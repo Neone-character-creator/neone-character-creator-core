@@ -19,6 +19,11 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.servlet.HandlerAdapter;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.View;
+import org.springframework.web.servlet.ViewResolver;
+import org.springframework.web.servlet.view.InternalResourceView;
+import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 
 import javax.inject.Inject;
 import javax.xml.ws.Response;
@@ -50,14 +55,8 @@ public class IndexControllerTest {
     public void testGettingIndexUnauthenticated() throws Exception {
         MockHttpServletRequestBuilder request = get("/").contentType(MediaType.TEXT_HTML);
 
-        MvcResult result = mvc.perform(request).andExpect(status().isOk())
-                .andExpect(content().)
-                .andReturn();
-
-        ModelAndView mv = result.getModelAndView();
-        ModelAndViewAssert.assertViewName(mv, "index");
-        String responseContent = result.getResponse().getContentAsString();
-        assertTrue(responseContent.contains("Would you like to create a new character or load an existing character?"));
-        assertFalse(responseContent.contains("Please sign in or create an account to continue."));
+        mvc.perform(request)
+                .andExpect(status().isOk())
+                .andExpect(view().name("index"));
     }
 }
