@@ -1,18 +1,13 @@
 package io.github.thisisnozaku.charactercreator;
 
-import com.atlassian.plugin.descriptors.AbstractModuleDescriptor;
-import com.atlassian.plugin.module.ModuleFactory;
+import java.io.File;
 
 /**
  * Interface for a NEOne game system plugin.
  * <p>
  * Created by Damien on 11/22/2015.
  */
-public abstract class GamePlugin<T extends Character> extends AbstractModuleDescriptor<T> {
-
-    public GamePlugin(ModuleFactory moduleFactory) {
-        super(moduleFactory);
-    }
+public abstract class GamePlugin<T extends Character> {
 
     /**
      * Returns the PluginDescription for this plugin.
@@ -26,5 +21,19 @@ public abstract class GamePlugin<T extends Character> extends AbstractModuleDesc
      *
      * @return a new Character
      */
-    public abstract <T extends Character> T getNewCharacter();
+    public abstract T getNewCharacter();
+
+    /**
+     * Returns the file for the description page for the plugin.
+     *
+     * @return the description view file
+     */
+    public abstract File getDescriptionViewFile();
+
+    /**
+     * Returns the file for the character sheet page for the plugin.
+     *
+     * @return the character sheet view file
+     */
+    public abstract File getCharacterViewFile();
 }
