@@ -1,17 +1,19 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
+import io.github.thisisnozaku.charactercreator.Character;
+import io.github.thisisnozaku.charactercreator.GamePlugin;
+import io.github.thisisnozaku.charactercreator.PluginDescription;
+import io.github.thisisnozaku.charactercreator.PluginManager;
 import io.github.thisisnozaku.charactercreator.data.AccountRepository;
 import io.github.thisisnozaku.charactercreator.data.CharacterDao;
-import io.github.thisisnozaku.charactercreator.model.Character;
-import io.github.thisisnozaku.charactercreator.model.GamePlugin;
-import io.github.thisisnozaku.charactercreator.model.PluginManager;
+import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
+import io.github.thisisnozaku.charactercreator.exceptions.MissingCharacterException;
+import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.inject.Inject;
 import java.io.UnsupportedEncodingException;
@@ -20,14 +22,16 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
+ * Controller for handling access to game plugin pages.
+ * <p>
  * Created by Damien on 11/15/2015.
  */
 @Controller
 @RequestMapping("/{author}/{gamename}/{version:.+}")
 public class GameController {
-    private AccountRepository accounts;
-    private CharacterDao characters;
-    private PluginManager plugins;
+    private final AccountRepository accounts;
+    private final CharacterDao characters;
+    private final PluginManager plugins;
 
     @Inject
     public GameController(CharacterDao characters, AccountRepository accounts, PluginManager plugins) {
@@ -37,7 +41,12 @@ public class GameController {
     }
 
     @RequestMapping(value = "", method = RequestMethod.GET, produces = "text/html")
-    public String description(@PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version) {
+    public String description(@PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version) throws UnsupportedEncodingException {
+        try {
+            plugins.getPlugin(URLDecoder.decode(author, "UTF-8"), URLDecoder.decode(game, "UTF-8"), URLDecoder.decode(version, "UTF-8")).get();
+        } catch (NoSuchElementException ex) {
+            throw new MissingPluginException();
+        }
         return String.format("%s-%s-%s-description", author, game, version);
     }
 
@@ -49,14 +58,15 @@ public class GameController {
             try {
                 model.addAttribute("character", characters.getCharacter(id, character.getClass()).get());
             } catch (NoSuchElementException ex) {
-                return "missing-character";
+                throw new MissingCharacterException();
+            } catch (ClassCastException ex) {
+                throw new CharacterPluginMismatchException(new PluginDescription(author, game, version), plugin.get().getPluginDescription());
             }
         } catch (NoSuchElementException ex) {
-            return "missing-plugin";
+            throw new MissingPluginException();
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
-
         return String.format("%s-%s-%s-character", author, game, version);
     }
 
@@ -65,9 +75,10 @@ public class GameController {
         try {
             Optional<GamePlugin> plugin = plugins.getPlugin(URLDecoder.decode(author, "UTF-8"), URLDecoder.decode(game, "UTF-8"), URLDecoder.decode(version, "UTF-8"));
             Character character = plugin.get().getNewCharacter();
+            characters.createCharacter(character);
             model.addAttribute("character", character);
         } catch (NoSuchElementException ex) {
-            return "missing-plugin";
+            throw new MissingPluginException();
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
@@ -77,22 +88,44 @@ public class GameController {
     /**
      * Replaces the given characters in the database, if it exists and the user is authorized to access it.
      *
-     * @param character
-     * @return
+     * @param character the character to save
      */
-    @RequestMapping(value = "/", method = RequestMethod.PUT)
-    public Object save(Object character) {
-        return null;
+    @RequestMapping(value = "/{id}  ", method = RequestMethod.PUT)
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void save(Character character, @PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version) {
+        characters.updateCharacter(character);
     }
 
     /**
      * Removes the given characters, if it exists and the user it authorized to access it.
      *
-     * @param id
+     * @param id the id of the character to remove
      */
-    @RequestMapping(value = "/")
+    @RequestMapping(value = "/{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void delete(@PathVariable int id) {
+    public void delete(@PathVariable long id) {
+        characters.deleteCharacter(id);
+    }
 
+    @ExceptionHandler(MissingCharacterException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    private static String missingCharacter() {
+        return "missing-character";
+    }
+
+    @ExceptionHandler(MissingPluginException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    private static String missingPlugin() {
+        return "missing-plugin";
+    }
+
+    @ExceptionHandler(CharacterPluginMismatchException.class)
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    private static ModelAndView wrongPluginForCharacter(CharacterPluginMismatchException ex) {
+        ModelAndView mv = new ModelAndView();
+        mv.addObject("expected", ex.getRequiredPlugin());
+        mv.addObject("actual", ex.getActualPlugin());
+        mv.setViewName("plugin-mismatch");
+        return mv;
     }
 }
