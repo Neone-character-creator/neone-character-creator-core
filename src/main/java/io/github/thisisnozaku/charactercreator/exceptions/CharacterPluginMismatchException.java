@@ -1,6 +1,6 @@
 package io.github.thisisnozaku.charactercreator.exceptions;
 
-import io.github.thisisnozaku.charactercreator.PluginDescription;
+import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 
 /**
  * Exception generated when attempting to perform an action, when the plugin that is required is

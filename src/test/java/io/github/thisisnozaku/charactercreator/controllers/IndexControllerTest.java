@@ -1,47 +1,38 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
 import io.github.thisisnozaku.charactercreator.NeoneCoreApplication;
+import io.github.thisisnozaku.charactercreator.data.AccountRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.web.ModelAndViewAssert;
-import org.springframework.test.web.client.ResponseActions;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.servlet.HandlerAdapter;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.View;
-import org.springframework.web.servlet.ViewResolver;
-import org.springframework.web.servlet.view.InternalResourceView;
-import org.springframework.web.servlet.view.InternalResourceViewResolver;
-import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 
 import javax.inject.Inject;
-import javax.xml.ws.Response;
-
-import static org.junit.Assert.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 /**
  * Created by Damien on 11/15/2015.
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 @WebAppConfiguration
 @ContextConfiguration(classes = {NeoneCoreApplication.class})
 public class IndexControllerTest {
     MockMvc mvc;
-    @Inject
+    @InjectMocks
     IndexController controller;
+
+    @Mock
+    AccountRepository accounts;
 
     @Before
     public void setup(){

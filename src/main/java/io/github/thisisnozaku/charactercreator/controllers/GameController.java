@@ -1,9 +1,9 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
-import io.github.thisisnozaku.charactercreator.Character;
-import io.github.thisisnozaku.charactercreator.GamePlugin;
-import io.github.thisisnozaku.charactercreator.PluginDescription;
-import io.github.thisisnozaku.charactercreator.PluginManager;
+import io.github.thisisnozaku.charactercreator.plugins.Character;
+import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
+import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
+import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import io.github.thisisnozaku.charactercreator.data.AccountRepository;
 import io.github.thisisnozaku.charactercreator.data.CharacterDao;
 import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
@@ -12,6 +12,7 @@ import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -19,6 +20,7 @@ import javax.inject.Inject;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -27,7 +29,7 @@ import java.util.Optional;
  * Created by Damien on 11/15/2015.
  */
 @Controller
-@RequestMapping("/{author}/{gamename}/{version:.+}")
+@RequestMapping("games/{author}/{gamename}/{version:.+}")
 public class GameController {
     private final AccountRepository accounts;
     private final CharacterDao characters;
@@ -53,34 +55,63 @@ public class GameController {
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     public String getCharacter(@PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version, @PathVariable long id, Model model) {
         try {
-            Optional<GamePlugin> plugin = plugins.getPlugin(URLDecoder.decode(author, "UTF-8"), URLDecoder.decode(game, "UTF-8"), URLDecoder.decode(version, "UTF-8"));
+            author = URLDecoder.decode(author, "UTF-8");
+            game = URLDecoder.decode(game, "UTF-8");
+            version = URLDecoder.decode(version, "UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            throw new IllegalStateException(ex);
+        }
+        try {
+            Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
             Character character = plugin.get().getNewCharacter();
             try {
-                model.addAttribute("character", characters.getCharacter(id, character.getClass()).get());
+                character = characters.getCharacter(id, character.getClass()).get();
             } catch (NoSuchElementException ex) {
                 throw new MissingCharacterException();
             } catch (ClassCastException ex) {
                 throw new CharacterPluginMismatchException(new PluginDescription(author, game, version), plugin.get().getPluginDescription());
             }
+            model.addAttribute("character", character);
         } catch (NoSuchElementException ex) {
             throw new MissingPluginException();
+        }
+        return String.format("%s-%s-%s-character", author, game, version);
+    }
+
+    @RequestMapping(value = "/", method = RequestMethod.GET)
+    public String getNewCharacter(@PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version, Model model) {
+        try {
+            author = URLDecoder.decode(author, "UTF-8");
+            game = URLDecoder.decode(game, "UTF-8");
+            version = URLDecoder.decode(version, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
+        }
+        try {
+            Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
+            Character character = plugin.get().getNewCharacter();
+            model.addAttribute("character", character);
+        } catch (NoSuchElementException ex) {
+            throw new MissingPluginException();
         }
         return String.format("%s-%s-%s-character", author, game, version);
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    public String create(Model model, @PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version) {
+    public String create(Model model, @PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version, Character character) {
         try {
-            Optional<GamePlugin> plugin = plugins.getPlugin(URLDecoder.decode(author, "UTF-8"), URLDecoder.decode(game, "UTF-8"), URLDecoder.decode(version, "UTF-8"));
-            Character character = plugin.get().getNewCharacter();
-            characters.createCharacter(character);
-            model.addAttribute("character", character);
-        } catch (NoSuchElementException ex) {
-            throw new MissingPluginException();
+            author = URLDecoder.decode(author, "UTF-8");
+            game = URLDecoder.decode(game, "UTF-8");
+            version = URLDecoder.decode(version, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
+        }
+        Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
+        if (plugin.isPresent()) {
+            character = characters.createCharacter(character);
+            model.addAttribute("character", character);
+        } else {
+            throw new MissingPluginException();
         }
         return String.format("%s-%s-%s-character", author, game, version);
     }
@@ -93,7 +124,26 @@ public class GameController {
     @RequestMapping(value = "/{id}  ", method = RequestMethod.PUT)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void save(Character character, @PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version) {
-        characters.updateCharacter(character);
+        try {
+            author = URLDecoder.decode(author, "UTF-8");
+            game = URLDecoder.decode(game, "UTF-8");
+            version = URLDecoder.decode(version, "UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            throw new IllegalStateException(ex);
+        }
+        GamePlugin plugin;
+        try {
+            plugin = plugins.getPlugin(URLDecoder.decode(author, "UTF-8"), URLDecoder.decode(game, "UTF-8"), URLDecoder.decode(version, "UTF-8")).get();
+            Class<?> targetClass = plugin.getNewCharacter().getClass();
+            if (!targetClass.equals(character.getClass())) {
+                throw new CharacterPluginMismatchException(new PluginDescription(author, game, version), null);
+            }
+            characters.updateCharacter(character);
+        } catch (NoSuchElementException ex) {
+            throw new MissingPluginException();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
