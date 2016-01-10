@@ -1,7 +1,6 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
 import io.github.thisisnozaku.charactercreator.NeoneCoreApplication;
-import io.github.thisisnozaku.charactercreator.model.CharacterResolver;
 import io.github.thisisnozaku.charactercreator.plugins.*;
 import io.github.thisisnozaku.charactercreator.data.AccountRepository;
 import io.github.thisisnozaku.charactercreator.data.CharacterDao;
@@ -67,7 +66,7 @@ public class GameControllerTest {
         MockitoAnnotations.initMocks(this);
         controller = new GameController(characters, accounts, plugins);
 
-        mvc = MockMvcBuilders.standaloneSetup(controller).setCustomArgumentResolvers(new CharacterResolver(plugins)).build();
+        mvc = MockMvcBuilders.standaloneSetup(controller).build();
         PluginDescription desc1 = new PluginDescription("Damien Marble", "Game System", "1.1");
         when(plugin.getPluginDescription()).thenReturn(desc1);
         when(plugin.getNewCharacter()).thenReturn(new MockCharacter());
