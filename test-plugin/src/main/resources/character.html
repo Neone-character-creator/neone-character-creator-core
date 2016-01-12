@@ -1,10 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+
+<html lang="en"
+ xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
     <title>Character Sheet</title>
 </head>
 <body>
 This is the character sheet for the plugin.
+<form action="post">
+    <label for="first-name">First Name</label><br/>
+    <input type="text" name="First Name" id="first-name" th:value="${character.firstName}"/><br/>
+    <label for="second-name">Last Name</label><br/>
+    <input type="text" name="Second Name" id="second-name" th:value="${character.lastName}"/><br/>
+    Address<br/>
+    <label for="street">Street</label><br/>
+    <input type="text" name="Street" id="street" th:value="${character.address.street}"/><br/>
+    <label for="city">City</label><br/>
+    <input type="text" name="City" id="city" th:value="${character.address.city}"/><br/>
+    <label for="state">State</label><br/>
+    <input type="text" name="State" id="state" th:value="${character.address.state}"/><br/>
+    (${character.id == null} ?
+    <input type="submit" th:formaction="${'/games/'+ author + '/' + game + '/' + version + '/'}" formmethod="post" value="Create"> :
+    <input type="submit" th:formaction="${'/games/'+ author + '/' + game + '/' + version + '/' + character.id}" formmethod="put" value="Save">)
+</form>
 </body>
 </html>
