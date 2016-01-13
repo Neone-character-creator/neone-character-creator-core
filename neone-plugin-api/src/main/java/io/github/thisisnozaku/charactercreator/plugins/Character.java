@@ -6,7 +6,7 @@ package io.github.thisisnozaku.charactercreator.plugins;
 public interface Character {
     Long getId();
 
-    void setId(long id);
+    void setId(Long id);
 
     /**
      * Returns the PluginDescription for the GamePlugin implementation that this Character is associated with.
