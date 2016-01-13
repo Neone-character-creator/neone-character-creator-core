@@ -1,7 +1,5 @@
 package io.github.thisisnozaku.charactercreator.data;
 
-import io.github.thisisnozaku.charactercreator.plugins.Character;
-
 import java.util.Optional;
 
 /**
