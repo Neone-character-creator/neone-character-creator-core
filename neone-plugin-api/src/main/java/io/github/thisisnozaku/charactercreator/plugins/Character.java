@@ -13,5 +13,7 @@ public interface Character {
      *
      * @return  the PluginDescription for the associated plugin.
      */
-    PluginDescription getPlugin();
+    PluginDescription getPluginDescription();
+
+    void setPluginDescription(PluginDescription pluginDescription);
 }
