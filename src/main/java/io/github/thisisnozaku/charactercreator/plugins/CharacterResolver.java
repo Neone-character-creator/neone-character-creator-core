@@ -1,30 +1,23 @@
 package io.github.thisisnozaku.charactercreator.plugins;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.github.thisisnozaku.charactercreator.*;
+import com.fasterxml.jackson.databind.ObjectReader;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
 import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.MethodParameter;
-import org.springframework.http.HttpRequest;
-import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.ServletRequestParameterPropertyValues;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.ws.handler.Handler;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLDecoder;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -52,13 +45,30 @@ public class CharacterResolver implements HandlerMethodArgumentResolver {
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
         Map<String, String> templateParameters = (Map<String, String>) request.getAttribute("org.springframework.web.servlet.HandlerMapping.uriTemplateVariables");
-        ObjectMapper mapper = new ObjectMapper();
         String author = URLDecoder.decode(templateParameters.get("author"), "UTF-8");
         String game = URLDecoder.decode(templateParameters.get("gamename"), "UTF-8");
         String version = URLDecoder.decode(templateParameters.get("version"), "UTF-8");
         Optional<GamePlugin> plugin = pluginManager.getPlugin(author, game, version);
-        if (plugin.isPresent()){
-            return mapper.readValue(request.getInputStream(), plugin.get().getNewCharacter().getClass());
+        if (plugin.isPresent()) {
+            Class<Character> characterClass = plugin.get().getCharacterType();
+            ObjectReader reader = new ObjectMapper().readerFor(characterClass).with(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
+            InputStream requestStream = request.getInputStream();
+            Character character = null;
+            try {
+                try {
+                    character = reader.readValue(requestStream);
+                } catch (JsonMappingException ex){
+                    character=characterClass.newInstance();
+                    character.setPluginDescription(new PluginDescription(author, game, version));
+                }
+                return character;
+            } finally {
+                try {
+                    requestStream.close();
+                } catch (Exception ex) {
+                    //Nothing to do about it now.
+                }
+            }
         }
         throw new MissingPluginException();
     }
