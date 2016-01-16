@@ -14,7 +14,7 @@ public interface CharacterDao {
      * @param <T>  the concrete type of the returned instance
      * @return an Optional containing the character, if it exists or empty otherwise
      */
-    <T extends Character> Optional<T> getCharacter(long id, Class<T> type);
+    <T> Optional<T> getCharacter(long id, Class<T> type);
 
     /**
      * Creates a new character object. The system will generate an id for the object and return an object with the new id.
@@ -24,7 +24,7 @@ public interface CharacterDao {
      * @param <T>       the type of the character
      * @return the updated character
      */
-    <T extends Character> T createCharacter(T character);
+    <T> T createCharacter(T character);
 
     /**
      * Deletes the character with the given id.

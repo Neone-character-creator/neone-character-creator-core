@@ -1,6 +1,5 @@
 package io.github.thisisnozaku.charactercreator.data.internal;
 
-import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.data.CharacterDao;
 import org.springframework.stereotype.Repository;
 
@@ -13,12 +12,12 @@ import java.util.Optional;
 public class CharacterDaoImpl implements CharacterDao {
 
     @Override
-    public <T extends Character> T createCharacter(T character) {
+    public <T> T createCharacter(T character) {
         throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
-    public <T extends Character> Optional<T> getCharacter(long id, Class<T> typeObject) {
+    public <T> Optional<T> getCharacter(long id, Class<T> typeObject) {
         return null;
     }
 
