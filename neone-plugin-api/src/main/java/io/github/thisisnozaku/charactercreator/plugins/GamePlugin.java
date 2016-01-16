@@ -21,7 +21,7 @@ public interface GamePlugin<T extends Character> {
      *
      * @return a new Character
      */
-    public T getNewCharacter();
+    public Class<T> getCharacterType();
 
     /**
      * Return the name of the resource for the character view for this plugin.
