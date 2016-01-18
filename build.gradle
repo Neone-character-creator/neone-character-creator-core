@@ -65,6 +65,7 @@ dependencies {
     runtime 'net.sourceforge.nekohtml:nekohtml:1.9.22'
     testOsgi project(':test-plugin')
     compile project(':neone-plugin-api')
+    compile 'commons-io:commons-io:2.4'
 }
 
 
