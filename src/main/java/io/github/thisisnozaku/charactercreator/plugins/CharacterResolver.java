@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
+import org.apache.commons.io.IOUtils;
 import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,8 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLDecoder;
@@ -51,24 +54,17 @@ public class CharacterResolver implements HandlerMethodArgumentResolver {
         Optional<GamePlugin> plugin = pluginManager.getPlugin(author, game, version);
         if (plugin.isPresent()) {
             Class<Character> characterClass = plugin.get().getCharacterType();
-            ObjectReader reader = new ObjectMapper().readerFor(characterClass).with(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
-            InputStream requestStream = request.getInputStream();
-            Character character = null;
-            try {
+            ObjectReader reader = new ObjectMapper().readerFor(characterClass);
+            byte[] requestBody = IOUtils.toByteArray(request.getInputStream());
+            Character character = characterClass.newInstance();
+            if (requestBody.length > 0) {
                 try {
-                    character = reader.readValue(requestStream);
-                } catch (JsonMappingException ex){
-                    character=characterClass.newInstance();
-                    character.setPluginDescription(new PluginDescription(author, game, version));
-                }
-                return character;
-            } finally {
-                try {
-                    requestStream.close();
-                } catch (Exception ex) {
-                    //Nothing to do about it now.
+                    character = reader.withValueToUpdate(character).readValue(requestBody);
+                } finally {
+                    IOUtils.closeQuietly(request.getInputStream());
                 }
             }
+            return character;
         }
         throw new MissingPluginException();
     }
