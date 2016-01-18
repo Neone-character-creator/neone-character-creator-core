@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
 import org.apache.commons.io.IOUtils;
 import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
@@ -51,6 +52,7 @@ public class CharacterResolver implements HandlerMethodArgumentResolver {
         String author = URLDecoder.decode(templateParameters.get("author"), "UTF-8");
         String game = URLDecoder.decode(templateParameters.get("gamename"), "UTF-8");
         String version = URLDecoder.decode(templateParameters.get("version"), "UTF-8");
+        PluginDescription incomingPluginDescription = new PluginDescription(author, game, version);
         Optional<GamePlugin> plugin = pluginManager.getPlugin(author, game, version);
         if (plugin.isPresent()) {
             Class<Character> characterClass = plugin.get().getCharacterType();
@@ -60,6 +62,9 @@ public class CharacterResolver implements HandlerMethodArgumentResolver {
             if (requestBody.length > 0) {
                 try {
                     character = reader.withValueToUpdate(character).readValue(requestBody);
+                    if (!incomingPluginDescription.equals(character.getPluginDescription())) {
+                        throw new CharacterPluginMismatchException(incomingPluginDescription, character.getPluginDescription());
+                    }
                 } finally {
                     IOUtils.closeQuietly(request.getInputStream());
                 }
