@@ -1,12 +1,15 @@
 package io.github.thisisnozaku.charactercreator.plugins;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 /**
  * Created by Damien on 11/22/2015.
  */
 public interface Character {
-    Long getId();
+    BigInteger getId();
 
-    void setId(Long id);
+    void setId(BigInteger id);
 
     /**
      * Returns the PluginDescription for the GamePlugin implementation that this Character is associated with.
