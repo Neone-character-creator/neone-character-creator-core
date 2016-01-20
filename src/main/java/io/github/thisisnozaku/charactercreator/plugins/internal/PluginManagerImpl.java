@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateProcessingParameters;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
@@ -67,23 +68,22 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                     }
                 }
             });
-
-            File file = new File(config.get("felix.auto.deploy.dir"));
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("plugins").toAbsolutePath())) {
-                stream.forEach(path -> {
-                    loadBundle(path);
-                });
-            } catch (IOException e) {
-                throw new IOError(e);
-            }
             framework.start();
         } catch (BundleException ex) {
             ex.printStackTrace();
         }
     }
 
-    public PluginManagerImpl() throws BundleException {
-
+    @PreDestroy
+    private void destroy() {
+        try {
+            framework.stop();
+            framework.waitForStop(0);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (BundleException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
