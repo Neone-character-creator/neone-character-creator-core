@@ -1,7 +1,7 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
-import io.github.thisisnozaku.charactercreator.data.AccountRepository;
-import io.github.thisisnozaku.charactercreator.data.CharacterDao;
+import io.github.thisisnozaku.charactercreator.data.UserRepository;
+import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingCharacterException;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
@@ -17,6 +17,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.inject.Inject;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.net.URLDecoder;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -29,12 +30,12 @@ import java.util.Optional;
 @Controller
 @RequestMapping("games/{author}/{gamename}/{version:.+}")
 public class GameController {
-    private final AccountRepository accounts;
-    private final CharacterDao characters;
+    private final UserRepository accounts;
+    private final CharacterMongoRepository characters;
     private final PluginManager plugins;
 
     @Inject
-    public GameController(CharacterDao characters, AccountRepository accounts, PluginManager plugins) {
+    public GameController(CharacterMongoRepository characters, UserRepository accounts, PluginManager plugins) {
         this.characters = characters;
         this.accounts = accounts;
         this.plugins = plugins;
@@ -61,22 +62,22 @@ public class GameController {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public String getCharacter(Character character, @PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version, @PathVariable long id, Model model) {
+    public String getCharacter(Character character, @PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version, @PathVariable BigInteger id, Model model) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
             version = URLDecoder.decode(version, "UTF-8");
+
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
+        PluginDescription targetPlugin = new PluginDescription(author, game, version);
         try {
-            Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
-            try {
-                character = (Character) characters.getCharacter(id, plugin.get().getCharacterType()).get();
-            } catch (NoSuchElementException ex) {
+            character = characters.findOne(id);
+            if (character == null) {
                 throw new MissingCharacterException();
-            } catch (ClassCastException ex) {
-                throw new CharacterPluginMismatchException(new PluginDescription(author, game, version), plugin.get().getPluginDescription());
+            } else if (!character.getPluginDescription().equals(targetPlugin)){
+                throw new CharacterPluginMismatchException(character.getPluginDescription(), targetPlugin);
             }
             model.addAttribute("character", character);
         } catch (NoSuchElementException ex) {
@@ -119,7 +120,7 @@ public class GameController {
         }
         Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
         if (plugin.isPresent()) {
-            character = characters.createCharacter(character);
+            character = characters.save(character);
             model.addAttribute("character", character);
         } else {
             throw new MissingPluginException();
@@ -148,7 +149,7 @@ public class GameController {
         GamePlugin plugin;
         try {
             plugin = plugins.getPlugin(character.getPluginDescription().getAuthor(), character.getPluginDescription().getSystem(), character.getPluginDescription().getVersion()).get();
-            characters.updateCharacter(character);
+            characters.save(character);
         } catch (NoSuchElementException ex) {
             throw new MissingPluginException();
         }
@@ -161,8 +162,8 @@ public class GameController {
      */
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void delete(@PathVariable long id) {
-        characters.deleteCharacter(id);
+    public void delete(@PathVariable BigInteger id) {
+        characters.delete(id);
     }
 
     @ExceptionHandler(MissingCharacterException.class)

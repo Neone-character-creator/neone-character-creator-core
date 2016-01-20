@@ -2,10 +2,10 @@ package io.github.thisisnozaku.charactercreator.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.thisisnozaku.charactercreator.NeoneCoreApplication;
-import io.github.thisisnozaku.charactercreator.data.AccountRepository;
-import io.github.thisisnozaku.charactercreator.data.CharacterDao;
-import io.github.thisisnozaku.charactercreator.plugins.*;
+import io.github.thisisnozaku.charactercreator.data.UserRepository;
+import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
+import io.github.thisisnozaku.charactercreator.plugins.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,6 +26,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.util.Objects;
 import java.util.Optional;
@@ -44,9 +45,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class GameControllerTest {
     private GameController controller;
     @Mock
-    private CharacterDao characters;
+    private CharacterMongoRepository characters;
     @Mock
-    private AccountRepository accounts;
+    private UserRepository accounts;
     @Mock
     private PluginManager plugins;
     @Mock
@@ -92,9 +93,11 @@ public class GameControllerTest {
                     return invocation.getArgumentAt(2, NativeWebRequest.class).getAttribute("character", RequestAttributes.SCOPE_REQUEST);
                 });
 
-        when(characters.createCharacter(isA(Character.class))).thenAnswer(invocation -> {
+        when(characters.save(isA(Character.class))).thenAnswer(invocation -> {
             Character character = invocation.getArgumentAt(0, Character.class);
-            character.setId(1L);
+            if (character.getId() == null){
+                character.setId(BigInteger.ONE);
+            }
             return character;
         });
     }
@@ -155,7 +158,7 @@ public class GameControllerTest {
                 URLEncoder.encode(desc.getVersion(), "UTF-8") + "/")
                 .content(mappedObject)
                 .contentType(MediaType.APPLICATION_JSON_UTF8);
-        newCharacter.setId(1L);
+        newCharacter.setId(BigInteger.ONE);
 
         mvc.perform(request)
                 .andDo(print())
@@ -166,7 +169,7 @@ public class GameControllerTest {
                                 "character"
                 ))
                 .andExpect(model().attribute("character", newCharacter));
-        verify(characters).createCharacter(newCharacter);
+        verify(characters).save(newCharacter);
     }
 
     /**
@@ -202,8 +205,8 @@ public class GameControllerTest {
     public void testGetCharacter() throws Exception {
         PluginDescription desc = plugin.getPluginDescription();
         MockCharacter existingCharacter = new MockCharacter(desc);
-        existingCharacter.setId(1L);
-        when(characters.getCharacter(existingCharacter.getId(), existingCharacter.getClass())).thenAnswer(invocation -> Optional.of(existingCharacter));
+        existingCharacter.setId(BigInteger.ONE);
+        when(characters.findOne(existingCharacter.getId())).thenAnswer(invocation -> existingCharacter);
 
 
         RequestBuilder request = get("/games/" +
@@ -223,7 +226,7 @@ public class GameControllerTest {
                 ))
                 .andExpect(model().attribute("character", existingCharacter));
 
-        verify(characters).getCharacter(existingCharacter.getId(), existingCharacter.getClass());
+        verify(characters).findOne(existingCharacter.getId());
     }
 
     /**
@@ -235,15 +238,15 @@ public class GameControllerTest {
     public void testGetMissingCharacter() throws Exception {
         PluginDescription desc = plugin.getPluginDescription();
         MockCharacter existingCharacter = new MockCharacter(desc);
-        existingCharacter.setId(1L);
-        when(characters.getCharacter(existingCharacter.getId(), existingCharacter.getClass())).thenAnswer(invocation -> Optional.empty());
+        existingCharacter.setId(BigInteger.ONE);
+        when(characters.findOne(existingCharacter.getId())).thenReturn(existingCharacter);
 
 
         RequestBuilder request = get("/games/" +
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getVersion(), "UTF-8") + "/" +
-                existingCharacter.getId())
+                2)
                 .contentType(MediaType.TEXT_HTML);
 
         mvc.perform(request)
@@ -260,15 +263,15 @@ public class GameControllerTest {
     @Test
     public void testGettingCharacterWrongPlugin() throws Exception {
         Character wrongCharacter = new Character() {
-            long id = 2;
+            BigInteger id = new BigInteger("2");
 
             @Override
-            public Long getId() {
+            public BigInteger getId() {
                 return id;
             }
 
             @Override
-            public void setId(Long id) {
+            public void setId(BigInteger id) {
                 this.id = id;
             }
 
@@ -284,7 +287,7 @@ public class GameControllerTest {
         };
         PluginDescription desc = plugin.getPluginDescription();
 
-        when(characters.getCharacter(wrongCharacter.getId(), MockCharacter.class)).thenThrow(ClassCastException.class);
+        when(characters.findOne(wrongCharacter.getId())).thenReturn(wrongCharacter);
 
         RequestBuilder request = get("/games/" +
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
@@ -305,7 +308,7 @@ public class GameControllerTest {
     public void testSaveCharacter() throws Exception {
         PluginDescription desc = plugin.getPluginDescription();
         Character mockCharacter = new MockCharacter(desc);
-        mockCharacter.setId(1L);
+        mockCharacter.setId(BigInteger.ONE);
         ObjectMapper objectMapper = new ObjectMapper();
 
         RequestBuilder request = put("/games/" +
@@ -319,7 +322,7 @@ public class GameControllerTest {
                 .andDo(print())
                 .andExpect(status().isAccepted());
 
-        verify(characters).updateCharacter(mockCharacter);
+        verify(characters).save(mockCharacter);
     }
 
     @Test
@@ -327,12 +330,12 @@ public class GameControllerTest {
         Character secondMockCharacter = new Character() {
             PluginDescription pluginDescription = plugin.getPluginDescription();
             @Override
-            public Long getId() {
-                return 0L;
+            public BigInteger getId() {
+                return BigInteger.ZERO;
             }
 
             @Override
-            public void setId(Long l) {
+            public void setId(BigInteger l) {
 
             }
 
@@ -346,7 +349,7 @@ public class GameControllerTest {
                 this.pluginDescription = pluginDescription;
             }
         };
-        secondMockCharacter.setId(1L);
+        secondMockCharacter.setId(BigInteger.ONE);
 
         PluginDescription desc = secondPlugin.getPluginDescription();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -367,7 +370,7 @@ public class GameControllerTest {
     public void testDeleteCharacter() throws Exception {
         PluginDescription desc = plugin.getPluginDescription();
         Character mockCharacter = new MockCharacter(desc);
-        mockCharacter.setId(1L);
+        mockCharacter.setId(BigInteger.ONE);
 
         RequestBuilder request = delete("/games/" +
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
@@ -379,11 +382,11 @@ public class GameControllerTest {
                 .andDo(print())
                 .andExpect(status().isAccepted());
 
-        verify(characters).deleteCharacter(mockCharacter.getId());
+        verify(characters).delete(mockCharacter.getId());
     }
 
     public static class MockCharacter implements Character {
-        private Long id;
+        private BigInteger id;
         private PluginDescription plugin;
 
         public MockCharacter(){};
@@ -393,12 +396,12 @@ public class GameControllerTest {
         }
 
         @Override
-        public Long getId() {
+        public BigInteger getId() {
             return id;
         }
 
         @Override
-        public void setId(Long id) {
+        public void setId(BigInteger id) {
             if (this.id != null) {
                 throw new IllegalStateException("Attempted to reassign the id of the character");
             }
