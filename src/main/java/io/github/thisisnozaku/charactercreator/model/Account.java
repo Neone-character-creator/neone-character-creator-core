@@ -1,13 +1,21 @@
 package io.github.thisisnozaku.charactercreator.model;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
 /**
  * Created by Damien on 11/13/2015.
  */
-public class User {
+@Entity
+public class Account {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private final String username;
 
-    public User(String username) {
+    public Account(String username) {
         this.username = username;
     }
 
