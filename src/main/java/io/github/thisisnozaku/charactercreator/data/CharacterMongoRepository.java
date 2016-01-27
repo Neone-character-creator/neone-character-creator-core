@@ -10,6 +10,5 @@ import java.math.BigInteger;
 /**
  * Created by Damien on 1/18/2016.
  */
-@RepositoryDefinition(domainClass = Character.class, idClass = BigInteger.class )
 public interface CharacterMongoRepository extends MongoRepository<Character, BigInteger>{
 }
