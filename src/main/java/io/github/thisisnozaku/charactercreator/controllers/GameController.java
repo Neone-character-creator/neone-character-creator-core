@@ -9,6 +9,7 @@ import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,7 +29,7 @@ import java.util.Optional;
  * Created by Damien on 11/15/2015.
  */
 @Controller
-@RequestMapping("games/{author}/{gamename}/{version:.+}")
+@RequestMapping("games/{author}/{game}/{version:.+}")
 public class GameController {
     private final UserRepository accounts;
     private final CharacterMongoRepository characters;
@@ -42,7 +43,7 @@ public class GameController {
     }
 
     @RequestMapping(value = "/info", method = RequestMethod.GET, produces = "text/html")
-    public String description(@PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version, Model model) throws UnsupportedEncodingException {
+    public String description(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model) throws UnsupportedEncodingException {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -62,7 +63,7 @@ public class GameController {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public String getCharacter(Character character, @PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version, @PathVariable BigInteger id, Model model) {
+    public String getCharacter(Character character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable BigInteger id, Model model) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -76,7 +77,7 @@ public class GameController {
             character = characters.findOne(id);
             if (character == null) {
                 throw new MissingCharacterException();
-            } else if (!character.getPluginDescription().equals(targetPlugin)){
+            } else if (!character.getPluginDescription().equals(targetPlugin)) {
                 throw new CharacterPluginMismatchException(character.getPluginDescription(), targetPlugin);
             }
             model.addAttribute("character", character);
@@ -90,7 +91,7 @@ public class GameController {
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    public String getNewCharacter(Character character, @PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version, Model model) {
+    public String getNewCharacter(Character character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -110,7 +111,7 @@ public class GameController {
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    public String create(Model model, @PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version, Character character) {
+    public String create(Character character, Model model, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -120,6 +121,7 @@ public class GameController {
         }
         Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
         if (plugin.isPresent()) {
+            character.setPluginDescription(plugin.get().getPluginDescription());
             character = characters.save(character);
             model.addAttribute("character", character);
         } else {
@@ -128,7 +130,7 @@ public class GameController {
         model.addAttribute("author", author);
         model.addAttribute("game", game);
         model.addAttribute("version", version);
-        return String.format("%s-%s-%s-character", author, game, version);
+        return String.format("redirect:/games/%s/%s/%s/%s", author, game, version, character.getId().toString());
     }
 
     /**
@@ -138,7 +140,7 @@ public class GameController {
      */
     @RequestMapping(value = "/{id}  ", method = RequestMethod.PUT)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void save(Character character, @PathVariable("author") String author, @PathVariable("gamename") String game, @PathVariable("version") String version) {
+    public String save(Character character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -149,10 +151,15 @@ public class GameController {
         GamePlugin plugin;
         try {
             plugin = plugins.getPlugin(character.getPluginDescription().getAuthor(), character.getPluginDescription().getSystem(), character.getPluginDescription().getVersion()).get();
+            PluginDescription targetPluginDescription = new PluginDescription(author, game, version);
+            if (!plugin.getPluginDescription().equals(targetPluginDescription)){
+                throw new CharacterPluginMismatchException(plugin.getPluginDescription(), targetPluginDescription);
+            }
             characters.save(character);
         } catch (NoSuchElementException ex) {
             throw new MissingPluginException();
         }
+        return String.format("%s-%s-%s-character", author, game, version);
     }
 
     /**
