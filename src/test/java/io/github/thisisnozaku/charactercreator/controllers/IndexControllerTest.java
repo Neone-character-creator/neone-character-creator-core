@@ -1,7 +1,7 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
 import io.github.thisisnozaku.charactercreator.NeoneCoreApplication;
-import io.github.thisisnozaku.charactercreator.data.AccountRepository;
+import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,13 +10,10 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import javax.inject.Inject;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -32,7 +29,7 @@ public class IndexControllerTest {
     IndexController controller;
 
     @Mock
-    AccountRepository accounts;
+    UserRepository accounts;
 
     @Before
     public void setup(){
