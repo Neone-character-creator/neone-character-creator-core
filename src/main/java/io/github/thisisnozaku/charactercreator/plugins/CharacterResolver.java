@@ -1,15 +1,15 @@
 package io.github.thisisnozaku.charactercreator.plugins;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
-import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
-import org.apache.commons.io.IOUtils;
-import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -17,11 +17,8 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URLDecoder;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,10 +27,7 @@ import java.util.Optional;
  */
 @Component
 public class CharacterResolver implements HandlerMethodArgumentResolver {
-    @Inject
     private PluginManager pluginManager;
-    @Inject
-    private HttpMessageConverters converters;
 
     @Inject
     public CharacterResolver(PluginManager pluginManager) {
@@ -50,27 +44,29 @@ public class CharacterResolver implements HandlerMethodArgumentResolver {
         HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
         Map<String, String> templateParameters = (Map<String, String>) request.getAttribute("org.springframework.web.servlet.HandlerMapping.uriTemplateVariables");
         String author = URLDecoder.decode(templateParameters.get("author"), "UTF-8");
-        String game = URLDecoder.decode(templateParameters.get("gamename"), "UTF-8");
+        String game = URLDecoder.decode(templateParameters.get("game"), "UTF-8");
         String version = URLDecoder.decode(templateParameters.get("version"), "UTF-8");
         PluginDescription incomingPluginDescription = new PluginDescription(author, game, version);
         Optional<GamePlugin> plugin = pluginManager.getPlugin(author, game, version);
-        if (plugin.isPresent()) {
-            Class<Character> characterClass = plugin.get().getCharacterType();
-            ObjectReader reader = new ObjectMapper().readerFor(characterClass);
-            byte[] requestBody = IOUtils.toByteArray(request.getInputStream());
-            Character character = characterClass.newInstance();
-            if (requestBody.length > 0) {
-                try {
-                    character = reader.withValueToUpdate(character).readValue(requestBody);
-                    if (!incomingPluginDescription.equals(character.getPluginDescription())) {
-                        throw new CharacterPluginMismatchException(incomingPluginDescription, character.getPluginDescription());
+        String requestContentType = request.getContentType();
+        if (requestContentType != null) {
+            switch (requestContentType) {
+                case MediaType.APPLICATION_JSON_UTF8_VALUE:
+                case MediaType.APPLICATION_JSON_VALUE:
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    return objectMapper.readerFor(plugin.get().getCharacterType()).readValue(request.getInputStream());
+                case MediaType.APPLICATION_FORM_URLENCODED_VALUE:
+                    BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(plugin.get().getCharacterType().newInstance());
+                    HttpMessageConverter converter = new FormHttpMessageConverter();
+                    MultiValueMap<String, String> values = (MultiValueMap<String, String>) converter.read(plugin.get().getCharacterType(), new ServletServerHttpRequest(request));
+                    for (Map.Entry<String, List<String>> entry : values.entrySet()){
+                        for(String value : entry.getValue()){
+                            beanWrapper.setPropertyValue(entry.getKey(), value);
+                        }
                     }
-                } finally {
-                    IOUtils.closeQuietly(request.getInputStream());
-                }
+                    return beanWrapper.getWrappedInstance();
             }
-            return character;
         }
-        throw new MissingPluginException();
+        return plugin.get().getCharacterType().newInstance();
     }
 }
