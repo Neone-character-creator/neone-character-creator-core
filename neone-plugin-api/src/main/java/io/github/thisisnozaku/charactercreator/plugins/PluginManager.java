@@ -12,4 +12,6 @@ public interface PluginManager{
     Optional<GamePlugin> getPlugin(String author, String game, String version);
 
     Collection<PluginDescription> getAllPluginDescriptions();
+
+    Optional<GamePlugin> getPlugin(PluginDescription pluginDescription);
 }
