@@ -1,0 +1,2 @@
+include 'neone-plugin-api'
+include 'test-plugin'
