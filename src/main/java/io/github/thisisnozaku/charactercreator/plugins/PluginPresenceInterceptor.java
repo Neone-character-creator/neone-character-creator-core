@@ -1,5 +1,6 @@
 package io.github.thisisnozaku.charactercreator.plugins;
 
+import io.github.thisisnozaku.charactercreator.controllers.GameController;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -23,20 +24,23 @@ public class PluginPresenceInterceptor extends HandlerInterceptorAdapter {
     private PluginManager pluginManager;
 
     @Inject
-    public PluginPresenceInterceptor(PluginManager pluginManager){
+    public PluginPresenceInterceptor(PluginManager pluginManager) {
         this.pluginManager = pluginManager;
     }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        Map<String, String> templateParameters = (Map<String, String>) request.getAttribute("org.springframework.web.servlet.HandlerMapping.uriTemplateVariables");
-        String author = URLDecoder.decode(templateParameters.get("author"), "UTF-8");
-        String game = URLDecoder.decode(templateParameters.get("game"), "UTF-8");
-        String version = URLDecoder.decode(templateParameters.get("version"), "UTF-8");
-        Optional<GamePlugin> plugin = pluginManager.getPlugin(author,game,version);
-        if (plugin.isPresent()){
-            return true;
+        if (handler instanceof GameController) {
+            Map<String, String> templateParameters = (Map<String, String>) request.getAttribute("org.springframework.web.servlet.HandlerMapping.uriTemplateVariables");
+            String author = URLDecoder.decode(templateParameters.get("author"), "UTF-8");
+            String game = URLDecoder.decode(templateParameters.get("game"), "UTF-8");
+            String version = URLDecoder.decode(templateParameters.get("version"), "UTF-8");
+            Optional<GamePlugin> plugin = pluginManager.getPlugin(author, game, version);
+            if (plugin.isPresent()) {
+                return true;
+            }
+            throw new MissingPluginException();
         }
-        throw new MissingPluginException();
+        return true;
     }
 }
