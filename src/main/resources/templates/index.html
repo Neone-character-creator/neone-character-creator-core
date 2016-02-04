@@ -5,27 +5,32 @@
       xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
 <head>
     <meta charset="UTF-8"/>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+          integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous"/>
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css"
+          integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous"/>
+    <link rel="stylesheet" href="css/index.css"/>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+            integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+            crossorigin="anonymous"></script>
     <title>Title</title>
 </head>
 <body>
+<div th:include="topbar"></div>
 <div class="container">
     <div class="container">
         <div class="row">
-            Would you like to create a new character or load an existing character?
+            <div class="col-md-offset-5 center-block">
+                Welcome to the NEOne Character creator.
+            </div>
         </div>
         <div class="row">
-            <button class="btn btn-standard">New Character</button>
-        </div>
-        <div class="row">
-            <button class="btn btn-standard">Load Character</button>
-        </div>
-    </div>
-    <div class="container">
-        <div class="row">
-            Please sign in or create an account to continue.
-        </div>
-        <div class="row">
-            <button class="btn btn-standard">Sign In</button>
+
         </div>
     </div>
 </div>
