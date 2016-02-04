@@ -9,11 +9,11 @@
 </head>
 <body>
 This is the character sheet for the plugin.
-<form action="post" id="user form" th:object="${character}">
+<form action="post" id="characte-form" th:object="${character}">
     <label for="first-name">First Name</label><br/>
     <input type="text" name="First Name" id="first-name" th:value="${character != null ? character.firstName : ''}" th:field="*{firstName}"/><br/>
     <label for="second-name">Last Name</label><br/>
-    <input type="text" name="Second Name" id="second-name" th:value="${character != null ? character.lastName : ''}" th:field="*{lastName}"/><br/>
+    <input type="text" name="Second Name" id="second-name" th:value="${character != null ? character.secondName : ''}" th:field="*{secondName}"/><br/>
     Address<br/>
     <label for="street">Street</label><br/>
     <input type="text" name="Street" id="street" th:value="${character != null and character.address != null ? character.address.street : ''}" th:field="*{address.street}"/><br/>
@@ -32,6 +32,19 @@ This is the character sheet for the plugin.
                    formmethod="put" value="Save">)
         </p>
     </div>
+    <script>
+        var character = function(){
+        return {
+                firstName : $("#first-name").val(),
+                secondName : $("#second-name").val(),
+                address : {
+                    street : $("#street").val(),
+                    city : $("#city").val(),
+                    state : $("#state").val()
+                }
+            }
+        }
+    </script>
 </form>
 </body>
 </html>
