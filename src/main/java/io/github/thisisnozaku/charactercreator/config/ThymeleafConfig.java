@@ -1,11 +1,11 @@
 package io.github.thisisnozaku.charactercreator.config;
 
+import io.github.thisisnozaku.charactercreator.plugins.PluginThymeleafResourceResolver;
 import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templatemode.StandardTemplateModeHandlers;
-import org.thymeleaf.templateresolver.TemplateResolver;
-import io.github.thisisnozaku.charactercreator.plugins.PluginThymeleafResourceResolver;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.templateresolver.TemplateResolver;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
