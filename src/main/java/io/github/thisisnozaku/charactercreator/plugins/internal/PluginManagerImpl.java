@@ -42,7 +42,7 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
     @PostConstruct
     private void init() {
         try {
-            ResourceBundle configResource = ResourceBundle.getBundle("osgi-config");
+            ResourceBundle configResource = ResourceBundle.getBundle("config");
             Map<String, String> config = new HashMap<>();
             config.put(Constants.FRAMEWORK_STORAGE_CLEAN, "true");
             config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "io.github.thisisnozaku.charactercreator.plugins; version=1.0");
@@ -69,6 +69,13 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                 }
             });
             framework.start();
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("plugins"))) {
+                for (Path path : stream) {
+                    loadBundle(path);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } catch (BundleException ex) {
             ex.printStackTrace();
         }
@@ -94,6 +101,11 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
     @Override
     public Collection<PluginDescription> getAllPluginDescriptions() {
         return plugins.keySet();
+    }
+
+    @Override
+    public Optional<GamePlugin> getPlugin(PluginDescription pluginDescription) {
+        return Optional.ofNullable(plugins.get(pluginDescription));
     }
 
     private Bundle loadBundle(Path path) {
