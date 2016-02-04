@@ -59,7 +59,8 @@ public class GameController {
         model.addAttribute("author", author);
         model.addAttribute("game", game);
         model.addAttribute("version", version);
-        return String.format("%s-%s-%s-description", author, game, version);
+        model.addAttribute("contentUrl", String.format("%s-%s-%s-description", author, game, version));
+        return "plugin-character-page";
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
@@ -87,7 +88,10 @@ public class GameController {
         model.addAttribute("author", author);
         model.addAttribute("game", game);
         model.addAttribute("version", version);
-        return String.format("%s-%s-%s-character", author, game, version);
+        model.addAttribute("contentUrl", String.format("%s-%s-%s-character", author, game, version));
+        model.addAttribute("saveEnabled", true);
+        model.addAttribute("deleteEnabled", true);
+        return "plugin-character-page";
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
@@ -107,11 +111,15 @@ public class GameController {
         model.addAttribute("author", author);
         model.addAttribute("game", game);
         model.addAttribute("version", version);
-        return String.format("%s-%s-%s-character", author, game, version);
+        model.addAttribute("contentUrl", String.format("%s-%s-%s-character", author, game, version));
+        model.addAttribute("saveEnabled", true);
+        model.addAttribute("deleteEnabled", true);
+        return "plugin-character-page";
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    public String create(Character character, Model model, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
+    @ResponseBody
+    public Character create(Character character, Model model, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -130,7 +138,8 @@ public class GameController {
         model.addAttribute("author", author);
         model.addAttribute("game", game);
         model.addAttribute("version", version);
-        return String.format("redirect:/games/%s/%s/%s/%s", author, game, version, character.getId().toString());
+        model.addAttribute("contentUrl", String.format("%s-%s-%s-character", author, game, version));
+        return character;
     }
 
     /**
@@ -140,7 +149,7 @@ public class GameController {
      */
     @RequestMapping(value = "/{id}  ", method = RequestMethod.PUT)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public String save(Character character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
+    public void save(Character character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -152,14 +161,13 @@ public class GameController {
         try {
             plugin = plugins.getPlugin(character.getPluginDescription().getAuthor(), character.getPluginDescription().getSystem(), character.getPluginDescription().getVersion()).get();
             PluginDescription targetPluginDescription = new PluginDescription(author, game, version);
-            if (!plugin.getPluginDescription().equals(targetPluginDescription)){
+            if (!plugin.getPluginDescription().equals(targetPluginDescription)) {
                 throw new CharacterPluginMismatchException(plugin.getPluginDescription(), targetPluginDescription);
             }
             characters.save(character);
         } catch (NoSuchElementException ex) {
             throw new MissingPluginException();
         }
-        return String.format("%s-%s-%s-character", author, game, version);
     }
 
     /**
@@ -191,7 +199,7 @@ public class GameController {
         ModelAndView mv = new ModelAndView();
         mv.addObject("expected", ex.getRequiredPlugin());
         mv.addObject("actual", ex.getActualPlugin());
-        mv.setViewName("plugin-mismatch");
+        mv.setViewName("pluginw-mismatch");
         return mv;
     }
 }
