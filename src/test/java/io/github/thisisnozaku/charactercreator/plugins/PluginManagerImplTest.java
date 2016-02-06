@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -53,7 +54,7 @@ public class PluginManagerImplTest {
         RequestBuilder request = get(String.format("/games/%s/%s/%s/info", desc.getAuthor(), desc.getSystem(), desc.getVersion()));
         ResultActions result = mvc.perform(request);
         result.andDo(print())
-                .andExpect(view().name(String.format("%s-%s-%s-description", desc.getAuthor(), desc.getSystem(), desc.getVersion())))
+                .andExpect(view().name(String.format("plugin-character-page", desc.getAuthor(), desc.getSystem(), desc.getVersion())))
                 .andReturn().getResponse().getContentAsString().contains("This is the information page for the test plugin.");
     }
 
@@ -63,7 +64,7 @@ public class PluginManagerImplTest {
         RequestBuilder request = get(String.format("/games/%s/%s/%s/", desc.getAuthor(), desc.getSystem(), desc.getVersion()));
         ResultActions result = mvc.perform(request);
         result.andDo(print())
-                .andExpect(view().name(String.format("%s-%s-%s-character", desc.getAuthor(), desc.getSystem(), desc.getVersion())))
+                .andExpect(view().name(String.format("plugin-character-page", desc.getAuthor(), desc.getSystem(), desc.getVersion())))
                 .andReturn().getResponse().getContentAsString().contains("This is the information page for the test plugin.");
     }
 }
