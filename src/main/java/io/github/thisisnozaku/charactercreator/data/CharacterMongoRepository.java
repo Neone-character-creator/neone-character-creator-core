@@ -10,5 +10,5 @@ import java.math.BigInteger;
 /**
  * Created by Damien on 1/18/2016.
  */
-public interface CharacterMongoRepository extends MongoRepository<Character, BigInteger>{
+public interface CharacterMongoRepository extends MongoRepository<CharacterDataWrapper, BigInteger>{
 }

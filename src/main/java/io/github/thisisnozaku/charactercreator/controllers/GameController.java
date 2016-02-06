@@ -1,7 +1,8 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
-import io.github.thisisnozaku.charactercreator.data.UserRepository;
+import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
+import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingCharacterException;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
@@ -9,8 +10,9 @@ import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -75,12 +77,13 @@ public class GameController {
         }
         PluginDescription targetPlugin = new PluginDescription(author, game, version);
         try {
-            character = characters.findOne(id);
-            if (character == null) {
+            CharacterDataWrapper wrapper = characters.findOne(id);
+            if (wrapper == null) {
                 throw new MissingCharacterException();
-            } else if (!character.getPluginDescription().equals(targetPlugin)) {
-                throw new CharacterPluginMismatchException(character.getPluginDescription(), targetPlugin);
+            } else if (!wrapper.getPluginDescription().equals(targetPlugin)) {
+                throw new CharacterPluginMismatchException(wrapper.getPluginDescription(), targetPlugin);
             }
+            character = wrapper.getCharacter();
             model.addAttribute("character", character);
         } catch (NoSuchElementException ex) {
             throw new MissingPluginException();
@@ -127,10 +130,11 @@ public class GameController {
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
+        PluginDescription description = new PluginDescription(author, game, version);
         Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
         if (plugin.isPresent()) {
-            character.setPluginDescription(plugin.get().getPluginDescription());
-            character = characters.save(character);
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, null, character);
+            character = characters.save(wrapper).getCharacter();
             model.addAttribute("character", character);
         } else {
             throw new MissingPluginException();
@@ -159,12 +163,14 @@ public class GameController {
         }
         GamePlugin plugin;
         try {
-            plugin = plugins.getPlugin(character.getPluginDescription().getAuthor(), character.getPluginDescription().getSystem(), character.getPluginDescription().getVersion()).get();
+            PluginDescription description = new PluginDescription(author, game, version);
+            plugin = plugins.getPlugin(description).get();
             PluginDescription targetPluginDescription = new PluginDescription(author, game, version);
-            if (!plugin.getPluginDescription().equals(targetPluginDescription)) {
+            if (!description.equals(targetPluginDescription)) {
                 throw new CharacterPluginMismatchException(plugin.getPluginDescription(), targetPluginDescription);
             }
-            characters.save(character);
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, null, character);
+            characters.save(wrapper);
         } catch (NoSuchElementException ex) {
             throw new MissingPluginException();
         }
@@ -199,7 +205,7 @@ public class GameController {
         ModelAndView mv = new ModelAndView();
         mv.addObject("expected", ex.getRequiredPlugin());
         mv.addObject("actual", ex.getActualPlugin());
-        mv.setViewName("pluginw-mismatch");
+        mv.setViewName("plugin-mismatch");
         return mv;
     }
 }
