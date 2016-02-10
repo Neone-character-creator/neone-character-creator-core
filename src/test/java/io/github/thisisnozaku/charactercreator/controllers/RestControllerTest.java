@@ -1,8 +1,6 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.webkit.plugin.Plugin;
 import io.github.thisisnozaku.charactercreator.NeoneCoreApplication;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
@@ -17,13 +15,11 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.method.P;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.RequestBuilder;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -44,14 +40,13 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 import static org.junit.Assert.*;
 
 @RunWith(MockitoJUnitRunner.class)
 @WebAppConfiguration
 @ContextConfiguration(classes = {NeoneCoreApplication.class})
-public class GameControllerTest {
-    private GameController controller;
+public class RestControllerTest {
+    private GameRestController controller;
     @Mock
     private CharacterMongoRepository characters;
     @Mock
@@ -73,7 +68,7 @@ public class GameControllerTest {
     @Before
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
-        controller = new GameController(characters, accounts, plugins);
+        controller = new GameRestController(characters, accounts, plugins);
 
         mvc = MockMvcBuilders.standaloneSetup(controller).addInterceptors(new PluginPresenceInterceptor(plugins)).setCustomArgumentResolvers(new CharacterResolver(plugins)).build();
 
@@ -111,58 +106,8 @@ public class GameControllerTest {
             return character;
         });
 
-        when(characters.findOne(isA(BigInteger.class))).then(a -> {
-            BigInteger id = (BigInteger) a.getArguments()[0];
-            if (id.equals(BigInteger.ONE)) {
-                return new CharacterDataWrapper(desc1, null, (Character) firstPlugin.getCharacterType().newInstance());
-            } else if (id.equals(BigInteger.TEN)) {
-                return new CharacterDataWrapper(desc2, null, (Character) secondPlugin.getCharacterType().newInstance());
-            } else {
-                return null;
-            }
-        });
-
         when(firstPlugin.getCharacterType()).thenReturn(MockCharacter.class);
         when(secondPlugin.getCharacterType()).thenReturn(MockCharacter.class);
-    }
-
-    /**
-     * Test returning the firstPlugin information page.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testGetPluginInformationPage() throws Exception {
-        PluginDescription desc = desc1;
-        RequestBuilder request = get("/games/" +
-                URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
-                URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
-                URLEncoder.encode(desc.getVersion(), "UTF-8") + "/info")
-                .contentType(MediaType.TEXT_HTML);
-        MvcResult result = mvc.perform(request)
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(view().name("plugin-character-page"))
-                .andReturn();
-    }
-
-    /**
-     * Attempt to get the firstPlugin description page for a firstPlugin that isn't present.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testGetInformationPageMissingPlugin() throws Exception {
-        PluginDescription desc = new PluginDescription("Fake", "Fake", "Fake");
-        RequestBuilder request = get("/games/" +
-                URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
-                URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
-                URLEncoder.encode(desc.getVersion(), "UTF-8") + "/info")
-                .contentType(MediaType.TEXT_HTML);
-
-        mvc.perform(request)
-                .andExpect(status().isNotFound())
-                .andExpect(view().name("missing-plugin"));
     }
 
     /**
@@ -179,7 +124,7 @@ public class GameControllerTest {
         RequestBuilder request = post("/games/" +
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
-                URLEncoder.encode(desc.getVersion(), "UTF-8") + "/")
+                URLEncoder.encode(desc.getVersion(), "UTF-8") + "/characters/")
                 .content(mappedObject)
                 .contentType(MediaType.APPLICATION_JSON_UTF8);
 
@@ -202,16 +147,14 @@ public class GameControllerTest {
         RequestBuilder request = post("/games/" +
                 URLEncoder.encode("Missing", "UTF-8") + "/" +
                 URLEncoder.encode("Missing", "UTF-8") + "/" +
-                URLEncoder.encode("Missing", "UTF-8") + "/")
+                URLEncoder.encode("Missing", "UTF-8") + "/" +
+                "characters" + "/")
                 .content(mapper.writeValueAsString(mockCharacter))
                 .contentType(MediaType.APPLICATION_JSON_UTF8);
 
         mvc.perform(request)
                 .andDo(print())
-                .andExpect(status().isNotFound())
-                .andExpect(view().name(
-                        "missing-plugin"
-                ));
+                .andExpect(status().isNotFound());
     }
 
     /**
@@ -224,20 +167,21 @@ public class GameControllerTest {
         PluginDescription desc = desc1;
         MockCharacter existingCharacter = new MockCharacter(desc);
         existingCharacter.setId(BigInteger.ONE);
-
+        when(characters.findOne(BigInteger.ONE)).thenReturn(new CharacterDataWrapper(desc, null,existingCharacter));
 
         RequestBuilder request = get("/games/" +
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getVersion(), "UTF-8") + "/" +
+                "characters" + "/" +
                 existingCharacter.getId())
-                .contentType(MediaType.TEXT_HTML);
+                .accept(MediaType.APPLICATION_JSON_UTF8_VALUE);
 
-        mvc.perform(request)
+        MvcResult result = mvc.perform(request)
                 .andDo(print())
-                .andExpect(view().name(
-                        "plugin-character-page"
-                ));
+                .andReturn();
+
+        assertEquals(existingCharacter, new ObjectMapper().readValue(result.getResponse().getContentAsString(), MockCharacter.class));
 
         verify(characters).findOne(existingCharacter.getId());
     }
@@ -260,10 +204,7 @@ public class GameControllerTest {
                 .contentType(MediaType.TEXT_HTML);
 
         mvc.perform(request)
-                .andDo(print())
-                .andExpect(view().name(
-                        "missing-character"
-                ));
+                .andDo(print());
     }
 
     @Test
@@ -276,7 +217,7 @@ public class GameControllerTest {
         RequestBuilder request = put("/games/" +
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
-                URLEncoder.encode(desc.getVersion(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getVersion(), "UTF-8") + "/characters/" +
                 id)
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(objectMapper.writeValueAsString(mockCharacter));
@@ -300,6 +241,7 @@ public class GameControllerTest {
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getVersion(), "UTF-8") + "/" +
+                "characters" + "/" +
                 id);
 
         mvc.perform(request)
@@ -309,17 +251,14 @@ public class GameControllerTest {
         verify(characters).delete(id);
     }
 
-    public static class MockCharacter implements Character {
+    public static class MockCharacter extends Character {
         private BigInteger id;
-        private PluginDescription plugin;
 
         public MockCharacter() {
         }
 
-        ;
-
         public MockCharacter(PluginDescription pluginDescription) {
-            this.plugin = pluginDescription;
+            setPluginDescription(pluginDescription);
         }
 
         public BigInteger getId() {
@@ -333,19 +272,11 @@ public class GameControllerTest {
             this.id = id;
         }
 
-        public PluginDescription getPluginDescription() {
-            return plugin;
-        }
-
-        public void setPluginDescription(PluginDescription pluginDescription) {
-            this.plugin = pluginDescription;
-        }
-
         @Override
         public String toString() {
             return "MockCharacter{" +
                     "id=" + id +
-                    ", plugin=" + plugin +
+                    ", plugin=" + getPluginDescription() +
                     '}';
         }
 
