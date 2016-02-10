@@ -51,7 +51,7 @@ public class PluginManagerImplTest {
     @Test
     public void testDescriptionViewResolution() throws Exception {
         PluginDescription desc = manager.getAllPluginDescriptions().iterator().next();
-        RequestBuilder request = get(String.format("/games/%s/%s/%s/info", desc.getAuthor(), desc.getSystem(), desc.getVersion()));
+        RequestBuilder request = get(String.format("/games/%s/%s/%s/pages/info", desc.getAuthor(), desc.getSystem(), desc.getVersion()));
         ResultActions result = mvc.perform(request);
         result.andDo(print())
                 .andExpect(view().name(String.format("plugin-character-page", desc.getAuthor(), desc.getSystem(), desc.getVersion())))
@@ -61,7 +61,7 @@ public class PluginManagerImplTest {
     @Test
     public void testNewCharacterViewResolution() throws Exception {
         PluginDescription desc = manager.getAllPluginDescriptions().iterator().next();
-        RequestBuilder request = get(String.format("/games/%s/%s/%s/", desc.getAuthor(), desc.getSystem(), desc.getVersion()));
+        RequestBuilder request = get(String.format("/games/%s/%s/%s/pages/character", desc.getAuthor(), desc.getSystem(), desc.getVersion()));
         ResultActions result = mvc.perform(request);
         result.andDo(print())
                 .andExpect(view().name(String.format("plugin-character-page", desc.getAuthor(), desc.getSystem(), desc.getVersion())))
