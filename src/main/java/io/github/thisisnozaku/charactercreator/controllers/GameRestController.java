@@ -39,7 +39,7 @@ public class GameRestController {
         this.plugins = pluginManager;
     }
 
-    @RequestMapping(value = "/", method = RequestMethod.POST)
+    @RequestMapping(value = "/", method = RequestMethod.POST, produces = "application/json")
     public Character create(Character character, Model model, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
@@ -69,7 +69,7 @@ public class GameRestController {
      *
      * @param character the character to save
      */
-    @RequestMapping(value = "/{id}  ", method = RequestMethod.PUT)
+    @RequestMapping(value = "/{id}  ", method = RequestMethod.PUT, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Character save(Character character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
@@ -99,19 +99,19 @@ public class GameRestController {
      *
      * @param id the id of the character to remove
      */
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void delete(@PathVariable BigInteger id) {
         characters.delete(id);
     }
 
-    @RequestMapping(value = "/", method = RequestMethod.GET)
+    @RequestMapping(value = "/", method = RequestMethod.GET, produces = "application/json")
     public List<Character> getAllForUserForPlugin(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version){
         PluginDescription pluginDescription = new PluginDescription(author,game,version);
         return characters.findByAccountForGame(null, pluginDescription).stream().map(CharacterDataWrapper::getCharacter).collect(Collectors.toList());
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json")
     public Character getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") BigInteger id){
         PluginDescription pluginDescription = new PluginDescription(author,game,version);
         return characters.findOne(id).getCharacter();
