@@ -9,28 +9,26 @@
 </head>
 <body>
 This is the character sheet for the plugin.
-<form action="post" id="characte-form" th:object="${character}">
+<form action="post" id="character-form" th:object="${character}">
     <label for="first-name">First Name</label><br/>
-    <input type="text" name="First Name" id="first-name" th:value="${character != null ? character.firstName : ''}" th:field="*{firstName}"/><br/>
+    <input type="text" name="First Name" id="first-name" th:value="${character != null ? character.firstName : ''}"
+           th:field="*{firstName}"/><br/>
     <label for="second-name">Last Name</label><br/>
-    <input type="text" name="Second Name" id="second-name" th:value="${character != null ? character.secondName : ''}" th:field="*{secondName}"/><br/>
+    <input type="text" name="Second Name" id="second-name" th:value="${character != null ? character.secondName : ''}"
+           th:field="*{secondName}"/><br/>
     Address<br/>
     <label for="street">Street</label><br/>
-    <input type="text" name="Street" id="street" th:value="${character != null and character.address != null ? character.address.street : ''}" th:field="*{address.street}"/><br/>
+    <input type="text" name="Street" id="street"
+           th:value="${character != null and character.address != null ? character.address.street : ''}"
+           th:field="*{address.street}"/><br/>
     <label for="city">City</label><br/>
-    <input type="text" name="City" id="city" th:value="${character != null and character.address != null ? character.address.city : ''}" th:field="*{address.city}"/><br/>
+    <input type="text" name="City" id="city"
+           th:value="${character != null and character.address != null ? character.address.city : ''}"
+           th:field="*{address.city}"/><br/>
     <label for="state">State</label><br/>
-    <input type="text" name="State" id="state" th:value="${character != null and character.address != null ? character.address.state : ''}" th:field="*{address.state}"/><br/>
-    <div th:switch="${character.id == null}">
-        <p th:case="true">
-            <input type="submit" th:formaction="${'/games/'+ author + '/' + game + '/' + version + '/'}"
-                   formmethod="post"
-                   value="Create">
-        </p>
-        <p th:case="false">
-            <input type="submit" th:formaction="${'/games/'+ author + '/' + game + '/' + version + '/' + character.id}"
-                   formmethod="put" value="Save">)
-        </p>
+    <input type="text" name="State" id="state"
+           th:value="${character != null and character.address != null ? character.address.state : ''}"
+           th:field="*{address.state}"/><br/>
     </div>
     <script>
         var character = function(){
@@ -44,6 +42,8 @@ This is the character sheet for the plugin.
                 }
             }
         }
+
+
     </script>
 </form>
 </body>
