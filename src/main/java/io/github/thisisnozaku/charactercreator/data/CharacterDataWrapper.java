@@ -1,6 +1,6 @@
 package io.github.thisisnozaku.charactercreator.data;
 
-import io.github.thisisnozaku.charactercreator.model.Account;
+import io.github.thisisnozaku.charactercreator.model.User;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 
@@ -12,10 +12,10 @@ import java.math.BigInteger;
 public class CharacterDataWrapper {
     private BigInteger id;
     private final PluginDescription pluginDescription;
-    private final Account user;
+    private final User user;
     private final Character character;
 
-    public CharacterDataWrapper(PluginDescription pluginDescription, Account user, Character character) {
+    public CharacterDataWrapper(PluginDescription pluginDescription, User user, Character character) {
         this.pluginDescription = pluginDescription;
         this.user = user;
         this.character = character;
@@ -25,7 +25,7 @@ public class CharacterDataWrapper {
         return pluginDescription;
     }
 
-    public Account getUser() {
+    public User getUser() {
         return user;
     }
 

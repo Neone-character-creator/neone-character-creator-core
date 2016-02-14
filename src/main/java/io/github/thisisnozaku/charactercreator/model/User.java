@@ -12,7 +12,7 @@ import javax.validation.constraints.NotNull;
  * Created by Damien on 11/13/2015.
  */
 @Entity
-public class Account {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
