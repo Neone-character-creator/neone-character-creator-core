@@ -1,7 +1,5 @@
 package io.github.thisisnozaku.charactercreator.plugins;
 
-import java.io.File;
-
 /**
  * Interface for a NEOne game system plugin.
  * <p>
@@ -31,6 +29,7 @@ public interface GamePlugin<T extends Character> {
 
     /**
      * Return the name of the resource for the description view for this plugin.
+     *
      * @return
      */
     public String getDescriptionViewResourceName();
