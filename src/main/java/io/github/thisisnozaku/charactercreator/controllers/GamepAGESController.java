@@ -66,7 +66,7 @@ public class GamePagesController {
         return "plugin-character-page";
     }
 
-    @RequestMapping(value = "/character", method = RequestMethod.GET)
+    @RequestMapping(value = "/character", method = RequestMethod.GET, produces = "text/html")
     public String getCharacter(Character character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @RequestParam(required = false) BigInteger id) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
