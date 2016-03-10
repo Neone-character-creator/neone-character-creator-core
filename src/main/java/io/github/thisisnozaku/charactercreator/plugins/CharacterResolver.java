@@ -49,12 +49,14 @@ public class CharacterResolver implements HandlerMethodArgumentResolver {
         PluginDescription incomingPluginDescription = new PluginDescription(author, game, version);
         Optional<GamePlugin> plugin = pluginManager.getPlugin(author, game, version);
         String requestContentType = request.getContentType();
+        Character character = null;
         if (requestContentType != null) {
             switch (requestContentType) {
                 case MediaType.APPLICATION_JSON_UTF8_VALUE:
                 case MediaType.APPLICATION_JSON_VALUE:
                     ObjectMapper objectMapper = new ObjectMapper();
-                    return objectMapper.readerFor(plugin.get().getCharacterType()).readValue(request.getInputStream());
+                    character = objectMapper.readerFor(plugin.get().getCharacterType()).readValue(request.getInputStream());
+                    break;
                 case MediaType.APPLICATION_FORM_URLENCODED_VALUE:
                     BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(plugin.get().getCharacterType().newInstance());
                     HttpMessageConverter converter = new FormHttpMessageConverter();
@@ -64,9 +66,14 @@ public class CharacterResolver implements HandlerMethodArgumentResolver {
                             beanWrapper.setPropertyValue(entry.getKey(), value);
                         }
                     }
-                    return beanWrapper.getWrappedInstance();
+                    character = (Character) beanWrapper.getWrappedInstance();
+                    break;
             }
+            character.setPluginDescription(incomingPluginDescription);
+            return character;
         }
-        return plugin.get().getCharacterType().newInstance();
+        character = (Character) plugin.get().getCharacterType().newInstance();
+        character.setPluginDescription(plugin.get().getPluginDescription());
+        return character;
     }
 }
