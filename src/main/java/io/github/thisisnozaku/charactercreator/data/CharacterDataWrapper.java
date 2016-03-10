@@ -1,6 +1,6 @@
 package io.github.thisisnozaku.charactercreator.data;
 
-import io.github.thisisnozaku.charactercreator.model.User;
+import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 
@@ -11,18 +11,18 @@ import java.math.BigInteger;
  */
 public class CharacterDataWrapper {
     private BigInteger id;
-    private final PluginDescription pluginDescription;
+    private final PluginDescription plugin;
     private final User user;
     private final Character character;
 
     public CharacterDataWrapper(PluginDescription pluginDescription, User user, Character character) {
-        this.pluginDescription = pluginDescription;
+        this.plugin = pluginDescription;
         this.user = user;
         this.character = character;
     }
 
-    public PluginDescription getPluginDescription() {
-        return pluginDescription;
+    public PluginDescription getPlugin() {
+        return plugin;
     }
 
     public User getUser() {
@@ -49,7 +49,7 @@ public class CharacterDataWrapper {
         CharacterDataWrapper wrapper = (CharacterDataWrapper) o;
 
         if (id != null ? !id.equals(wrapper.id) : wrapper.id != null) return false;
-        if (pluginDescription != null ? !pluginDescription.equals(wrapper.pluginDescription) : wrapper.pluginDescription != null)
+        if (plugin != null ? !plugin.equals(wrapper.plugin) : wrapper.plugin != null)
             return false;
         if (user != null ? !user.equals(wrapper.user) : wrapper.user != null) return false;
         return character != null ? character.equals(wrapper.character) : wrapper.character == null;
@@ -59,7 +59,7 @@ public class CharacterDataWrapper {
     @Override
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (pluginDescription != null ? pluginDescription.hashCode() : 0);
+        result = 31 * result + (plugin != null ? plugin.hashCode() : 0);
         result = 31 * result + (user != null ? user.hashCode() : 0);
         result = 31 * result + (character != null ? character.hashCode() : 0);
         return result;
@@ -69,7 +69,7 @@ public class CharacterDataWrapper {
     public String toString() {
         return "CharacterDataWrapper{" +
                 "id=" + id +
-                ", pluginDescription=" + pluginDescription +
+                ", plugin=" + plugin +
                 ", user=" + user +
                 ", character=" + character +
                 '}';
