@@ -2,6 +2,7 @@ package io.github.thisisnozaku.charactercreator.data;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
@@ -12,9 +13,6 @@ import org.springframework.data.mongodb.core.mapping.MongoPersistentEntity;
 import org.springframework.data.mongodb.core.mapping.MongoPersistentProperty;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
 
 /**
  * Created by Damien on 1/29/2016.
@@ -29,11 +27,13 @@ public class CharacterMongoConverter extends MappingMongoConverter {
 
     @Override
     public <T> T read(Class<T> clazz, DBObject dbo) {
-        if (Character.class.isAssignableFrom(clazz)) {
-            return (T) super.read(getTypeForObject(dbo), dbo);
-        } else {
-            return super.read(clazz, dbo);
+        if (CharacterDataWrapper.class.isAssignableFrom(clazz)) {
+            PluginDescription pluginDescription = read(PluginDescription.class, (DBObject) dbo.get("plugin"));
+            Character character = (Character) read(pluginManager.getPlugin(pluginDescription).get().getCharacterType(), (DBObject) dbo.get("character"));
+            User user = read(User.class, (DBObject) dbo.get("user"));
+            return (T) new CharacterDataWrapper(pluginDescription, user, character);
         }
+        return super.read(clazz, dbo);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class CharacterMongoConverter extends MappingMongoConverter {
         }
     }
 
-    private Class<?> getTypeForObject(DBObject dbo){
+    private Class<?> getTypeForObject(DBObject dbo) {
         BasicDBObject object = (BasicDBObject) dbo.get("pluginDescription");
         PluginDescription pluginDescription = new PluginDescription(object.getString("author"), object.getString("system"), object.getString("version"));
         return pluginManager.getPlugin(pluginDescription).get().getCharacterType();
