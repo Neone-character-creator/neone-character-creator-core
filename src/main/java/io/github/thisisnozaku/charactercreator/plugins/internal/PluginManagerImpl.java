@@ -22,6 +22,8 @@ import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -108,6 +110,15 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
         return Optional.ofNullable(plugins.get(pluginDescription));
     }
 
+    @Override
+    public URI getPluginResource(PluginDescription incomingPluginDescription, String resourceName) {
+        try {
+            return getBundleResourceUrl(incomingPluginDescription, resourceName).toURI();
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     private Bundle loadBundle(Path path) {
         try {
             Bundle bundle = framework.getBundleContext().installBundle(path.toUri().toURL().toExternalForm());
@@ -133,14 +144,16 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
         Bundle bundle = pluginBundles.get(pluginDescription);
         try {
             URL resourceUrl = null;
+            String resource = null;
             switch (pluginNameTokens[3]) {
                 case "description":
-                    resourceUrl = bundle.getEntry(plugins.get(pluginDescription).getDescriptionViewResourceName());
+                    resource = plugins.get(pluginDescription).getDescriptionViewResourceName();
                     break;
                 case "character":
-                    resourceUrl = bundle.getEntry(plugins.get(pluginDescription).getCharacterViewResourceName());
+                    resource = plugins.get(pluginDescription).getCharacterViewResourceName();
                     break;
             }
+            resourceUrl = getBundleResourceUrl(pluginDescription, resource);
             if (resourceUrl == null) {
                 throw new IOException("Stream for resource " + resourceName + " was null.");
             }
@@ -149,5 +162,11 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
             logger.error(String.format("Tried to get an input stream from plugin %s for resource %s but an exception occured: %s", pluginDescription.toString(), resourceName, ex.getMessage()));
         }
         return null;
+    }
+
+    private URL getBundleResourceUrl(PluginDescription pluginDescription, String name) {
+        Bundle bundle = pluginBundles.get(pluginDescription);
+        URL resourceUrl = bundle.getResource(name);
+        return resourceUrl;
     }
 }

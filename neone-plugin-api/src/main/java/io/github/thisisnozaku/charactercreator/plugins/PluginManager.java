@@ -1,6 +1,7 @@
 package io.github.thisisnozaku.charactercreator.plugins;
 
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -14,4 +15,6 @@ public interface PluginManager{
     Collection<PluginDescription> getAllPluginDescriptions();
 
     Optional<GamePlugin> getPlugin(PluginDescription pluginDescription);
+
+    URI getPluginResource(PluginDescription incomingPluginDescription, String resourceName);
 }
