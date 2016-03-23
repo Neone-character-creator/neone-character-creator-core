@@ -88,7 +88,9 @@ task copyRuntimeDependencies(type: Sync) {
     into 'plugins'
 }
 
-copyRuntimeDependencies.outputs.upToDateWhen { false }
+copyRuntimeDependencies.outputs.upToDateWhen {
+    false
+}
 
 clean << {
     new File('plugins').listFiles().each { f ->
@@ -98,3 +100,4 @@ clean << {
 }
 
 test.dependsOn copyRuntimeDependencies
+bootRun.dependsOn copyRuntimeDependencies
