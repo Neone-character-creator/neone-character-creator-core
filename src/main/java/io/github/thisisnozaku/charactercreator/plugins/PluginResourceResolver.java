@@ -33,15 +33,14 @@ public class PluginResourceResolver implements ResourceResolver {
     @Override
     public Resource resolveResource(HttpServletRequest request, String requestPath, List<? extends Resource> locations, ResourceResolverChain chain) {
         try {
-            String fullPath = request.getServletPath();
-            String[] pathTokens = fullPath.substring(fullPath.indexOf("games/") + "games/".length()).split("/");
+            String referralPath = URLDecoder.decode(request.getHeader("referer"), "UTF-8");
+            String[] pathTokens = referralPath.substring(referralPath.indexOf("games/") + "games/".length()).split("/");
             String author = pathTokens[0];
             String game = pathTokens[1];
             String version = pathTokens[2];
             PluginDescription incomingPluginDescription = new PluginDescription(author, game, version);
-            String resourceName = fullPath.substring(fullPath.indexOf("pluginresources/") + "pluginresources/".length());
-            return new UrlResource(pluginManager.getPluginResource(incomingPluginDescription, resourceName));
-        } catch (MalformedURLException e) {
+            return new UrlResource(pluginManager.getPluginResource(incomingPluginDescription, requestPath));
+        } catch (MalformedURLException | UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }
     }
