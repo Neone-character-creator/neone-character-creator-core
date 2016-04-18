@@ -6,11 +6,12 @@ import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
-import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,7 +42,7 @@ public class GameRestController {
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST, produces = "application/json")
-    public CharacterDataWrapper create(Character character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
+    public CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @AuthenticationPrincipal io.github.thisisnozaku.charactercreator.authentication.User user) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -52,8 +53,7 @@ public class GameRestController {
         PluginDescription description = new PluginDescription(author, game, version);
         Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
         if (plugin.isPresent()) {
-            Object user = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, (User) user, character);
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, user, requestBody.getBody());
             wrapper = characters.save(wrapper);
             return wrapper;
         } else {
@@ -68,7 +68,7 @@ public class GameRestController {
      */
     @RequestMapping(value = "/{id}  ", method = RequestMethod.PUT, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public CharacterDataWrapper save(Character character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
+    public CharacterDataWrapper save(String character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");

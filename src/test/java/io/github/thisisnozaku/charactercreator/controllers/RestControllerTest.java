@@ -3,19 +3,21 @@ package io.github.thisisnozaku.charactercreator.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.thisisnozaku.charactercreator.NeoneCoreApplication;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
-import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
+import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.Mockito;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -29,27 +31,24 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 import java.math.BigInteger;
 import java.net.URLEncoder;
-import java.util.Objects;
 import java.util.Optional;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.Assert.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringJUnit4ClassRunner.class)
 @WebAppConfiguration
 @ContextConfiguration(classes = {NeoneCoreApplication.class})
+@Configuration
 public class RestControllerTest {
     private GameRestController controller;
-    @Mock
-    private CharacterMongoRepository characters;
-    @Mock
+    private CharacterMongoRepository characters = Mockito.mock(CharacterMongoRepository.class);
     private UserRepository accounts;
     @Mock
     private PluginManager plugins;
@@ -67,7 +66,13 @@ public class RestControllerTest {
 
     @Before
     public void setup() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        characters = Mockito.mock(CharacterMongoRepository.class);
+        accounts = Mockito.mock(UserRepository.class);
+        plugins = Mockito.mock(PluginManager.class);
+        resolver = Mockito.mock(HandlerMethodArgumentResolver.class);
+        firstPlugin = Mockito.mock(GamePlugin.class);
+        secondPlugin = Mockito.mock(GamePlugin.class);
+
         controller = new GameRestController(characters, accounts, plugins);
 
         mvc = MockMvcBuilders.standaloneSetup(controller).addInterceptors(new PluginPresenceInterceptor(plugins)).setCustomArgumentResolvers(new CharacterResolver(plugins)).build();
@@ -105,9 +110,6 @@ public class RestControllerTest {
             }
             return character;
         });
-
-        when(firstPlugin.getCharacterType()).thenReturn(MockCharacter.class);
-        when(secondPlugin.getCharacterType()).thenReturn(MockCharacter.class);
     }
 
     /**
@@ -116,22 +118,22 @@ public class RestControllerTest {
      * @throws Exception
      */
     @Test
+    @WithMockUser
     public void testCreate() throws Exception {
         PluginDescription desc = desc1;
-        Character newCharacter = new MockCharacter(desc);
+        String newCharacter = "{\"name\":\"Damien\"}";
         ObjectMapper objectMapper = new ObjectMapper();
-        String mappedObject = objectMapper.writeValueAsString(newCharacter);
         RequestBuilder request = post("/games/" +
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getVersion(), "UTF-8") + "/characters/")
-                .content(mappedObject)
+                .content(newCharacter)
                 .contentType(MediaType.APPLICATION_JSON_UTF8);
 
 
         MvcResult result = mvc.perform(request)
                 .andDo(print()).andReturn();
-        objectMapper.readValue(result.getRequest().getInputStream(), MockCharacter.class);
+        objectMapper.readValue(result.getRequest().getInputStream(), CharacterDataWrapper.class);
         verify(characters).save(isA(CharacterDataWrapper.class));
     }
 
@@ -142,14 +144,13 @@ public class RestControllerTest {
      */
     @Test
     public void testCreateForMissingPlugin() throws Exception {
-        Character mockCharacter = new MockCharacter();
-        ObjectMapper mapper = new ObjectMapper();
+        String newCharacter = "{\"name\":\"Damien\"}";
         RequestBuilder request = post("/games/" +
                 URLEncoder.encode("Missing", "UTF-8") + "/" +
                 URLEncoder.encode("Missing", "UTF-8") + "/" +
                 URLEncoder.encode("Missing", "UTF-8") + "/" +
                 "characters" + "/")
-                .content(mapper.writeValueAsString(mockCharacter))
+                .content(newCharacter)
                 .contentType(MediaType.APPLICATION_JSON_UTF8);
 
         mvc.perform(request)
@@ -165,25 +166,26 @@ public class RestControllerTest {
     @Test
     public void testGetCharacter() throws Exception {
         PluginDescription desc = desc1;
-        MockCharacter existingCharacter = new MockCharacter(desc);
-        existingCharacter.setId(BigInteger.ONE);
-        when(characters.findOne(BigInteger.ONE)).thenReturn(new CharacterDataWrapper(desc, null,existingCharacter));
+        String existingCharacter = "{\"name\" : \"Damien\"}";
+        CharacterDataWrapper characterWrapper = new CharacterDataWrapper(desc, null, existingCharacter);
+        characterWrapper.setId(BigInteger.ONE);
+        when(characters.findOne(BigInteger.ONE)).thenReturn(characterWrapper);
 
         RequestBuilder request = get("/games/" +
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getVersion(), "UTF-8") + "/" +
                 "characters" + "/" +
-                existingCharacter.getId())
+                characterWrapper.getId())
                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE);
 
         MvcResult result = mvc.perform(request)
                 .andDo(print())
                 .andReturn();
 
-        assertEquals(existingCharacter, new ObjectMapper().readValue(result.getResponse().getContentAsString(), MockCharacter.class));
+        assertEquals(characterWrapper, new ObjectMapper().readValue(result.getResponse().getContentAsString(), CharacterDataWrapper.class));
 
-        verify(characters).findOne(existingCharacter.getId());
+        verify(characters).findOne(characterWrapper.getId());
     }
 
     /**
@@ -210,7 +212,7 @@ public class RestControllerTest {
     @Test
     public void testSaveCharacter() throws Exception {
         PluginDescription desc = desc1;
-        Character mockCharacter = new MockCharacter(desc);
+        String mockCharacter = "{";
         ObjectMapper objectMapper = new ObjectMapper();
         BigInteger id = BigInteger.ONE;
 
@@ -234,7 +236,6 @@ public class RestControllerTest {
     @Test
     public void testDeleteCharacter() throws Exception {
         PluginDescription desc = desc1;
-        Character mockCharacter = new MockCharacter(desc);
         BigInteger id = BigInteger.ONE;
 
         RequestBuilder request = delete("/games/" +
@@ -249,47 +250,5 @@ public class RestControllerTest {
                 .andExpect(status().isAccepted());
 
         verify(characters).delete(id);
-    }
-
-    public static class MockCharacter extends Character {
-        private BigInteger id;
-
-        public MockCharacter() {
-        }
-
-        public MockCharacter(PluginDescription pluginDescription) {
-            setPluginDescription(pluginDescription);
-        }
-
-        public BigInteger getId() {
-            return id;
-        }
-
-        public void setId(BigInteger id) {
-            if (this.id != null) {
-                throw new IllegalStateException("Attempted to reassign the id of the character");
-            }
-            this.id = id;
-        }
-
-        @Override
-        public String toString() {
-            return "MockCharacter{" +
-                    "id=" + id +
-                    ", plugin=" + getPluginDescription() +
-                    '}';
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) {
-                return true;
-            }
-            if (!this.getClass().isInstance(obj)) {
-                return false;
-            }
-            MockCharacter other = (MockCharacter) obj;
-            return Objects.equals(this.id, other.id);
-        }
     }
 }

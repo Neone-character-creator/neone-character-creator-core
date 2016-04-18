@@ -1,11 +1,10 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
+import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
-import io.github.thisisnozaku.charactercreator.authentication.User;
-import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
@@ -68,7 +67,7 @@ public class GamePagesController {
     }
 
     @RequestMapping(value = "/pages/character", method = RequestMethod.GET, produces = "text/html")
-    public String getCharacter(Character character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @RequestParam(required = false) BigInteger id, @AuthenticationPrincipal User user) {
+    public String getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @RequestParam(required = false) BigInteger id, @AuthenticationPrincipal User user) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -85,7 +84,7 @@ public class GamePagesController {
         if (id != null) {
             wrapper = characters.findOne(id);
         } else {
-            wrapper = new CharacterDataWrapper(description, user, character);
+            wrapper = new CharacterDataWrapper(description, user, null);
         }
         model.addAttribute("wrapper", wrapper);
         model.addAttribute("author", author);
