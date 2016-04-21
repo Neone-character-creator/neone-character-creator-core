@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.thisisnozaku.charactercreator.NeoneCoreApplication;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
+import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.*;
@@ -45,10 +46,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebAppConfiguration
 @ContextConfiguration(classes = {NeoneCoreApplication.class})
-@Configuration
+@WithMockUser
 public class RestControllerTest {
     private GameRestController controller;
-    private CharacterMongoRepository characters = Mockito.mock(CharacterMongoRepository.class);
+    private CharacterMongoRepositoryCustom characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
     private UserRepository accounts;
     @Mock
     private PluginManager plugins;
@@ -66,7 +67,7 @@ public class RestControllerTest {
 
     @Before
     public void setup() throws Exception {
-        characters = Mockito.mock(CharacterMongoRepository.class);
+        characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
         accounts = Mockito.mock(UserRepository.class);
         plugins = Mockito.mock(PluginManager.class);
         resolver = Mockito.mock(HandlerMethodArgumentResolver.class);
@@ -75,7 +76,7 @@ public class RestControllerTest {
 
         controller = new GameRestController(characters, accounts, plugins);
 
-        mvc = MockMvcBuilders.standaloneSetup(controller).addInterceptors(new PluginPresenceInterceptor(plugins)).setCustomArgumentResolvers(new CharacterResolver(plugins)).build();
+        mvc = MockMvcBuilders.standaloneSetup(controller).build();
 
         when(plugins.getPlugin(isA(String.class), isA(String.class), isA(String.class))).thenAnswer((invocation -> {
             Object[] args = invocation.getArguments();
@@ -106,7 +107,7 @@ public class RestControllerTest {
         when(characters.save(isA(CharacterDataWrapper.class))).thenAnswer(invocation -> {
             CharacterDataWrapper character = invocation.getArgumentAt(0, CharacterDataWrapper.class);
             if (character.getId() == null) {
-                character.setId(BigInteger.ONE);
+                character.setId(BigInteger.ONE.toString());
             }
             return character;
         });
@@ -118,7 +119,6 @@ public class RestControllerTest {
      * @throws Exception
      */
     @Test
-    @WithMockUser
     public void testCreate() throws Exception {
         PluginDescription desc = desc1;
         String newCharacter = "{\"name\":\"Damien\"}";
@@ -133,7 +133,6 @@ public class RestControllerTest {
 
         MvcResult result = mvc.perform(request)
                 .andDo(print()).andReturn();
-        objectMapper.readValue(result.getRequest().getInputStream(), CharacterDataWrapper.class);
         verify(characters).save(isA(CharacterDataWrapper.class));
     }
 
@@ -168,8 +167,8 @@ public class RestControllerTest {
         PluginDescription desc = desc1;
         String existingCharacter = "{\"name\" : \"Damien\"}";
         CharacterDataWrapper characterWrapper = new CharacterDataWrapper(desc, null, existingCharacter);
-        characterWrapper.setId(BigInteger.ONE);
-        when(characters.findOne(BigInteger.ONE)).thenReturn(characterWrapper);
+        characterWrapper.setId(BigInteger.ONE.toString());
+        when(characters.findOne(BigInteger.ONE.toString())).thenReturn(characterWrapper);
 
         RequestBuilder request = get("/games/" +
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
@@ -183,7 +182,7 @@ public class RestControllerTest {
                 .andDo(print())
                 .andReturn();
 
-        assertEquals(characterWrapper, new ObjectMapper().readValue(result.getResponse().getContentAsString(), CharacterDataWrapper.class));
+        assertEquals(new ObjectMapper().writeValueAsString(characterWrapper), result.getResponse().getContentAsString());
 
         verify(characters).findOne(characterWrapper.getId());
     }
@@ -212,8 +211,7 @@ public class RestControllerTest {
     @Test
     public void testSaveCharacter() throws Exception {
         PluginDescription desc = desc1;
-        String mockCharacter = "{";
-        ObjectMapper objectMapper = new ObjectMapper();
+        String mockCharacter = "{\"name\":\"Damien\"}";
         BigInteger id = BigInteger.ONE;
 
         RequestBuilder request = put("/games/" +
@@ -222,13 +220,13 @@ public class RestControllerTest {
                 URLEncoder.encode(desc.getVersion(), "UTF-8") + "/characters/" +
                 id)
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(objectMapper.writeValueAsString(mockCharacter));
+                .content(mockCharacter);
 
         mvc.perform(request)
                 .andDo(print())
                 .andExpect(status().isAccepted());
         CharacterDataWrapper characterDataWrapper = new CharacterDataWrapper(desc, null, mockCharacter);
-        characterDataWrapper.setId(BigInteger.ONE);
+        characterDataWrapper.setId(BigInteger.ONE.toString());
 
         verify(characters).save(characterDataWrapper);
     }
@@ -236,7 +234,7 @@ public class RestControllerTest {
     @Test
     public void testDeleteCharacter() throws Exception {
         PluginDescription desc = desc1;
-        BigInteger id = BigInteger.ONE;
+        String id = BigInteger.ONE.toString();
 
         RequestBuilder request = delete("/games/" +
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
