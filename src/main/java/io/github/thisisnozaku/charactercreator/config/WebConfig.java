@@ -2,7 +2,6 @@ package io.github.thisisnozaku.charactercreator.config;
 
 import io.github.thisisnozaku.charactercreator.plugins.CharacterResolver;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
-import io.github.thisisnozaku.charactercreator.plugins.PluginPresenceInterceptor;
 import io.github.thisisnozaku.charactercreator.plugins.PluginResourceResolver;
 import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -24,18 +23,11 @@ public class WebConfig extends WebMvcAutoConfiguration.WebMvcAutoConfigurationAd
     @Inject
     private PluginManager pluginManager;
     @Inject
-    private PluginPresenceInterceptor pluginPresenceInterceptor;
-    @Inject
     private PluginResourceResolver pluginResourceResolver;
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         argumentResolvers.add(new CharacterResolver(pluginManager));
-    }
-
-    @Override
-    public void addInterceptors(InterceptorRegistry interceptorRegistry) {
-        interceptorRegistry.addInterceptor(pluginPresenceInterceptor);
     }
 
     @Bean
