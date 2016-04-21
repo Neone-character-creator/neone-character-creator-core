@@ -53,12 +53,7 @@ public class User implements UserDetails {
         this.accountNonLocked = accountNonLocked;
     }
 
-    @ManyToMany(targetEntity = AppAuthority.class)
-    @JoinTable(
-            name = "user_authorities",
-            joinColumns = @JoinColumn(name = "userid"),
-            inverseJoinColumns = @JoinColumn(name = "authorityid")
-    )
+    @OneToMany(targetEntity = AppAuthority.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Override
     public Collection<GrantedAuthority> getAuthorities() {
         return Collections.unmodifiableCollection(authorities);
