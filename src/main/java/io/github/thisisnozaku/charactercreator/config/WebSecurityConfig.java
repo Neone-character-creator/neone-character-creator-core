@@ -2,6 +2,7 @@ package io.github.thisisnozaku.charactercreator.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -39,8 +40,10 @@ WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder()).and()
-        .inMemoryAuthentication().withUser("Damien").password("Paranoia").roles("User");
+        auth.userDetailsService(userDetailsService)
+//                .passwordEncoder(passwordEncoder())
+//                .and().inMemoryAuthentication().withUser("Damien").password("Paranoia").roles("User")
+        ;
     }
 
     private CsrfTokenRepository csrfTokenRepository() {
