@@ -8,29 +8,6 @@
 </head>
 <body>
 This is the character sheet for the plugin.
-<form action="post" id="character-form" th:object="${wrapper.character}">
-    <label for="first-name">First Name</label><br/>
-    <input type="text" name="First Name" id="first-name" th:value="*{firstName != null ? firstName : ''}"
-           th:field="*{firstName}"/><br/>
-    <label for="second-name">Last Name</label><br/>
-    <input type="text" name="Second Name" id="second-name" th:value="*{secondName != null ? secondName : ''}"
-           th:field="*{secondName}"/><br/>
-    Address<br/>
-    <label for="street">Street</label><br/>
-    <input type="text" name="Street" id="street"
-           th:value="*{address != null ? address.street : ''}"
-           th:field="*{address.street}"/><br/>
-    <label for="city">City</label><br/>
-    <input type="text" name="City" id="city"
-           th:value="*{address != null ? address.city : ''}"
-           th:field="*{address.city}"/><br/>
-    <label for="state">State</label><br/>
-    <input type="text" name="State" id="state"
-           th:value="*{address != null ? address.state : ''}"
-           th:field="*{address.state}"/><br/>
-    </div>
-    <script src="/pluginresource/character.js" type="text/javascript">
-    </script>
-</form>
+
 </body>
 </html>
