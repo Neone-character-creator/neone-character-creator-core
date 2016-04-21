@@ -69,7 +69,7 @@ public class GameRestController {
      */
     @RequestMapping(value = "/{id}  ", method = RequestMethod.PUT, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public CharacterDataWrapper save(HttpEntity<String> character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
+    public CharacterDataWrapper save(HttpEntity<String> character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable String id) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -86,6 +86,7 @@ public class GameRestController {
                 throw new CharacterPluginMismatchException(plugin.getPluginDescription(), targetPluginDescription);
             }
             CharacterDataWrapper wrapper = new CharacterDataWrapper(description, null, character.getBody());
+            wrapper.setId(id);
             return characters.save(wrapper);
         } catch (NoSuchElementException ex) {
             throw new MissingPluginException(description);
