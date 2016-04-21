@@ -13,6 +13,11 @@ public class AppAuthority implements GrantedAuthority {
     private Integer id;
     private String authority;
 
+    public AppAuthority(Integer id, String authority) {
+        this.id = id;
+        this.authority = authority;
+    }
+
     public AppAuthority() {
     }
 
@@ -21,6 +26,7 @@ public class AppAuthority implements GrantedAuthority {
         return authority;
     }
 
+    @Column(name="authority_id", nullable = false)
     @Id
     @GeneratedValue
     public Integer getId() {
