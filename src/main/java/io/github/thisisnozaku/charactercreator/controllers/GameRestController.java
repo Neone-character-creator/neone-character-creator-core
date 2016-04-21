@@ -3,6 +3,7 @@ package io.github.thisisnozaku.charactercreator.controllers;
 import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
+import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
@@ -31,18 +32,18 @@ import java.util.Optional;
 @RequestMapping("games/{author}/{game}/{version:.+?}/characters")
 public class GameRestController {
     private final UserRepository accounts;
-    private final CharacterMongoRepository characters;
+    private final CharacterMongoRepositoryCustom characters;
     private final PluginManager plugins;
 
     @Inject
-    public GameRestController(CharacterMongoRepository characters, UserRepository accounts, PluginManager pluginManager) {
+    public GameRestController(CharacterMongoRepositoryCustom characters, UserRepository accounts, PluginManager pluginManager) {
         this.accounts = accounts;
         this.characters = characters;
         this.plugins = pluginManager;
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST, produces = "application/json")
-    public CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @AuthenticationPrincipal io.github.thisisnozaku.charactercreator.authentication.User user) {
+    public CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @AuthenticationPrincipal User user) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -57,7 +58,7 @@ public class GameRestController {
             wrapper = characters.save(wrapper);
             return wrapper;
         } else {
-            throw new MissingPluginException();
+            throw new MissingPluginException(description);
         }
     }
 
@@ -68,7 +69,7 @@ public class GameRestController {
      */
     @RequestMapping(value = "/{id}  ", method = RequestMethod.PUT, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public CharacterDataWrapper save(String character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
+    public CharacterDataWrapper save(HttpEntity<String> character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -77,17 +78,17 @@ public class GameRestController {
             throw new IllegalStateException(ex);
         }
         GamePlugin plugin;
+        PluginDescription description = new PluginDescription(author, game, version);
         try {
-            PluginDescription description = new PluginDescription(author, game, version);
             plugin = plugins.getPlugin(description).get();
             PluginDescription targetPluginDescription = new PluginDescription(author, game, version);
             if (!description.equals(targetPluginDescription)) {
                 throw new CharacterPluginMismatchException(plugin.getPluginDescription(), targetPluginDescription);
             }
-            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, null, character);
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, null, character.getBody());
             return characters.save(wrapper);
         } catch (NoSuchElementException ex) {
-            throw new MissingPluginException();
+            throw new MissingPluginException(description);
         }
     }
 
@@ -98,18 +99,19 @@ public class GameRestController {
      */
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void delete(@PathVariable BigInteger id) {
+    public void delete(@PathVariable String id) {
         characters.delete(id);
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET, produces = "application/json")
-    public List<CharacterDataWrapper> getAllForUserForPlugin(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Principal principal) {
+    public List<CharacterDataWrapper> getAllForUserForPlugin(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @AuthenticationPrincipal User principal) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
-        return characters.findByUserAndPlugin(principal, pluginDescription);
+        List<CharacterDataWrapper> result = characters.findByUserAndPlugin(principal, pluginDescription);
+        return result;
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json")
-    public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") BigInteger id) {
+    public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
         return characters.findOne(id);
     }

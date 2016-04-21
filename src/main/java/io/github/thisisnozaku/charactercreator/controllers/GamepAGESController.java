@@ -57,7 +57,7 @@ public class GamePagesController {
         try {
             plugins.getPlugin(URLDecoder.decode(author, "UTF-8"), URLDecoder.decode(game, "UTF-8"), URLDecoder.decode(version, "UTF-8")).get();
         } catch (NoSuchElementException ex) {
-            throw new MissingPluginException();
+            throw new MissingPluginException(new PluginDescription(author, game, version));
         }
         model.addAttribute("author", author);
         model.addAttribute("game", game);
@@ -67,7 +67,7 @@ public class GamePagesController {
     }
 
     @RequestMapping(value = "/pages/character", method = RequestMethod.GET, produces = "text/html")
-    public String getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @RequestParam(required = false) BigInteger id, @AuthenticationPrincipal User user) {
+    public String getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @RequestParam(required = false) String id, @AuthenticationPrincipal User user) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -78,7 +78,7 @@ public class GamePagesController {
         PluginDescription description = new PluginDescription(author, game, version);
         Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
         if (!plugin.isPresent()) {
-            throw new MissingPluginException();
+            throw new MissingPluginException(description);
         }
         CharacterDataWrapper wrapper;
         if (id != null) {
@@ -98,10 +98,10 @@ public class GamePagesController {
 
     @ExceptionHandler(MissingPluginException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String missingPlugin(Model model, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
-        model.addAttribute("author", author);
-        model.addAttribute("game", game);
-        model.addAttribute("version", version);
+    public String missingPlugin(Model model, MissingPluginException ex) {
+        model.addAttribute("author", ex.getMissingPlugin().getAuthor());
+        model.addAttribute("game", ex.getMissingPlugin().getSystem());
+        model.addAttribute("version", ex.getMissingPlugin().getVersion());
         return "missing-plugin";
     }
 }

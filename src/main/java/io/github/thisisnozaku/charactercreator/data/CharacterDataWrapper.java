@@ -1,5 +1,6 @@
 package io.github.thisisnozaku.charactercreator.data;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
 import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 
@@ -9,9 +10,10 @@ import java.math.BigInteger;
  * Created by Damien on 2/4/2016.
  */
 public class CharacterDataWrapper {
-    private BigInteger id;
+    private String id;
     private PluginDescription plugin;
     private User user;
+    @JsonRawValue
     private String character;
 
     public CharacterDataWrapper() {
@@ -36,11 +38,11 @@ public class CharacterDataWrapper {
         return character;
     }
 
-    public BigInteger getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(BigInteger id) {
+    public void setId(String id) {
         this.id = id;
     }
 
