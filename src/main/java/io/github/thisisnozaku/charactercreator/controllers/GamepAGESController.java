@@ -66,12 +66,13 @@ public class GamePagesController {
         return "plugin-character-page";
     }
 
-    @RequestMapping(value = "/pages/character", method = RequestMethod.GET, produces = "text/html")
-    public String getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @RequestParam(required = false) String id, @AuthenticationPrincipal User user) {
+    @RequestMapping(value = "/pages/character/{id}", method = RequestMethod.GET, produces = "text/html")
+    public String getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @PathVariable String id, @AuthenticationPrincipal User user) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
             version = URLDecoder.decode(version, "UTF-8");
+
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
@@ -94,6 +95,11 @@ public class GamePagesController {
         model.addAttribute("saveEnabled", true);
         model.addAttribute("deleteEnabled", true);
         return "plugin-character-page";
+    }
+
+    @RequestMapping(value= {"/pages/character"}, method = RequestMethod.GET, produces = "text/html")
+    public String getNewCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @AuthenticationPrincipal User user) {
+        return  getCharacter(author, game, version, model, null, user);
     }
 
     @ExceptionHandler(MissingPluginException.class)
