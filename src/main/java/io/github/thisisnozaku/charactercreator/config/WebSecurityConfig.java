@@ -25,6 +25,8 @@ public class
 WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Inject
     UserDetailsService userDetailsService;
+    @Inject
+    private PasswordEncoder passwordEncoder;
 
     @Override
     protected void configure(HttpSecurity security) throws Exception {
@@ -41,8 +43,8 @@ WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService)
-//                .passwordEncoder(passwordEncoder())
-//                .and().inMemoryAuthentication().withUser("Damien").password("Paranoia").roles("User")
+                .passwordEncoder(passwordEncoder)
+                .and().inMemoryAuthentication().withUser("Damien").password("Paranoia").roles("User")
         ;
     }
 
