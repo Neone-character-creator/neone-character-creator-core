@@ -3,9 +3,14 @@ $().ready(function(){
     var csrfToken = $("meta[name=_csrf]").attr("content");
     var csrfHeader = $("meta[name=_csrf_header]").attr("content");
 
+    var author = $('meta[name=author]').attr("content");
+    var game = $('meta[name=game]').attr("content");
+    var version = $('meta[name=version]').attr("content");
+    var characterid = $('meta[name=characterid]').attr("content");
+
     $("#new-character").click(function(){
         var url = $("#new-character").data("url");
-        window.location = url;
+        window.location.href = url;
     });
 
     $("#save-character").click(function(){
@@ -30,8 +35,21 @@ $().ready(function(){
                 cache : false
                 }
             );
-            ajax.done(function(result){
-                 alert("Save Complete")
+            ajax.done(function(result, response, xhr){
+                 alert("Save Complete");
+                 switch(xhr.status){
+                 	case 202:
+
+                 	break;
+                 	default:
+                 	//Move to the new url if we created a new character.
+                 	if(window.location.href.substring(window.location.href.length-1) !== "/"){
+                 		window.location.href += "/" + result.id;
+                 	} else {
+                 		window.location.href += result.id;
+                 	}
+                 }
+
             }).fail(function(result){
                 alert(result.responseText);
             });
@@ -71,11 +89,10 @@ $().ready(function(){
                         row.append(nameCol);
 
                         var loadButton = $("<button>",{
-                            'class' : "btn btn-primary load-character"
-                        }).text("Open")
-                        .click(function(){
-                            window.location = redirect + id
-                        });
+                            'class' : "btn btn-primary load-character",
+                            'data-url' : url + id,
+                            'data-characterid' : id
+                        }).text("Open");
                         row.append(loadButton);
 
                         var deleteButton = $("<button>", {
@@ -100,5 +117,32 @@ $().ready(function(){
             alert("There was an error loading from the server.");
         }).always(function(){
         })
-    })
+    });
+
+    $().ready(function(){
+    	    if(characterid){
+    	    	var headers = {};
+    	    	headers[csrfHeader] = csrfToken;
+    	    	$.ajax({
+    	    		url : "/games/" + author + "/" + game + "/" + version + "/characters/" + characterid,
+    	    		type: "GET",
+    	    		headers : headers
+    	    	}).done(function(wrapperResult){
+    	    		var i = 0;
+    	    		var timer = setInterval(function(){
+    	    			if(typeof character != 'function' && i < 10){
+    	    				i++;
+    	    			} else {
+    	    				character(wrapperResult.character);
+    	    				clearInterval(timer);
+    	    			}
+    	    			if(i === 10){
+    	    				alert("Sorry, but there was an error trying to open the character.");
+    	    			}
+    	    		}, 500);
+    	    	}).error(function(result){
+    	    		alert("Sorry, but there was an error trying to open the character.");
+    	    	});
+        	};
+        })
 });
