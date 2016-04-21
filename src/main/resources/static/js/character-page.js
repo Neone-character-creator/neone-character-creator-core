@@ -26,7 +26,8 @@ $().ready(function(){
                 "type": type,
                 headers : headers,
                 data: JSON.stringify(characterObject),
-                contentType : "application/json;charset=UTF-8"
+                contentType : "application/json;charset=UTF-8",
+                cache : false
                 }
             );
             ajax.done(function(result){
@@ -59,26 +60,27 @@ $().ready(function(){
             } else {
             $.each(response, function(i, element)
             {
+            	var id =element.id;
                         var row = $("<div>", {
                         'class' : 'row'
                         });
 
                         var nameCol = $("<div>", {
                         'class' : 'col-md-8'
-                        }).text(element.character.firstName + " " + element.character.secondName);
+                        }).text(element.character.name ? element.character.name : "Unnamed Character");
                         row.append(nameCol);
 
                         var loadButton = $("<button>",{
-                            'class' : "btn btn-primary"
+                            'class' : "btn btn-primary load-character"
                         }).text("Open")
                         .click(function(){
-                            window.location = redirect + "/" + element.id
+                            window.location = redirect + id
                         });
                         row.append(loadButton);
 
                         var deleteButton = $("<button>", {
-                            'class' : "btn btn-warning",
-                            'data-url' : url + "/" + i.id
+                            'class' : "btn btn-warning delete-character",
+                            'data-url' : url + id
                          }).text("Delete")
                          .click(function(){
                             $.ajax({
