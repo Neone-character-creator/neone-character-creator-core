@@ -28,6 +28,6 @@ $().ready(function(){
             $(event.target.parentNode).empty();
         }).error(function(result){
         	alert("Sorry, something went wrong while trying to delete the character.")
-        })
+        });
     });
 })
