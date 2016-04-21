@@ -119,6 +119,24 @@ $().ready(function(){
         })
     });
 
+    $("#delete-character").click(function(event){
+    	var id = $(event.target).data("characterid");
+    	var urlBase = "/games/" + author +"/"+game+"/"+version;
+
+    	var headers = {};
+    	headers[csrfHeader] = csrfToken;
+    	$.ajax({
+    		url : urlBase + "/characters/" + id,
+    		type : 'DELETE',
+    		headers : headers
+    	}).done(function(){
+    		window.location.href = urlBase+"/pages/character/";
+    		alert("Character deleted");
+    	}).error(function(result){
+    		alert("Sorry, something went wrong while trying to delete the character.")
+    	});
+    })
+
     $().ready(function(){
     	    if(characterid){
     	    	var headers = {};

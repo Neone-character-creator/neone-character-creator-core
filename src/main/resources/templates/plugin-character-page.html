@@ -6,6 +6,10 @@
     <meta charset="UTF-8"/>
     <meta name="_csrf" th:content="${_csrf?.token}"/>
     <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+    <meta name="author" th:content="${author}"/>
+    <meta name="game" th:content="${game}"/>
+    <meta name="version" th:content="${version}"/>
+    <meta name="characterid" th:content="${wrapper.id}" th:if="${wrapper != null}"/>
 
     <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
 
@@ -72,7 +76,8 @@
                 </li>
                 <li>
                     <button class="btn btn-default" type="button" id="delete-character"
-                            th:disabled="${deleteEnabled != true}"><span
+                            th:attrappend="data-characterid=${wrapper != null}?${wrapper.id}"
+                            th:disabled="${deleteEnabled != true and wrapper != null}"><span
                             class="glyphicon glyphicon-floppy-remove"
                     />
                         Delete Character
