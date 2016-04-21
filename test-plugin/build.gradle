@@ -1,10 +1,6 @@
 group 'io.github.thisisnozaku.charactercreator'
 version 'unspecified'
 
-apply plugin: 'java'
-
-sourceCompatibility = 1.5
-
 buildscript {
     dependencies {
         classpath 'be.jlr-home.gradle:scrPlugin:0.1.+'
@@ -18,6 +14,8 @@ buildscript {
 apply plugin: "java"
 apply plugin: 'scr'
 apply plugin: 'osgi'
+
+sourceCompatibility = 1.8
 
 repositories {
     mavenLocal()
