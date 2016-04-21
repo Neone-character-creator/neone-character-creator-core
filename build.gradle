@@ -55,6 +55,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-security:1.3.1.RELEASE')
     compile('org.springframework.boot:spring-boot-starter-social-facebook:1.3.1.RELEASE')
     compile('org.springframework.boot:spring-boot-starter-web:1.3.1.RELEASE')
+    compile 'org.springframework.security:spring-security-test:4.0.4.RELEASE'
 
     compile('org.springframework.boot:spring-boot-starter-thymeleaf:1.3.0.RELEASE')
 
@@ -67,9 +68,10 @@ dependencies {
 
     compile project(':neone-plugin-api')
 
+
     compile 'org.apache.felix:org.apache.felix.framework:5.4.0'
     osgi 'org.apache.felix:org.apache.felix.scr:2.0.2'
-    osgi 'org.apache.felix:org.apache.felix.fileinstall:3.5.0'
+    osgi project(':neone-plugin-api')
     testOsgi project(':test-plugin')
 
     compile 'commons-io:commons-io:2.4'
@@ -83,8 +85,13 @@ eclipse {
     }
 }
 
-task copyRuntimeDependencies(type: Sync) {
+task copyTestRuntimeDependencies(type: Sync) {
     from(configurations.testOsgi)
+    into 'plugins'
+}
+
+task copyRuntimeDependencies(type: Sync){
+    from(configurations.osgi)
     into 'plugins'
 }
 
@@ -99,5 +106,5 @@ clean << {
     new File('felix-cache').deleteDir()
 }
 
-test.dependsOn copyRuntimeDependencies
+test.dependsOn copyTestRuntimeDependencies
 bootRun.dependsOn copyRuntimeDependencies
