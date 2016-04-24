@@ -2,7 +2,6 @@ package io.github.thisisnozaku.charactercreator.controllers;
 
 import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
-import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
@@ -10,23 +9,24 @@ import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException
 import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
+import io.github.thisisnozaku.pdfexporter.JsonFieldValueExtractor;
+import io.github.thisisnozaku.pdfexporter.PdfExporter;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
+import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URLDecoder;
-import java.security.Principal;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
- * Created by Damien on 2/8/2016.
+ * Controller for the rest api.
  */
 @RestController
 @RequestMapping("games/{author}/{game}/{version:.+?}/characters")
@@ -111,7 +111,27 @@ public class GameRestController {
         return result;
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/{id}/pdf", method = RequestMethod.GET, produces = "application/pfg")
+    public ResponseEntity<OutputStream> exportToPdf(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String characterID){
+        try {
+            PluginDescription pluginDescription = new PluginDescription(author, game, version);
+            CharacterDataWrapper characterDataWrapper = characters.findOne(characterID);
+            InputStream pdfResource = plugins.getPluginResource(pluginDescription, "character.pdf").toURL().openStream();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            PdfExporter pdfExporter = new PdfExporter();
+            pdfExporter.exportPdf(new JsonFieldValueExtractor().generateFieldMappings(characterDataWrapper.getCharacter()), pdfResource, out);
+
+            ResponseEntity<OutputStream> response = new ResponseEntity<>(out, HttpStatus.OK);
+            return response;
+        } catch (MalformedURLException urlex){
+            urlex.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        throw new IllegalStateException();
+    }
+
+    @RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json", consumes = "")
     public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
         return characters.findOne(id);
