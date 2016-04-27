@@ -1,5 +1,8 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.io.Files;
 import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
@@ -11,19 +14,21 @@ import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import io.github.thisisnozaku.pdfexporter.JsonFieldValueExtractor;
 import io.github.thisisnozaku.pdfexporter.PdfExporter;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URLDecoder;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Controller for the rest api.
@@ -34,12 +39,15 @@ public class GameRestController {
     private final UserRepository accounts;
     private final CharacterMongoRepositoryCustom characters;
     private final PluginManager plugins;
+    private final Cache<String, File> generatedPdfs;
 
     @Inject
     public GameRestController(CharacterMongoRepositoryCustom characters, UserRepository accounts, PluginManager pluginManager) {
         this.accounts = accounts;
         this.characters = characters;
         this.plugins = pluginManager;
+        generatedPdfs = CacheBuilder.newBuilder()
+                .expireAfterAccess(5, TimeUnit.MINUTES).build();
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST, produces = "application/json")
@@ -111,27 +119,62 @@ public class GameRestController {
         return result;
     }
 
-    @RequestMapping(value = "/{id}/pdf", method = RequestMethod.GET, produces = "application/pfg")
-    public ResponseEntity<OutputStream> exportToPdf(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String characterID){
+    @RequestMapping(value = "/pdf", method = RequestMethod.POST)
+    public ResponseEntity<String> exportToPdf(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, RequestEntity<String> request) {
+        UUID pdfId;
         try {
             PluginDescription pluginDescription = new PluginDescription(author, game, version);
-            CharacterDataWrapper characterDataWrapper = characters.findOne(characterID);
-            InputStream pdfResource = plugins.getPluginResource(pluginDescription, "character.pdf").toURL().openStream();
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            PdfExporter pdfExporter = new PdfExporter();
-            pdfExporter.exportPdf(new JsonFieldValueExtractor().generateFieldMappings(characterDataWrapper.getCharacter()), pdfResource, out);
-
-            ResponseEntity<OutputStream> response = new ResponseEntity<>(out, HttpStatus.OK);
-            return response;
-        } catch (MalformedURLException urlex){
-            urlex.printStackTrace();
+            Optional<GamePlugin> plugin = plugins.getPlugin(pluginDescription);
+            if (plugin.isPresent()) {
+                URI resource = plugins.getPluginResource(pluginDescription, plugin.get().getCharacterSheetPdfResourceName());
+                ResponseEntity<String> response;
+                if (resource != null) {
+                    InputStream pdfResource = resource.toURL().openStream();
+                    PdfExporter pdfExporter = new PdfExporter();
+                    pdfId = UUID.randomUUID();
+                    File tempPdfPath = Paths.get(Files.createTempDir().getCanonicalPath(), pdfId.toString()).toFile();
+                    OutputStream out = new FileOutputStream(tempPdfPath);
+                    pdfExporter.exportPdf(new JsonFieldValueExtractor().generateFieldMappings(URLDecoder.decode(request.getBody(), "UTF-8")), pdfResource, out);
+                    generatedPdfs.put(pdfId.toString(), tempPdfPath);
+                    response = new ResponseEntity<>(pdfId.toString(), HttpStatus.OK);
+                } else {
+                    response = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                return response;
+            } else {
+                throw new MissingPluginException(pluginDescription);
+            }
+        } catch (MalformedURLException ex) {
+            ex.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
         throw new IllegalStateException();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json", consumes = "")
+    @RequestMapping(value = "/pdf/{id}", method = RequestMethod.GET)
+    public ResponseEntity<byte[]> getPdf(@PathVariable("id") String id) {
+        try {
+            ResponseEntity<byte[]> responseEntity;
+            File pdf = generatedPdfs.getIfPresent(id);
+            if (pdf != null) {
+                byte[] out = Files.toByteArray(pdf);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentDispositionFormData("attachment", id + ".pdf");
+                headers.setContentType(MediaType.parseMediaType("application/pdf"));
+                responseEntity = new ResponseEntity<>(out, headers, HttpStatus.OK);
+            } else {
+                responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            return responseEntity;
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+
+    @RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json")
     public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
         return characters.findOne(id);

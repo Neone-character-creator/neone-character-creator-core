@@ -128,14 +128,36 @@ $().ready(function(){
     	$.ajax({
     		url : urlBase + "/characters/" + id,
     		type : 'DELETE',
-    		headers : headers
+    		headers : headers,
+    		contentType : "application/json;charset=UTF-8",
+    		cache : false
     	}).done(function(){
     		window.location.href = urlBase+"/pages/character/";
     		alert("Character deleted");
     	}).error(function(result){
     		alert("Sorry, something went wrong while trying to delete the character.")
     	});
-    })
+    });
+
+    $("#export-character").click(function(event){
+    	var headers = {};
+    	headers[csrfHeader] = csrfToken;
+    	if (typeof(character) === 'function'){
+    		var characterObject = exportCharacter();
+    		var url = "/games/" + author + "/" +game + "/" + version + "/characters/pdf";
+    		$.post({
+	    		url: url,
+	    		headers : headers,
+	    		data : JSON.stringify(characterObject),
+	    		contentType : "application/json"
+	    	}).success(function(result){
+	    		console.log(result);
+	    		window.location = url + "/" + result;
+	    	}).error(function(result){
+	    		console.log(result.error())
+	    	});
+	    };
+    });
 
     $().ready(function(){
     	    if(characterid){
