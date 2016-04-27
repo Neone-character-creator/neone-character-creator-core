@@ -52,7 +52,12 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-data-mongodb:1.3.1.RELEASE')
     compile('org.springframework.boot:spring-boot-starter-mail:1.3.1.RELEASE')
     compile('org.springframework.boot:spring-boot-starter-web:1.3.1.RELEASE')
+    compile('org.springframework.boot:spring-boot-starter-data-jpa:1.3.1.RELEASE')
+    compile('org.springframework.boot:spring-boot-starter-security:1.3.1.RELEASE')
     compile 'org.springframework.security:spring-security-test:4.0.4.RELEASE'
+    compile('com.google.guava:guava:19.0'
+    )
+
     compile("org.springframework.boot:spring-boot-starter-amqp")
 
     compile('org.springframework.boot:spring-boot-starter-thymeleaf:1.3.0.RELEASE')
@@ -61,6 +66,8 @@ dependencies {
     compile('org.thymeleaf:thymeleaf-spring4:2.1.2.RELEASE')
     compile 'org.thymeleaf.extras:thymeleaf-extras-springsecurity4:2.1.2.RELEASE'
     runtime 'net.sourceforge.nekohtml:nekohtml:1.9.22'
+
+    runtime('org.apache.derby:derby:10.12.1.1')
 
     compile('javax.inject:javax.inject:1')
 
@@ -72,9 +79,7 @@ dependencies {
     testOsgi project(':test-plugin')
 
     compile 'commons-io:commons-io:2.4'
-    compile('io.github.thisisnozaku.charactercreator:neone-character-creator-plugin-container-service:1.0.0')
-    compile('io.github.thisisnozaku.charactercreator:neone-character-creator-user-service:1.0.0')
-    compile('io.github.thisisnozaku.charactercreator:neone-character-creator-character-service:1.0.0')
+    compile('io.github.thisisnozaku:pdf-export:1.0.0')
 }
 
 
