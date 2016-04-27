@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateProcessingParameters;
+import org.yaml.snakeyaml.util.UriEncoder;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -148,13 +149,19 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
     @Override
     public URI getPluginResource(PluginDescription incomingPluginDescription, String resourceName) {
         bundleLock.readLock().lock();
-        URI returnVal;
+        URI returnVal = null;
         try {
-            returnVal = getBundleResourceUrl(incomingPluginDescription, resourceName).toURI();
+            URL resourceURL = getBundleResourceUrl(incomingPluginDescription, UriEncoder.encode(resourceName));
+            if(resourceURL != null) {
+                returnVal = resourceURL.toURI();
+            }
         } catch (URISyntaxException e) {
             throw new IllegalStateException(e);
+        } catch (NullPointerException ex){
+            return null;
+        } finally {
+            bundleLock.readLock().unlock();
         }
-        bundleLock.readLock().unlock();
         return returnVal;
     }
 
