@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -32,11 +33,12 @@ WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity security) throws Exception {
         security.csrf().csrfTokenRepository(csrfTokenRepository());
 
-        security.authorizeRequests().antMatchers("/", "/login", "/createuser").permitAll()
+        security.authorizeRequests().antMatchers("/", "/login", "/createuser", "/games/").permitAll()
+                .antMatchers("/js/**", "/css/**").permitAll()
                 .antMatchers("/**").authenticated()
                 .and()
                 .formLogin().loginPage("/login").failureUrl("/login?error").and()
-                .logout().permitAll().and();
+                .logout().permitAll();
     }
 
 
