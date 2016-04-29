@@ -24,17 +24,14 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Controller for the rest api.
  */
 @RestController
-@RequestMapping("games/{author}/{game}/{version:.+?}/characters")
+@RequestMapping("games/")
 public class GameRestController {
     private final UserRepository accounts;
     private final CharacterMongoRepositoryCustom characters;
@@ -50,7 +47,12 @@ public class GameRestController {
                 .expireAfterAccess(5, TimeUnit.MINUTES).build();
     }
 
-    @RequestMapping(value = "/", method = RequestMethod.POST, produces = "application/json")
+    @RequestMapping(value = "/", method = RequestMethod.GET)
+    public Collection<PluginDescription> getAvailablePlugins(){
+        return plugins.getAllPluginDescriptions();
+    }
+
+    @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.POST, produces = "application/json")
     public CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @AuthenticationPrincipal User user) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
@@ -75,7 +77,7 @@ public class GameRestController {
      *
      * @param character the character to save
      */
-    @RequestMapping(value = "/{id}  ", method = RequestMethod.PUT, produces = "application/json")
+    @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}  ", method = RequestMethod.PUT, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public CharacterDataWrapper save(HttpEntity<String> character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable String id) {
         try {
@@ -106,20 +108,20 @@ public class GameRestController {
      *
      * @param id the id of the character to remove
      */
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE, produces = "application/json")
+    @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.DELETE, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void delete(@PathVariable String id) {
         characters.delete(id);
     }
 
-    @RequestMapping(value = "/", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.GET, produces = "application/json")
     public List<CharacterDataWrapper> getAllForUserForPlugin(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @AuthenticationPrincipal User principal) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
         List<CharacterDataWrapper> result = characters.findByUserAndPlugin(principal, pluginDescription);
         return result;
     }
 
-    @RequestMapping(value = "/pdf", method = RequestMethod.POST)
+    @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/pdf", method = RequestMethod.POST)
     public ResponseEntity<String> exportToPdf(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, RequestEntity<String> request) {
         UUID pdfId;
         try {
@@ -152,7 +154,7 @@ public class GameRestController {
         throw new IllegalStateException();
     }
 
-    @RequestMapping(value = "/pdf/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/pdf/{id}", method = RequestMethod.GET)
     public ResponseEntity<byte[]> getPdf(@PathVariable("id") String id) {
         try {
             ResponseEntity<byte[]> responseEntity;
@@ -174,7 +176,7 @@ public class GameRestController {
     }
 
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.GET, produces = "application/json")
     public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
         return characters.findOne(id);
