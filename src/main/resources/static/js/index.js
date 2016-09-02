@@ -9,7 +9,7 @@ $(document).ready(function(){
 			$.each(result, function(index, element){
 				var item= $("<a>", {
 					class : "list-group-item",
-					href : "/games/" + element.author + "/" + element.system + "/" + element.version,
+					href : encodeURI("/games/" + element.author + "/" + element.system + "/" + element.version),
 					text : element.system + " " + element.version
 				});
 				availablePlugins.append(item);
