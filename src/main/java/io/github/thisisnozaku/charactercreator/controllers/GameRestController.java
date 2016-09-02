@@ -16,6 +16,9 @@ import io.github.thisisnozaku.pdfexporter.JsonFieldValueExtractor;
 import io.github.thisisnozaku.pdfexporter.PdfExporter;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.test.context.annotation.SecurityTestExecutionListeners;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -53,7 +56,7 @@ public class GameRestController {
     }
 
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.POST, produces = "application/json")
-    public CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @AuthenticationPrincipal User user) {
+    public CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -61,10 +64,11 @@ public class GameRestController {
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         PluginDescription description = new PluginDescription(author, game, version);
         Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
         if (plugin.isPresent()) {
-            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, user, requestBody.getBody());
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUserId, requestBody.getBody());
             wrapper = characters.save(wrapper);
             return wrapper;
         } else {
@@ -115,9 +119,10 @@ public class GameRestController {
     }
 
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.GET, produces = "application/json")
-    public List<CharacterDataWrapper> getAllForUserForPlugin(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @AuthenticationPrincipal User principal) {
+    public List<CharacterDataWrapper> getAllForUserForPlugin(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
-        List<CharacterDataWrapper> result = characters.findByUserAndPlugin(principal, pluginDescription);
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<CharacterDataWrapper> result = characters.findByUserAndPlugin(currentUserId, pluginDescription);
         return result;
     }
 
