@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.util.List;
 import java.util.Map;
@@ -33,13 +34,19 @@ public class PluginResourceResolver implements ResourceResolver {
     @Override
     public Resource resolveResource(HttpServletRequest request, String requestPath, List<? extends Resource> locations, ResourceResolverChain chain) {
         try {
-            String referralPath = URLDecoder.decode(request.getHeader("referer"), "UTF-8");
-            String[] pathTokens = referralPath.substring(referralPath.indexOf("games/") + "games/".length()).split("/");
+            requestPath = URLDecoder.decode(requestPath, "UTF-8");
+            String[] pathTokens = requestPath.substring(requestPath.indexOf("games/") + "games/".length()).split("/");
             String author = pathTokens[0];
             String game = pathTokens[1];
             String version = pathTokens[2];
-            PluginDescription incomingPluginDescription = new PluginDescription(author, game, version);
-            return new UrlResource(pluginManager.getPluginResource(incomingPluginDescription, requestPath));
+            PluginDescription incomingPluginDescription = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
+                    URLDecoder.decode(game, "UTF-8"),
+                    URLDecoder.decode(version, "UTF-8"));
+            if(requestPath.contains("pluginresource")){
+                requestPath = requestPath.substring(requestPath.indexOf("pluginresource/") + "pluginresource/".length());
+            }
+            URI resourceUri = pluginManager.getPluginResource(incomingPluginDescription, requestPath);
+            return resourceUri != null ? new UrlResource(resourceUri) : null;
         } catch (MalformedURLException | UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }
