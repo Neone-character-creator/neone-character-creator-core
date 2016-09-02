@@ -8,18 +8,20 @@ $().ready(function(){
     var version = $('meta[name=version]').attr("content");
     var characterid = $('meta[name=characterid]').attr("content");
 
-    $("#new-character").click(function(){
+    var contentContainer= $("#content");
+    contentContainer.ready(function(){
+    	$("#new-character").click(function(){
         var url = $("#new-character").data("url");
         window.location.href = url;
     });
 
-    $("#save-character").click(function(){
+    	$("#save-character").click(function(){
         var url = $("#save-character").data("url");
         var headers = {};
         headers[csrfHeader] = csrfToken;
         //JS API
-        if (typeof(character) === 'function'){
-            var characterObject = character();
+        if (typeof(contentContainer[0].contentWindow.character) === 'function'){
+            var characterData = contentContainer[0].contentWindow.character();
             var characterId = $("#save-character").data("characterid");
             var type = 'POST';
             if (characterId !== undefined){
@@ -30,7 +32,7 @@ $().ready(function(){
                 url: url,
                 "type": type,
                 headers : headers,
-                data: JSON.stringify(characterObject),
+                data: typeof characterData === "string" ? characterData : JSON.stringify(characterData),
                 contentType : "application/json;charset=UTF-8",
                 cache : false
                 }
@@ -59,7 +61,7 @@ $().ready(function(){
         }
     });
 
-    $("#open-character").click(function(event){
+	    $("#open-character").click(function(event){
         var source = $(this)
         var url = $("#open-character").data("url");
         var redirect = $("#open-character").data("redirecturlbase");
@@ -119,7 +121,7 @@ $().ready(function(){
         })
     });
 
-    $("#delete-character").click(function(event){
+	    $("#delete-character").click(function(event){
     	var id = $(event.target).data("characterid");
     	var urlBase = "/games/" + author +"/"+game+"/"+version;
 
@@ -139,7 +141,7 @@ $().ready(function(){
     	});
     });
 
-    $("#export-character").click(function(event){
+    	$("#export-character").click(function(event){
     	var headers = {};
     	headers[csrfHeader] = csrfToken;
     	if (typeof(character) === 'function'){
@@ -159,7 +161,7 @@ $().ready(function(){
 	    };
     });
 
-    $().ready(function(){
+    	$(contentContainer).load(function(){
     	    if(characterid){
     	    	var headers = {};
     	    	headers[csrfHeader] = csrfToken;
@@ -170,19 +172,29 @@ $().ready(function(){
     	    	}).done(function(wrapperResult){
     	    		var i = 0;
     	    		var timer = setInterval(function(){
-    	    			if(typeof character != 'function' && i < 10){
-    	    				i++;
-    	    			} else {
-    	    				character(wrapperResult.character);
-    	    				clearInterval(timer);
-    	    			}
-    	    			if(i === 10){
-    	    				alert("Sorry, but there was an error trying to open the character.");
-    	    			}
-    	    		}, 500);
+    	    			try {
+    	    				if(typeof contentContainer[0].contentWindow.character === 'function'){
+	    	    				contentContainer[0].contentWindow.character(wrapperResult.character);
+	    	    			} else if(i < 10) {
+		    	    			i++;
+		    	    		} else {
+		    	    			clearInterval(timer);
+		    	    		}
+	    	    		} catch(ex){
+
+		    	    			console.log(ex);
+		    	    			alert("Sorry, but there was an error trying to open the character.");
+		    	    			var url = $("#new-character").data("url");
+		    	    			window.location.href = url;
+		    	    			clearInterval(timer);
+		    	    	}
+	    	    	}, 1000);
     	    	}).error(function(result){
     	    		alert("Sorry, but there was an error trying to open the character.");
+    	    		var url = $("#new-character").data("url");
+    	    		window.location.href = url;
     	    	});
         	};
         })
+	});
 });

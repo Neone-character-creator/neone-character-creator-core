@@ -39,13 +39,13 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div id="modal-content" class="modal-body">
-                        Loading...
+                    Loading...
                 </div>
             </div>
         </div>
     </div>
-    <nav class="navbar navbar-default navbar-fixed-top">
-        <div class="container-fluid">
+    <nav class="navbar navbar-default">
+        <div class="container">
             <ul class="navbar-nav nav">
                 <li>
                     <button class="btn btn-default" type="button" id="new-character"
@@ -93,11 +93,13 @@
             </ul>
         </div>
     </nav>
-    <div class="container-fluid content" th:include="${contentUrl}">
+    <div id="content-container">
+        <iframe th:src="${contentUrl}" id="content">
 
+        </iframe>
     </div>
 </div>
+</body>
 <script src="/js/character-page.js" type="text/javascript"></script>
 <script src="/js/character-list.js" type="text/javascript"></script>
-</body>
 </html>
