@@ -87,7 +87,7 @@ $().ready(function(){
 
                         var nameCol = $("<div>", {
                         'class' : 'col-md-8'
-                        }).text(element.character.name ? element.character.name : "Unnamed Character");
+                        }).text(element.character.name ? element.character.name : (element.character._name ? element.character._name : "Unnamed Character"));
                         row.append(nameCol);
 
                         var loadButton = $("<button>",{
@@ -161,7 +161,7 @@ $().ready(function(){
 	    };
     });
 
-    	$(contentContainer).load(function(){
+    	$(contentContainer[0].contentWindow).ready(function(){
     	    if(characterid){
     	    	var headers = {};
     	    	headers[csrfHeader] = csrfToken;
@@ -175,13 +175,12 @@ $().ready(function(){
     	    			try {
     	    				if(typeof contentContainer[0].contentWindow.character === 'function'){
 	    	    				contentContainer[0].contentWindow.character(wrapperResult.character);
-	    	    			} else if(i < 10) {
+	    	    			} else if(i < 30) {
 		    	    			i++;
 		    	    		} else {
 		    	    			clearInterval(timer);
 		    	    		}
 	    	    		} catch(ex){
-
 		    	    			console.log(ex);
 		    	    			alert("Sorry, but there was an error trying to open the character.");
 		    	    			var url = $("#new-character").data("url");
