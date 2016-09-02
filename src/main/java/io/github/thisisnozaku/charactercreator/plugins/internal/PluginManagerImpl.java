@@ -151,7 +151,19 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
         bundleLock.readLock().lock();
         URI returnVal = null;
         try {
-            URL resourceURL = getBundleResourceUrl(incomingPluginDescription, UriEncoder.encode(resourceName));
+            String resource = resourceName;
+            switch (resourceName){
+                case "description":
+                    resource = plugins.get(incomingPluginDescription).getDescriptionViewResourceName();
+                    break;
+                case "character":
+                    resource = plugins.get(incomingPluginDescription).getCharacterViewResourceName();
+                    break;
+            }
+            if(resource.contains("pluginresource")){
+                resource = resource.substring(resource.indexOf("pluginresource") + "pluginresource/".length());
+            }
+            URL resourceURL = getBundleResourceUrl(incomingPluginDescription, UriEncoder.encode(resource));
             if(resourceURL != null) {
                 returnVal = resourceURL.toURI();
             }
