@@ -6,6 +6,7 @@ import io.github.thisisnozaku.charactercreator.plugins.PluginResourceResolver;
 import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -42,11 +43,9 @@ public class WebConfig extends WebMvcAutoConfiguration.WebMvcAutoConfigurationAd
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/pluginresource/**")
+        registry.addResourceHandler("**/pluginresource/**")
                 .resourceChain(true).addResolver(pluginResourceResolver);
 
         super.addResourceHandlers(registry);
     }
-
-
 }
