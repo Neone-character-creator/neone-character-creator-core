@@ -3,6 +3,8 @@ package io.github.thisisnozaku.charactercreator.controllers;
 import io.github.thisisnozaku.charactercreator.authentication.AppAuthority;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.authentication.User;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,11 +35,11 @@ public class SecurityController {
         authorities.add(new AppAuthority(null, "USER"));
         user.setAuthorities(authorities);
         users.save(user);
-        return "index";
+        return "registered";
     }
 
     @RequestMapping(value = "/login")
-    public String login(User user, Model model, @RequestHeader(value = "referer", required = false)String referralUrl){
+    public String login(User user, Model model){
         model.addAttribute("user", user);
         return "login";
     }
