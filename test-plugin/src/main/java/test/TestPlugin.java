@@ -40,4 +40,9 @@ public class TestPlugin implements GamePlugin {
     public String getDescriptionViewResourceName() {
         return descriptionViewName;
     }
+
+    @Override
+    public String getCharacterSheetPdfResourceName() {
+        return null;
+    }
 }
