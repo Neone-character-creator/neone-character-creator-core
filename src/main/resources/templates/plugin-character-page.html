@@ -31,7 +31,7 @@
     <title>Title</title>
 </head>
 <body>
-<div class="container-fluid">
+<div class="container-fluid" id="character-page-container">
     <div id="loading-modal" class="modal fade" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -93,11 +93,9 @@
             </ul>
         </div>
     </nav>
-    <div id="content-container">
-        <iframe th:src="${contentUrl}" id="content">
+    <iframe th:src="${contentUrl}" id="content">
 
-        </iframe>
-    </div>
+    </iframe>
 </div>
 </body>
 <script src="/js/character-page.js" type="text/javascript"></script>

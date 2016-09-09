@@ -64,11 +64,11 @@ public class GameRestController {
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
-        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String currentid = SecurityContextHolder.getContext().getAuthentication().getName();
         PluginDescription description = new PluginDescription(author, game, version);
         Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
         if (plugin.isPresent()) {
-            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUserId, requestBody.getBody());
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentid, requestBody.getBody());
             wrapper = characters.save(wrapper);
             return wrapper;
         } else {
@@ -121,8 +121,8 @@ public class GameRestController {
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.GET, produces = "application/json")
     public List<CharacterDataWrapper> getAllForUserForPlugin(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
-        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
-        List<CharacterDataWrapper> result = characters.findByUserAndPlugin(currentUserId, pluginDescription);
+        String currentid = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<CharacterDataWrapper> result = characters.findByUserAndPlugin(currentid, pluginDescription);
         return result;
     }
 

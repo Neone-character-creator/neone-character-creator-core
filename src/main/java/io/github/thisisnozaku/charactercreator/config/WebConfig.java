@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.handler.SimpleMappingExceptionResolver;
@@ -20,7 +21,8 @@ import java.util.Properties;
  * Created by Damien on 1/8/2016.
  */
 @Configuration
-public class WebConfig extends WebMvcAutoConfiguration.WebMvcAutoConfigurationAdapter {
+@EnableWebMvc
+public class WebConfig extends WebMvcAutoConfiguration.WebMvcAutoConfigurationAdapter{
     @Inject
     private PluginManager pluginManager;
     @Inject

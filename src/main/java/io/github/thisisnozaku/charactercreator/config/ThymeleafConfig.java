@@ -27,12 +27,12 @@ public class ThymeleafConfig{
         TemplateResolver resolver = new TemplateResolver();
         resolver.setPrefix("");
         resolver.setSuffix("");
-        Set<String> resolvablePatters = new HashSet<>();
-        resolvablePatters.add("*-*-*-description");
-        resolvablePatters.add("*-*-*-character");
-        resolver.setResolvablePatterns(resolvablePatters);
+        Set<String> resolvablePatterns = new HashSet<>();
+        resolvablePatterns.add("*-*-*-description");
+        resolvablePatterns.add("*-*-*-character");
+        resolver.setResolvablePatterns(resolvablePatterns);
         resolver.setTemplateMode(StandardTemplateModeHandlers.LEGACYHTML5.getTemplateModeName());
-        resolver.setOrder(engine.getTemplateResolvers().size());
+        resolver.setOrder(0);
         resolver.setCacheable(false);
         resolver.setResourceResolver(pluginResourceLoader);
 

@@ -5,6 +5,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -56,7 +57,7 @@ public class User implements UserDetails {
     @OneToMany(targetEntity = AppAuthority.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Override
     public Collection<GrantedAuthority> getAuthorities() {
-        return Collections.unmodifiableCollection(authorities);
+        return new ArrayList<GrantedAuthority>(authorities);
     }
 
     @Column(name = "password", nullable = false)

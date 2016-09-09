@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher;
 
 import javax.inject.Inject;
@@ -33,12 +34,17 @@ WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity security) throws Exception {
         security.csrf().csrfTokenRepository(csrfTokenRepository());
 
-        security.authorizeRequests().antMatchers("/", "/login", "/createuser", "/games/").permitAll()
+        security.authorizeRequests().antMatchers("/", "/login", "/createuser", "/games/", "/activate/**").permitAll()
                 .antMatchers("/js/**", "/css/**").permitAll()
                 .antMatchers("/**").authenticated()
                 .and()
-                .formLogin().loginPage("/login").failureUrl("/login?error").and()
+                .formLogin().loginPage("/login").failureUrl("/login?error").defaultSuccessUrl("/", false)
+                .and()
                 .logout().permitAll();
+
+        security.userDetailsService(userDetailsService);
+
+        security.headers().frameOptions().sameOrigin();
     }
 
 
@@ -46,8 +52,7 @@ WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService)
                 .passwordEncoder(passwordEncoder)
-                .and().inMemoryAuthentication().withUser("Damien").password("Paranoia").roles("User")
-        ;
+                .and().inMemoryAuthentication().withUser("Damien").password("Paranoia").roles("User");
     }
 
     private CsrfTokenRepository csrfTokenRepository() {

@@ -12,6 +12,7 @@ import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateProcessingParameters;
 import org.yaml.snakeyaml.util.UriEncoder;
@@ -35,21 +36,23 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Created by Damien on 11/27/2015.
  */
-@Service
+@Service("pluginManager")
 public class PluginManagerImpl implements PluginManager, PluginThymeleafResourceResolver {
     private final Map<PluginDescription, GamePlugin> plugins = new HashMap<PluginDescription, GamePlugin>();
     private final Map<PluginDescription, Bundle> pluginBundles = new HashMap<>();
     private Framework framework;
     Logger logger = LoggerFactory.getLogger(PluginManagerImpl.class);
     private final ReentrantReadWriteLock bundleLock = new ReentrantReadWriteLock();
+    @Value("${plugins.directory}")
+    private String pluginDirectory;
 
     @PostConstruct
     private void init() {
         try {
             ResourceBundle configResource = ResourceBundle.getBundle("config");
             Map<String, String> config = new HashMap<>();
-            System.setProperty("felix.fileinstall.dir", "./plugins");
-            String s = System.getProperty("felix.fileinstall.dir");
+            System.setProperty("felix.fileinstall.dir", pluginDirectory);
+            String property = System.getProperty("felix.fileinstall.dir");
             config.put(Constants.FRAMEWORK_STORAGE_CLEAN, "true");
             config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "io.github.thisisnozaku.charactercreator.plugins; version=1.0");
             for (String key : configResource.keySet()) {

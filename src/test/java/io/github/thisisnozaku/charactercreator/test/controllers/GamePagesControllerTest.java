@@ -1,7 +1,7 @@
-package io.github.thisisnozaku.charactercreator.controllers;
+package io.github.thisisnozaku.charactercreator.test.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.thisisnozaku.charactercreator.NeoneCoreApplication;
+import io.github.thisisnozaku.charactercreator.TestConfiguration;
+import io.github.thisisnozaku.charactercreator.controllers.GamePagesController;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
@@ -44,11 +44,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.Assert.*;
 
 @RunWith(MockitoJUnitRunner.class)
 @WebAppConfiguration
-@ContextConfiguration(classes = {NeoneCoreApplication.class})
+@ContextConfiguration(classes = {TestConfiguration.class})
 public class GamePagesControllerTest {
     private GamePagesController controller;
     @Mock
@@ -74,7 +73,7 @@ public class GamePagesControllerTest {
         MockitoAnnotations.initMocks(this);
         controller = new GamePagesController(characters, accounts, plugins);
 
-        mvc = MockMvcBuilders.standaloneSetup(controller).addInterceptors(new PluginPresenceInterceptor(plugins)).setCustomArgumentResolvers(new CharacterResolver(plugins)).build();
+        mvc = MockMvcBuilders.standaloneSetup(controller).setCustomArgumentResolvers(new CharacterResolver(plugins)).build();
 
         when(plugins.getPlugin(isA(String.class), isA(String.class), isA(String.class))).thenAnswer((invocation -> {
             Object[] args = invocation.getArguments();
@@ -105,7 +104,7 @@ public class GamePagesControllerTest {
         when(characters.save(isA(CharacterDataWrapper.class))).thenAnswer(invocation -> {
             CharacterDataWrapper character = invocation.getArgumentAt(0, CharacterDataWrapper.class);
             if (character.getId() == null) {
-                character.setId(BigInteger.ONE);
+                character.setId(BigInteger.ONE.toString());
             }
             return character;
         });

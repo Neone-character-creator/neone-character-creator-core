@@ -1,23 +1,25 @@
-package io.github.thisisnozaku.charactercreator.controllers;
+package io.github.thisisnozaku.charactercreator.test.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.thisisnozaku.charactercreator.NeoneCoreApplication;
+import io.github.thisisnozaku.charactercreator.TestConfiguration;
+import io.github.thisisnozaku.charactercreator.controllers.GameRestController;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
-import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
-import io.github.thisisnozaku.charactercreator.plugins.*;
+import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
+import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
+import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
@@ -45,8 +47,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebAppConfiguration
-@ContextConfiguration(classes = {NeoneCoreApplication.class})
+@ContextConfiguration(classes = {TestConfiguration.class})
 @WithMockUser
+@TestPropertySource("classpath:/application.properties")
 public class RestControllerTest {
     private GameRestController controller;
     private CharacterMongoRepositoryCustom characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
