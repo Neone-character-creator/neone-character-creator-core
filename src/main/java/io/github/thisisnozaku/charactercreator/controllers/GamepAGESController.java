@@ -47,9 +47,9 @@ public class GamePagesController {
     @RequestMapping(value = {"/", ""})
     public String redirect(HttpServletRequest request, @PathVariable("version") String version) {
         if (!request.getRequestURI().endsWith("/")) {
-            return "redirect:" + version + "/pages/info";
+            return "redirect:" + version + "/pages/character";
         }
-        return "redirect:pages/info";
+        return "redirect:pages/character";
     }
 
     @RequestMapping(value = "/pages/info", method = RequestMethod.GET, produces = "text/html")
