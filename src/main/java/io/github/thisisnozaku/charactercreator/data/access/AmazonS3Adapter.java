@@ -1,0 +1,63 @@
+package io.github.thisisnozaku.charactercreator.data.access;
+
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import org.apache.felix.scr.annotations.Service;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Paths;
+import java.util.LinkedList;
+import java.util.List;
+
+/**
+ * Created by Damien on 9/11/2016.
+ */
+@Service
+@Profile("aws")
+public class AmazonS3Adapter implements FileAccess {
+    @Value("${amazon.s3.bucket}")
+    private String bucket;
+    private AmazonS3Client s3;
+
+    public AmazonS3Adapter() {
+        AWSCredentials credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
+        ClientConfiguration config = new ClientConfiguration();
+        s3 = new AmazonS3Client(credentials, config);
+    }
+
+    @Override
+    public URL getUrl(String path) {
+        return s3.getUrl(bucket, path);
+    }
+
+    public List<URL> getUrls(String path) {
+        List<URL> urls = new LinkedList<>();
+        s3.listObjects(bucket, path).getObjectSummaries().forEach(s3ObjectSummary -> {
+            if (!Paths.get(s3ObjectSummary.getKey()).equals(Paths.get(path))) {
+                urls.add(s3.getUrl(bucket, s3ObjectSummary.getKey()));
+            }
+        });
+        return urls;
+    }
+
+    @Override
+    public InputStream getUrlContent(URL url) {
+        String bucket = url.getHost().substring(0, url.getHost().indexOf(".s3"));
+        //Strip leading slash, s3 key doesn't expect it
+        String path = url.getPath().substring(1);
+        GetObjectRequest request = new GetObjectRequest(bucket, path);
+
+        return s3.getObject(request).getObjectContent();
+    }
+
+}

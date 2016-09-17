@@ -1,5 +1,6 @@
 package io.github.thisisnozaku.charactercreator.plugins.internal;
 
+import io.github.thisisnozaku.charactercreator.data.access.FileAccess;
 import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
@@ -19,18 +20,11 @@ import org.yaml.snakeyaml.util.UriEncoder;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.*;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -45,9 +39,14 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
     private final ReentrantReadWriteLock bundleLock = new ReentrantReadWriteLock();
     @Value("${plugins.directory}")
     private String pluginDirectory;
+    @Inject
+    private FileAccess fileAccess;
+    @Value("${plugins.pollingWait}")
+    private int pollingWait;
 
     @PostConstruct
     private void init() {
+        logger.info("Starting Plugin manager");
         try {
             ResourceBundle configResource = ResourceBundle.getBundle("config");
             Map<String, String> config = new HashMap<>();
@@ -65,8 +64,10 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                 Object service = framework.getBundleContext().getService(serviceEvent.getServiceReference());
                 if (service instanceof GamePlugin) {
                     GamePlugin plugin = (GamePlugin) service;
+                    PluginDescription description = plugin.getPluginDescription();
                     switch (serviceEvent.getType()) {
                         case ServiceEvent.REGISTERED:
+                            logger.info("Game plugin %s-%s-%s registered.", description.getAuthor(), description.getVersion(), description.getVersion());
                             plugins.put(plugin.getPluginDescription(), plugin);
                             pluginBundles.put(plugin.getPluginDescription(), serviceEvent.getServiceReference().getBundle());
                             break;
@@ -88,18 +89,20 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                 public void run() {
                     try {
                         while (true) {
-                            Thread.sleep(1_000);
                             bundleLock.writeLock().lock();
-                            try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("plugins"))) {
-                                for (Path path : stream) {
-                                    if (framework.getBundleContext().getBundle(path.toAbsolutePath().toUri().toURL().getPath()) == null) {
+                            List<URL> bundleUrls = fileAccess.getUrls("plugins");
+                            try {
+                                for (URL path : bundleUrls) {
+                                    logger.info("Plugin at url %s", path.toExternalForm());
+                                    Bundle b = framework.getBundleContext().getBundle(path.toExternalForm());
+                                    if (b == null) {
+                                        logger.info("Loading it.");
                                         loadBundle(path);
                                     }
                                 }
-                            } catch (IOException e) {
-                                e.printStackTrace();
                             } finally {
                                 bundleLock.writeLock().unlock();
+                                Thread.sleep(pollingWait);
                             }
                         }
                     } catch (InterruptedException e) {
@@ -155,7 +158,7 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
         URI returnVal = null;
         try {
             String resource = resourceName;
-            switch (resourceName){
+            switch (resourceName) {
                 case "description":
                     resource = plugins.get(incomingPluginDescription).getDescriptionViewResourceName();
                     break;
@@ -163,16 +166,16 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                     resource = plugins.get(incomingPluginDescription).getCharacterViewResourceName();
                     break;
             }
-            if(resource.contains("pluginresource")){
+            if (resource.contains("pluginresource")) {
                 resource = resource.substring(resource.indexOf("pluginresource") + "pluginresource/".length());
             }
             URL resourceURL = getBundleResourceUrl(incomingPluginDescription, UriEncoder.encode(resource));
-            if(resourceURL != null) {
+            if (resourceURL != null) {
                 returnVal = resourceURL.toURI();
             }
         } catch (URISyntaxException e) {
             throw new IllegalStateException(e);
-        } catch (NullPointerException ex){
+        } catch (NullPointerException ex) {
             return null;
         } finally {
             bundleLock.readLock().unlock();
@@ -180,19 +183,17 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
         return returnVal;
     }
 
-    private Bundle loadBundle(Path path) {
+    private Bundle loadBundle(URL path) {
         try {
             bundleLock.readLock().lock();
-            Bundle bundle = framework.getBundleContext().installBundle(path.toUri().toURL().toExternalForm());
+            InputStream in = fileAccess.getUrlContent(path);
+            Bundle bundle = framework.getBundleContext().installBundle(path.toExternalForm(), in);
             bundle.start();
             bundleLock.readLock().unlock();
             return bundle;
-        } catch (MalformedURLException ex) {
-            ex.printStackTrace();
-        } catch (BundleException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        throw new IllegalStateException();
     }
 
     @Override
