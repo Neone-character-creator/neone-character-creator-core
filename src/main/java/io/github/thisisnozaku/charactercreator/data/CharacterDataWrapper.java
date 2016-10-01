@@ -17,7 +17,7 @@ public class CharacterDataWrapper {
     }
 
 
-    public CharacterDataWrapper(PluginDescription pluginDescription, String user, String character) {
+    public CharacterDataWrapper(PluginDescription pluginDescription, Object user, String character) {
         this.plugin = pluginDescription;
         this.user = user;
         this.character = character;
