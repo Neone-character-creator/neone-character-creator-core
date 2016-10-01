@@ -3,22 +3,17 @@ package io.github.thisisnozaku.charactercreator.controllers;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Files;
-import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
-import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
-import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
-import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
+import io.github.thisisnozaku.charactercreator.plugins.*;
+import io.github.thisisnozaku.pdfexporter.DefaultPdfWriter;
 import io.github.thisisnozaku.pdfexporter.JsonFieldValueExtractor;
 import io.github.thisisnozaku.pdfexporter.PdfExporter;
 import org.springframework.http.*;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.test.context.annotation.SecurityTestExecutionListeners;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -99,7 +94,7 @@ public class GameRestController {
             if (!description.equals(targetPluginDescription)) {
                 throw new CharacterPluginMismatchException(plugin.getPluginDescription(), targetPluginDescription);
             }
-            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, null, character.getBody());
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, SecurityContextHolder.getContext().getAuthentication().getName(), character.getBody());
             wrapper.setId(id);
             return characters.save(wrapper);
         } catch (NoSuchElementException ex) {
@@ -137,11 +132,14 @@ public class GameRestController {
                 ResponseEntity<String> response;
                 if (resource != null) {
                     InputStream pdfResource = resource.toURL().openStream();
-                    PdfExporter pdfExporter = new PdfExporter();
+                    PdfExporter<String> pdfExporter = new PdfExporter(new DefaultPdfWriter(), new JsonFieldValueExtractor());
                     pdfId = UUID.randomUUID();
                     File tempPdfPath = Paths.get(Files.createTempDir().getCanonicalPath(), pdfId.toString()).toFile();
                     OutputStream out = new FileOutputStream(tempPdfPath);
-                    pdfExporter.exportPdf(new JsonFieldValueExtractor().generateFieldMappings(URLDecoder.decode(request.getBody(), "UTF-8")), pdfResource, out);
+                    PluginEventListener listener = plugin.get().getPluginEventListener().isPresent() ?
+                            (PluginEventListener) plugin.get().getPluginEventListener().get() : new PluginEventListenerAdapter();
+                    String characterJson = (String)listener.prePdfExport(URLDecoder.decode(request.getBody(), "UTF-8"));
+                    pdfExporter.exportPdf(characterJson, pdfResource, out);
                     generatedPdfs.put(pdfId.toString(), tempPdfPath);
                     response = new ResponseEntity<>(pdfId.toString(), HttpStatus.OK);
                 } else {
@@ -184,7 +182,13 @@ public class GameRestController {
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.GET, produces = "application/json")
     public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
-        return characters.findOne(id);
+        Optional<PluginEventListener> listener = plugins.getPlugin(pluginDescription).get().getPluginEventListener();
+        if(!listener.isPresent()){
+            listener = Optional.of(new PluginEventListenerAdapter());
+        }
+        CharacterDataWrapper wrapper = characters.findOne(id);
+        wrapper = new CharacterDataWrapper(wrapper.getPlugin(), wrapper.getUser(), (String)listener.get().postCharacterLoad(wrapper.getCharacter()));
+        return wrapper;
     }
 
     @ExceptionHandler(MissingPluginException.class)
