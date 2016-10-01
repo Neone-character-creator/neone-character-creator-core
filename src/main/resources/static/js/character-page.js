@@ -3,103 +3,99 @@ $().ready(function(){
     var csrfToken = $("meta[name=_csrf]").attr("content");
     var csrfHeader = $("meta[name=_csrf_header]").attr("content");
 
-    var author = $('meta[name=author]').attr("content");
-    var game = $('meta[name=game]').attr("content");
-    var version = $('meta[name=version]').attr("content");
-    var characterid = $('meta[name=characterid]').attr("content");
+    var author = $("meta[name=author]").attr("content");
+    var game = $("meta[name=game]").attr("content");
+    var version = $("meta[name=version]").attr("content");
+    var characterid = $("meta[name=characterid]").attr("content");
 
     var contentContainer= $("#content");
     contentContainer.ready(function(){
     	$("#new-character").click(function(){
-        var url = $("#new-character").data("url");
-        window.location.href = url;
-    });
+        	var url = $("#new-character").data("url");
+        	window.location.href = url;
+    	});
 
     	$("#save-character").click(function(){
-        var url = $("#save-character").data("url");
-        var headers = {};
-        headers[csrfHeader] = csrfToken;
-        //JS API
-        if (typeof(contentContainer[0].contentWindow.character) === 'function'){
-            var characterData = contentContainer[0].contentWindow.character();
-            var characterId = $("#save-character").data("characterid");
-            var type = 'POST';
-            if (characterId !== undefined){
-                url = url + characterId;
-                type = 'PUT';
-            }
-            var ajax = $.ajax({
-                url: url,
-                "type": type,
-                headers : headers,
-                data: typeof characterData === "string" ? characterData : JSON.stringify(characterData),
-                contentType : "application/json;charset=UTF-8",
-                cache : false
-                }
-            );
-            ajax.done(function(result, response, xhr){
-                 alert("Save Complete");
-                 switch(xhr.status){
-                 	case 202:
-
-                 	break;
-                 	default:
-                 	//Move to the new url if we created a new character.
+        	var url = $("#save-character").data("url");
+        	var headers = {};
+        	headers[csrfHeader] = csrfToken;
+        	//JS API
+	        if (typeof(contentContainer[0].contentWindow.character) === "function"){
+	            var characterData = contentContainer[0].contentWindow.character();
+	            var characterId = $("#save-character").data("characterid");
+	            var type = "POST";
+	            if (characterId !== undefined){
+	                url = url + characterId;
+	                type = "PUT";
+	            }
+	            var ajax = $.ajax({
+	                url: url,
+	                "type": type,
+	                headers : headers,
+	                data: typeof characterData === "string" ? characterData : JSON.stringify(characterData),
+	                contentType : "application/json;charset=UTF-8",
+	                cache : false
+	                }
+	            );
+	            ajax.done(function(result, response, xhr){
+	                 alert("Save Complete");
+	                 if(!characterId){
+	                 	//Move to the new url if we created a new character.
                  	if(window.location.href.substring(window.location.href.length-1) !== "/"){
                  		window.location.href += "/" + result.id;
                  	} else {
                  		window.location.href += result.id;
                  	}
-                 }
-
-            }).fail(function(result){
-                alert(result.responseText);
+                 	}
+                 }).fail(function(result){
+                console.log(result.responseText);
+                alert("Sorry, there was an error trying to save the character.");
             });
         } else {
-            var characterForm = $('#character-form');
+            var characterForm = $("#character-form");
             characterForm.submit();
         }
     });
 
 	    $("#open-character").click(function(event){
-        var source = $(this)
-        var url = $("#open-character").data("url");
-        var redirect = $("#open-character").data("redirecturlbase");
-        var headers = {};
-        headers[csrfHeader] = csrfToken;
-        $("#modal-content").text("Loading...")
+        	var source = $(this)
+        	var url = $("#open-character").data("url");
+        	var redirect = $("#open-character").data("redirecturlbase");
+        	var headers = {};
+        	headers[csrfHeader] = csrfToken;
+        	$("#modal-content").text("Loading...")
 
-        $.get({
+        	$.get({
             url : url,
             headers : headers,
             accept : "application/json;charset=UTF-8"
         }).done(function(response){
-            $("#modal-content").empty()
-            if(response.length == 0){
-                $("#modal-content").text("No characters found.");
-            } else {
+	            $("#modal-content").empty()
+	            if(response.length == 0){
+	                $("#modal-content").text("No characters found.");
+	            } else {
             $.each(response, function(i, element)
             {
             	var id =element.id;
                         var row = $("<div>", {
-                        'class' : 'row'
+                        "class" : "row"
                         });
 
                         var nameCol = $("<div>", {
-                        'class' : 'col-md-8'
+                        "class" : "col-md-8"
                         }).text(element.character.name ? element.character.name : (element.character._name ? element.character._name : "Unnamed Character"));
                         row.append(nameCol);
 
                         var loadButton = $("<button>",{
-                            'class' : "btn btn-primary load-character",
-                            'data-url' : url + id,
-                            'data-characterid' : id
+                            "class" : "btn btn-primary load-character",
+                            "data-url" : url + id,
+                            "data-characterid" : id
                         }).text("Open");
                         row.append(loadButton);
 
                         var deleteButton = $("<button>", {
-                            'class' : "btn btn-warning delete-character",
-                            'data-url' : url + id
+                            "class" : "btn btn-warning delete-character",
+                            "data-url" : url + id
                          }).text("Delete")
                          .click(function(){
                             $.ajax({
@@ -114,12 +110,11 @@ $().ready(function(){
                         $("#modal-content").append(row)
             })
             }
-        }).fail(function(error){
-            $("#loading-modal").modal("hide");
-            alert("There was an error loading from the server.");
-        }).always(function(){
-        })
-    });
+	        }).fail(function(error){
+	            $("#loading-modal").modal("hide");
+	            alert("There was an error loading from the server.");
+	        });
+	    });
 
 	    $("#delete-character").click(function(event){
     	var id = $(event.target).data("characterid");
@@ -129,7 +124,7 @@ $().ready(function(){
     	headers[csrfHeader] = csrfToken;
     	$.ajax({
     		url : urlBase + "/characters/" + id,
-    		type : 'DELETE',
+    		type : "DELETE",
     		headers : headers,
     		contentType : "application/json;charset=UTF-8",
     		cache : false
@@ -142,24 +137,26 @@ $().ready(function(){
     });
 
     	$("#export-character").click(function(event){
-    	var headers = {};
-    	headers[csrfHeader] = csrfToken;
-    	if (typeof(character) === 'function'){
-    		var characterObject = exportCharacter();
-    		var url = "/games/" + author + "/" +game + "/" + version + "/characters/pdf";
-    		$.post({
-	    		url: url,
-	    		headers : headers,
-	    		data : JSON.stringify(characterObject),
-	    		contentType : "application/json"
-	    	}).success(function(result){
-	    		console.log(result);
-	    		window.location = url + "/" + result;
-	    	}).error(function(result){
-	    		console.log(result.error())
-	    	});
-	    };
-    });
+	    	var headers = {};
+	    	headers[csrfHeader] = csrfToken;
+	    	if (typeof(contentContainer[0].contentWindow.export) === "function"){
+	    		var url = "/games/" + author + "/" +game + "/" + version + "/characters/pdf";
+	    		$.post({
+		    		url: url,
+		    		headers : headers,
+		    		data : JSON.stringify(contentContainer[0].contentWindow.export()),
+		    		contentType : "application/json"
+		    	}).success(function(result){
+		    		console.log(result);
+		    		window.location = url + "/" + result;
+		    	}).error(function(result){
+		    		console.log(result.responseText);
+		    		alert("There was an error while trying to export the character to PDF.");
+		    	});
+		    } else {
+		    	alert("It looks like this plugin doesn't correctly implement export functionality.");
+		    };
+    	});
 
     	$(contentContainer[0].contentWindow).ready(function(){
     	    if(characterid){
@@ -173,8 +170,9 @@ $().ready(function(){
     	    		var i = 0;
     	    		var timer = setInterval(function(){
     	    			try {
-    	    				if(typeof contentContainer[0].contentWindow.character === 'function'){
-	    	    				contentContainer[0].contentWindow.character(wrapperResult.character);
+    	    				if(typeof contentContainer[0].contentWindow.character === "function"){
+	    	    				contentContainer[0].contentWindow.character(JSON.stringify(wrapperResult.character));
+	    	    				clearInterval(timer);
 	    	    			} else if(i < 30) {
 		    	    			i++;
 		    	    		} else {
@@ -184,14 +182,11 @@ $().ready(function(){
 		    	    			console.log(ex);
 		    	    			alert("Sorry, but there was an error trying to open the character.");
 		    	    			var url = $("#new-character").data("url");
-		    	    			window.location.href = url;
 		    	    			clearInterval(timer);
 		    	    	}
 	    	    	}, 1000);
     	    	}).error(function(result){
     	    		alert("Sorry, but there was an error trying to open the character.");
-    	    		var url = $("#new-character").data("url");
-    	    		window.location.href = url;
     	    	});
         	};
         })
