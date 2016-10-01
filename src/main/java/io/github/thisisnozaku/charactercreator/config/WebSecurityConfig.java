@@ -34,7 +34,7 @@ WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity security) throws Exception {
         security.csrf().csrfTokenRepository(csrfTokenRepository());
 
-        security.authorizeRequests().antMatchers("/", "/login", "/createuser", "/games/", "/activate/**").permitAll()
+        security.authorizeRequests().antMatchers("/", "/login", "/createuser", "/games/" ,"/games/**/pages/info", "/activate/**").permitAll()
                 .antMatchers("/js/**", "/css/**").permitAll()
                 .antMatchers("/**").authenticated()
                 .and()
