@@ -1,10 +1,8 @@
 package io.github.thisisnozaku.charactercreator.plugins.internal;
 
 import io.github.thisisnozaku.charactercreator.data.access.FileAccess;
-import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
-import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
-import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
-import io.github.thisisnozaku.charactercreator.plugins.PluginThymeleafResourceResolver;
+import io.github.thisisnozaku.charactercreator.plugins.*;
+import org.aspectj.lang.annotation.Aspect;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
@@ -23,7 +21,9 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -67,7 +67,7 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                     PluginDescription description = plugin.getPluginDescription();
                     switch (serviceEvent.getType()) {
                         case ServiceEvent.REGISTERED:
-                            logger.info("Game plugin %s-%s-%s registered.", description.getAuthor(), description.getVersion(), description.getVersion());
+                            logger.info("Game plugin {}-{}-{} registered.", description.getAuthor(), description.getVersion(), description.getVersion());
                             plugins.put(plugin.getPluginDescription(), plugin);
                             pluginBundles.put(plugin.getPluginDescription(), serviceEvent.getServiceReference().getBundle());
                             break;
@@ -93,10 +93,9 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                             List<URL> bundleUrls = fileAccess.getUrls("plugins");
                             try {
                                 for (URL path : bundleUrls) {
-                                    logger.info("Plugin at url %s", path.toExternalForm());
                                     Bundle b = framework.getBundleContext().getBundle(path.toExternalForm());
                                     if (b == null) {
-                                        logger.info("Loading it.");
+                                        logger.info("A new plugin found at url {}, loading it.", path.toExternalForm());
                                         loadBundle(path);
                                     }
                                 }
@@ -146,9 +145,7 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
 
     @Override
     public Optional<GamePlugin> getPlugin(PluginDescription pluginDescription) {
-        bundleLock.readLock().lock();
         Optional<GamePlugin> returnVal = Optional.ofNullable(plugins.get(pluginDescription));
-        bundleLock.readLock().unlock();
         return returnVal;
     }
 
