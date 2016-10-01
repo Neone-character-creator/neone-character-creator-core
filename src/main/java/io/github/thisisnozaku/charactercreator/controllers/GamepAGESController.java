@@ -64,24 +64,10 @@ public class GamePagesController {
         GamePlugin plugin;
         try {
             plugin = plugins.getPlugin(URLDecoder.decode(author, "UTF-8"), URLDecoder.decode(game, "UTF-8"), URLDecoder.decode(version, "UTF-8")).get();
-            model.addAttribute("author", author);
-            model.addAttribute("game", game);
-            model.addAttribute("version", version);
-            model.addAttribute("saveEnabled", true);
-            model.addAttribute("deleteEnabled", true);
-            model.addAttribute("exportEnabled", true);
-            model.addAttribute("contentUrl", request.getHeader("referer") + File.separator +
-                    Paths.get(
-                            "games",
-                            URLEncoder.encode(author, "UTF-8"),
-                            URLEncoder.encode(game, "UTF-8"),
-                            URLEncoder.encode(version, "UTF-8"),
-                            "pluginresource",
-                            "character"));
+            return String.format("%s-%s-%s-description", author, game, version);
         } catch (NoSuchElementException ex) {
             throw new MissingPluginException(new PluginDescription(author, game, version));
         }
-        return "plugin-character-page";
     }
 
     @RequestMapping(value = "/pages/character/{id}", method = RequestMethod.GET, produces = "text/html")
@@ -106,7 +92,7 @@ public class GamePagesController {
             model.addAttribute("author", author);
             model.addAttribute("game", game);
             model.addAttribute("version", version);
-            model.addAttribute("contentUrl", Paths.get(URLEncoder.encode(author, "UTF-8"), URLEncoder.encode(game, "UTF-8"), URLEncoder.encode(version,"UTF-8"), plugin.get().getCharacterViewResourceName()));
+            model.addAttribute("contentUrl", Paths.get(URLEncoder.encode(author, "UTF-8"), URLEncoder.encode(game, "UTF-8"), URLEncoder.encode(version, "UTF-8"), "pluginresource" ,plugin.get().getCharacterViewResourceName()));
             model.addAttribute("saveEnabled", true);
             model.addAttribute("deleteEnabled", true);
             model.addAttribute("exportEnabled", true);
