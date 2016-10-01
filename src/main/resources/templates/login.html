@@ -46,6 +46,9 @@
         <div class="row">
             <input type="submit" value="Create Account"/>
         </div>
+        <div class="row" th:if="${error_message != null}">
+            <span th:text="${error_message}"></span>
+        </div>
     </form>
 </div>
 </body>
