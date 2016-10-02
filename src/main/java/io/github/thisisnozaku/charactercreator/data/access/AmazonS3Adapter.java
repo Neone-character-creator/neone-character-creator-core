@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -32,15 +33,18 @@ public class AmazonS3Adapter implements FileAccess {
     }
 
     @Override
-    public URL getUrl(String path) {
-        return s3.getUrl(bucket, path);
+    public FileInformation getUrl(String path) {
+        return new FileInformation(s3.getUrl(bucket, path),
+                s3.getObjectMetadata(bucket, path).getLastModified().toInstant());
     }
 
-    public List<URL> getUrls(String path) {
-        List<URL> urls = new LinkedList<>();
+    public List<FileInformation> getUrls(String path) {
+        List<FileInformation> urls = new LinkedList<>();
         s3.listObjects(bucket, path).getObjectSummaries().forEach(s3ObjectSummary -> {
             if (!Paths.get(s3ObjectSummary.getKey()).equals(Paths.get(path))) {
-                urls.add(s3.getUrl(bucket, s3ObjectSummary.getKey()));
+                urls.add(
+                        new FileInformation(s3.getUrl(bucket, s3ObjectSummary.getKey()),
+                                s3ObjectSummary.getLastModified().toInstant()));
             }
         });
         return urls;

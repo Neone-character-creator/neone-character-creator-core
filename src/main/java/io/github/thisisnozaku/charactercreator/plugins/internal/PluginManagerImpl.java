@@ -1,6 +1,7 @@
 package io.github.thisisnozaku.charactercreator.plugins.internal;
 
 import io.github.thisisnozaku.charactercreator.data.access.FileAccess;
+import io.github.thisisnozaku.charactercreator.data.access.FileInformation;
 import io.github.thisisnozaku.charactercreator.plugins.*;
 import org.aspectj.lang.annotation.Aspect;
 import org.osgi.framework.Bundle;
@@ -90,13 +91,13 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                     try {
                         while (true) {
                             bundleLock.writeLock().lock();
-                            List<URL> bundleUrls = fileAccess.getUrls("plugins");
+                            List<FileInformation> bundleInformation = fileAccess.getUrls("plugins");
                             try {
-                                for (URL path : bundleUrls) {
-                                    Bundle b = framework.getBundleContext().getBundle(path.toExternalForm());
-                                    if (b == null) {
-                                        logger.info("A new plugin found at url {}, loading it.", path.toExternalForm());
-                                        loadBundle(path);
+                                for (FileInformation info : bundleInformation) {
+                                    Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
+                                    if (b == null || b.getLastModified() < info.getLastModifiedTimestamp().toEpochMilli()) {
+                                        logger.info("A new plugin found at url {}, loading it.", info.getFileUrl().toExternalForm());
+                                        loadBundle(info.getFileUrl());
                                     }
                                 }
                             } finally {

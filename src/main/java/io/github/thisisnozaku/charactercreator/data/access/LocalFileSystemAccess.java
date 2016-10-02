@@ -3,6 +3,7 @@ package io.github.thisisnozaku.charactercreator.data.access;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -11,6 +12,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,9 +23,10 @@ import java.util.List;
 @Service
 public class LocalFileSystemAccess implements FileAccess {
     @Override
-    public URL getUrl(String path) {
+    public FileInformation getUrl(String path) {
         try {
-            return Paths.get(path).toUri().toURL();
+            File file = new File(path);
+            return new FileInformation(file.toURI().toURL(), Instant.ofEpochMilli(file.lastModified()));
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return null;
@@ -31,14 +34,14 @@ public class LocalFileSystemAccess implements FileAccess {
     }
 
     @Override
-    public List<URL> getUrls(String path) {
-        List<URL> urls = new LinkedList<>();
+    public List<FileInformation> getUrls(String path) {
+        List<FileInformation> urls = new LinkedList<>();
         Path p = Paths.get(path);
         try {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
                 stream.forEach(filePath -> {
                     try {
-                        urls.add(filePath.toUri().toURL());
+                        urls.add(new FileInformation(filePath.toUri().toURL(), Instant.ofEpochMilli(filePath.toFile().lastModified())));
                     } catch (MalformedURLException ex){
                         ex.printStackTrace();
                     }

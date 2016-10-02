@@ -13,14 +13,14 @@ public interface FileAccess {
      * @param path
      * @return
      */
-    URL getUrl(String path);
+    FileInformation getUrl(String path);
 
     /**
      * Get all child URLs at the given path if it is a directory. Returns null if path resolves to a file
      * @param path
      * @return
      */
-    List<URL> getUrls(String path);
+    List<FileInformation> getUrls(String path);
 
     /**
      * Get an input stream for the resource at the given URL. The method is primarily for implementations that
