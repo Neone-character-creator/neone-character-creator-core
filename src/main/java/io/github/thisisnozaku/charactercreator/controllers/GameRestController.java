@@ -13,6 +13,7 @@ import io.github.thisisnozaku.pdfexporter.DefaultPdfWriter;
 import io.github.thisisnozaku.pdfexporter.JsonFieldValueExtractor;
 import io.github.thisisnozaku.pdfexporter.PdfExporter;
 import org.springframework.http.*;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,6 +51,7 @@ public class GameRestController {
         return plugins.getAllPluginDescriptions();
     }
 
+    @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.POST, produces = "application/json")
     public CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
@@ -76,6 +78,7 @@ public class GameRestController {
      *
      * @param character the character to save
      */
+    @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}  ", method = RequestMethod.PUT, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public CharacterDataWrapper save(HttpEntity<String> character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable String id) {
@@ -105,14 +108,16 @@ public class GameRestController {
     /**
      * Removes the given characters, if it exists and the user it authorized to access it.
      *
-     * @param id the id of the character to remove
+     *@param id the id of the character to remove
      */
+    @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.DELETE, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void delete(@PathVariable String id) {
         characters.delete(id);
     }
 
+    @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.GET, produces = "application/json")
     public List<CharacterDataWrapper> getAllForUserForPlugin(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
@@ -178,7 +183,7 @@ public class GameRestController {
         return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-
+    @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.GET, produces = "application/json")
     public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
