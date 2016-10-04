@@ -41,11 +41,11 @@ $().ready(function(){
 	                 alert("Save Complete");
 	                 if(!characterId){
 	                 	//Move to the new url if we created a new character.
-                 	if(window.location.href.substring(window.location.href.length-1) !== "/"){
-                 		window.location.href += "/" + result.id;
-                 	} else {
-                 		window.location.href += result.id;
-                 	}
+                 		if(window.location.href.substring(window.location.href.length-1) !== "/"){
+	                 		window.location.href += "/" + result.id;
+	                 	} else {
+	                 		window.location.href += result.id;
+	                 	}
                  	}
                  }).fail(function(result){
                 console.log(result.responseText);
