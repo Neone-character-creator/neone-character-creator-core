@@ -12,6 +12,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,8 +42,8 @@ public class LocalFileSystemAccess implements FileAccess {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
                 stream.forEach(filePath -> {
                     try {
-                        urls.add(new FileInformation(filePath.toUri().toURL(), Instant.ofEpochMilli(filePath.toFile().lastModified())));
-                    } catch (MalformedURLException ex){
+                        urls.add(new FileInformation(filePath.toUri().toURL(), Instant.ofEpochMilli(Files.readAttributes(filePath, BasicFileAttributes.class).creationTime().toMillis())));
+                    } catch (IOException ex){
                         ex.printStackTrace();
                     }
                 });
