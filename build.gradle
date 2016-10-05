@@ -99,6 +99,8 @@ dependencies {
     compile 'com.amazonaws:aws-java-sdk-s3'
     compile 'com.amazonaws:aws-java-sdk-ses'
 
+    compile 'org.springframework.security.oauth:spring-security-oauth2:2.0.11.RELEASE'
+
 }
 
 
@@ -132,3 +134,10 @@ clean << {
 
 test.dependsOn copyTestRuntimeDependencies
 bootRun.dependsOn copyRuntimeDependencies
+
+bootRun {
+    if (project.hasProperty('jvmArgs')){
+        jvmArgs project.jvmArgs.split("\\s+")
+        println project.jvmArgs
+    }
+}
