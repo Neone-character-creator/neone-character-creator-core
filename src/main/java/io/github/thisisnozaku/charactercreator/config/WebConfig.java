@@ -1,5 +1,7 @@
 package io.github.thisisnozaku.charactercreator.config;
 
+import io.github.thisisnozaku.charactercreator.mail.EmailSender;
+import io.github.thisisnozaku.charactercreator.mail.AppMailSender;
 import io.github.thisisnozaku.charactercreator.plugins.CharacterResolver;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import io.github.thisisnozaku.charactercreator.plugins.PluginResourceResolver;
@@ -21,7 +23,6 @@ import java.util.Properties;
  */
 @Configuration
 @EnableWebMvc
-@PropertySource("classpath:application.properties")
 public class WebConfig extends WebMvcAutoConfiguration.WebMvcAutoConfigurationAdapter{
     @Inject
     private PluginManager pluginManager;
