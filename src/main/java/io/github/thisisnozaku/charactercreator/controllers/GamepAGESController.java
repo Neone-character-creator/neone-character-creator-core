@@ -8,6 +8,7 @@ import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -69,6 +70,9 @@ public class GamePagesController {
                 throw new MissingPluginException(description);
             }
             Object currentUser = SecurityContextHolder.getContext().getAuthentication();
+            if(AnonymousAuthenticationToken.class.isAssignableFrom(currentUser.getClass())){
+                currentUser = null;
+            }
             CharacterDataWrapper wrapper;
             if (redirectAttributes.containsAttribute("character-wrapper")) {
                 wrapper = (CharacterDataWrapper) redirectAttributes.getFlashAttributes().get("character-wrapper");
@@ -79,8 +83,9 @@ public class GamePagesController {
             model.addAttribute("author", author);
             model.addAttribute("game", game);
             model.addAttribute("version", version);
-            model.addAttribute("saveEnabled", true);
-            model.addAttribute("deleteEnabled", true);
+            model.addAttribute("saveEnabled", currentUser != null && wrapper.getCharacter() != null);
+            model.addAttribute("deleteEnabled", currentUser != null && wrapper.getCharacter() != null);
+            model.addAttribute("loadEnabled", currentUser != null);
             model.addAttribute("exportEnabled", true);
             model.addAttribute("contentUrl", String.format("%s:%s/pluginresource/%s/%s/%s", request.getLocalName(), request.getLocalPort(), author, game, version));
         } catch (UnsupportedEncodingException ex) {
