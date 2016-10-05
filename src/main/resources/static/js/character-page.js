@@ -8,7 +8,8 @@ $().ready(function(){
     var version = $("meta[name=version]").attr("content");
     var characterid = $("meta[name=characterid]").attr("content");
 
-    var contentContainer= $("#content");
+	var contentContainer= $("#content");
+	contentContainer.attr('src', "/pluginresource/" + author + "/" + game + "/" + version + "/");
     contentContainer.ready(function(){
     	$("#new-character").click(function(){
         	var url = $("#new-character").data("url");
