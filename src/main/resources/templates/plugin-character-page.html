@@ -32,6 +32,16 @@
 </head>
 <body>
 <div class="container-fluid" id="character-page-container">
+    <div id="login-modal" class="modal fade" role="dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+
+            </div>
+            <div class="modal-body">
+
+            </div>
+        </div>
+    </div>
     <div id="loading-modal" class="modal fade" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -66,6 +76,7 @@
                 </li>
                 <li>
                     <button class="btn btn-default" type="button" id="open-character"
+                            th:disabled="${loadEnabled != true}"
                             th:attr="data-url=${'/games/' + author + '/' + game + '/' + version + '/characters/'},
                             data-toggle='modal',
                             data-target='#loading-modal',
@@ -93,7 +104,7 @@
             </ul>
         </div>
     </nav>
-    <iframe th:src="${contentUrl}" id="content">
+    <iframe src="about:blank" id="content">
 
     </iframe>
 </div>
