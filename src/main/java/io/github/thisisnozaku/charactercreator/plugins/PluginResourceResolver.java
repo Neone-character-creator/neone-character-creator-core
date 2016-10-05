@@ -35,15 +35,15 @@ public class PluginResourceResolver implements ResourceResolver {
     public Resource resolveResource(HttpServletRequest request, String requestPath, List<? extends Resource> locations, ResourceResolverChain chain) {
         try {
             requestPath = URLDecoder.decode(requestPath, "UTF-8");
-            String[] pathTokens = requestPath.substring(requestPath.indexOf("games/") + "games/".length()).split("/");
+            String[] pathTokens = requestPath.substring(requestPath.lastIndexOf("games/") + "games/".length()).split("/");
             String author = pathTokens[0];
             String game = pathTokens[1];
             String version = pathTokens[2];
             PluginDescription incomingPluginDescription = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
                     URLDecoder.decode(game, "UTF-8"),
                     URLDecoder.decode(version, "UTF-8"));
-            if(requestPath.contains("pluginresource")){
-                requestPath = requestPath.substring(requestPath.indexOf("pluginresource/") + "pluginresource/".length());
+            if (requestPath.contains("pluginresource")) {
+                requestPath = requestPath.substring(requestPath.lastIndexOf("pluginresource/") + "pluginresource/".length());
             }
             URI resourceUri = pluginManager.getPluginResource(incomingPluginDescription, requestPath);
             return resourceUri != null ? new UrlResource(resourceUri) : null;
