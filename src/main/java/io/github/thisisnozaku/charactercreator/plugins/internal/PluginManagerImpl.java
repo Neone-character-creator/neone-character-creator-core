@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -95,7 +96,7 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                             try {
                                 for (FileInformation info : bundleInformation) {
                                     Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
-                                    if (b == null || b.getLastModified() < info.getLastModifiedTimestamp().toEpochMilli()) {
+                                    if (b == null || info.getLastModifiedTimestamp().isAfter(Instant.ofEpochMilli(b.getLastModified()))) {
                                         logger.info("A new plugin found at url {}, loading it.", info.getFileUrl().toExternalForm());
                                         loadBundle(info.getFileUrl());
                                     }
@@ -146,7 +147,9 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
 
     @Override
     public Optional<GamePlugin> getPlugin(PluginDescription pluginDescription) {
+        bundleLock.readLock().lock();
         Optional<GamePlugin> returnVal = Optional.ofNullable(plugins.get(pluginDescription));
+        bundleLock.readLock().unlock();
         return returnVal;
     }
 
@@ -183,11 +186,15 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
 
     private Bundle loadBundle(URL path) {
         try {
-            bundleLock.readLock().lock();
+            bundleLock.writeLock().lock();
             InputStream in = fileAccess.getUrlContent(path);
-            Bundle bundle = framework.getBundleContext().installBundle(path.toExternalForm(), in);
+            Bundle bundle = framework.getBundleContext().getBundle(path.toExternalForm());
+            if(bundle != null){
+                bundle.uninstall();
+            }
+            bundle = framework.getBundleContext().installBundle(path.toExternalForm());
             bundle.start();
-            bundleLock.readLock().unlock();
+            bundleLock.writeLock().unlock();
             return bundle;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -222,7 +229,7 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
             }
             return resourceUrl.openStream();
         } catch (IOException ex) {
-            logger.error(String.format("Tried to get an input stream from plugin %s for resource %s but an exception occured: %s", pluginDescription.toString(), resourceName, ex.getMessage()));
+            logger.error(String.format("Tried to get an input stream from plugin %s for resource %s but an exception occurred: %s", pluginDescription.toString(), resourceName, ex.getMessage()));
         } finally {
             bundleLock.readLock().unlock();
         }
@@ -230,8 +237,10 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
     }
 
     private URL getBundleResourceUrl(PluginDescription pluginDescription, String name) {
+        bundleLock.readLock().lock();
         Bundle bundle = pluginBundles.get(pluginDescription);
         URL resourceUrl = bundle.getResource(name);
+        bundleLock.readLock().unlock();
         return resourceUrl;
     }
 }
