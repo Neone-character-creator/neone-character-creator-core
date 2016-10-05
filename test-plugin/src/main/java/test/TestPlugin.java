@@ -3,8 +3,11 @@ package test;
 import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
+import io.github.thisisnozaku.charactercreator.plugins.PluginEventListener;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
+
+import java.util.Optional;
 
 /**
  * Created by Damien on 1/4/2016.
@@ -43,6 +46,11 @@ public class TestPlugin implements GamePlugin {
 
     @Override
     public String getCharacterSheetPdfResourceName() {
+        return null;
+    }
+
+    @Override
+    public Optional<PluginEventListener> getPluginEventListener() {
         return null;
     }
 }

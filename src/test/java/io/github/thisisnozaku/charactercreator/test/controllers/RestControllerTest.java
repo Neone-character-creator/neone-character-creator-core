@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebAppConfiguration
 @ContextConfiguration(classes = {TestConfiguration.class})
 @WithMockUser
-@TestPropertySource("classpath:/application.properties")
+@TestPropertySource("classpath:/application-dev.properties")
 public class RestControllerTest {
     private GameRestController controller;
     private CharacterMongoRepositoryCustom characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
