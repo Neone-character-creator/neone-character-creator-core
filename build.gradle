@@ -111,12 +111,12 @@ eclipse {
     }
 }
 
-task copyTestRuntimeDependencies(type: Sync) {
+task copyTestRuntimeDependencies(type: Copy) {
     from(configurations.testOsgi)
     into 'plugins'
 }
 
-task copyRuntimeDependencies(type: Sync) {
+task copyRuntimeDependencies(type: Copy) {
     from(configurations.osgi)
     into 'plugins'
 }
