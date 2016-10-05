@@ -18,10 +18,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Resolves resources that are found in plugins.
@@ -35,17 +37,19 @@ public class PluginResourceResolver implements ResourceResolver {
     public Resource resolveResource(HttpServletRequest request, String requestPath, List<? extends Resource> locations, ResourceResolverChain chain) {
         try {
             requestPath = URLDecoder.decode(requestPath, "UTF-8");
-            String[] pathTokens = requestPath.substring(requestPath.lastIndexOf("games/") + "games/".length()).split("/");
+            String[] pathTokens = requestPath.substring(requestPath.lastIndexOf("pluginresource/") + "pluginresource/".length()).split("/");
             String author = pathTokens[0];
             String game = pathTokens[1];
             String version = pathTokens[2];
+            String resourcePath = Arrays.asList(pathTokens).subList(3, pathTokens.length).stream().collect(Collectors.joining("/"));
             PluginDescription incomingPluginDescription = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
                     URLDecoder.decode(game, "UTF-8"),
                     URLDecoder.decode(version, "UTF-8"));
-            if (requestPath.contains("pluginresource")) {
-                requestPath = requestPath.substring(requestPath.lastIndexOf("pluginresource/") + "pluginresource/".length());
+            //If there is no resource is named, we get the character sheet
+            if(resourcePath.equals("")){
+                resourcePath = "character";
             }
-            URI resourceUri = pluginManager.getPluginResource(incomingPluginDescription, requestPath);
+            URI resourceUri = pluginManager.getPluginResource(incomingPluginDescription, resourcePath);
             return resourceUri != null ? new UrlResource(resourceUri) : null;
         } catch (MalformedURLException | UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
