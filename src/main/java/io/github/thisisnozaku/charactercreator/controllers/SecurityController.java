@@ -6,6 +6,8 @@ import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterActivationTokenRepository;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.mail.AppMailSender;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -26,6 +28,7 @@ import javax.mail.internet.MimeMessage;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Collection;
@@ -37,6 +40,7 @@ import java.util.Properties;
  */
 @Controller
 public class SecurityController {
+    private Logger logger = LoggerFactory.getLogger(SecurityController.class);
     @Inject
     private UserRepository users;
     @Inject
@@ -65,7 +69,7 @@ public class SecurityController {
                 authorities.add(new AppAuthority(null, "USER"));
                 user.setAuthorities(authorities);
                 Md5PasswordEncoder encoder = new Md5PasswordEncoder();
-                String authenticationToken = encoder.encodePassword(user.getUsername(), null);
+                String authenticationToken = encoder.encodePassword(user.getUsername(), System.currentTimeMillis());
 
                 Session session = Session.getDefaultInstance(new Properties());
                 MimeMessage message = new MimeMessage(session);
@@ -82,6 +86,7 @@ public class SecurityController {
 
                 user = users.save(user);
                 ActivationToken token = new ActivationToken(user.getId(), authenticationToken);
+                logger.debug("Activation token {} saved", token.getToken());
                 activationTokenRepository.save(token);
                 return "registered";
             } catch (MailException | MessagingException | UnsupportedEncodingException e) {
@@ -92,18 +97,23 @@ public class SecurityController {
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
-    public String login(User user, Model model) {
+    public String login(User user, Model model, HttpServletRequest request, HttpSession session) {
         model.addAttribute("user", user);
         return "login";
     }
 
     @RequestMapping(value = "/activate/{token}")
-    public String activate(@PathVariable String token) {
+    public String activate(@PathVariable String token, Model model) {
         ActivationToken activationToken = activationTokenRepository.findOne(token);
+        logger.info("Attempting to activate for token {}", token);
         if (activationToken != null) {
             User user = users.findOne(activationToken.getid());
             user.setEnabled(true);
             users.saveAndFlush(user);
+            activationTokenRepository.delete(activationToken);
+        } else {
+            model.addAttribute("error", "That token is invalid.");
+            return "invalid-activation";
         }
         return "redirect:/";
     }
