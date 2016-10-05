@@ -1,6 +1,5 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
-import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
@@ -9,19 +8,16 @@ import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.file.Paths;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -44,14 +40,6 @@ public class GamePagesController {
         this.plugins = plugins;
     }
 
-    @RequestMapping(value = {"/", ""})
-    public String redirect(HttpServletRequest request, @PathVariable("version") String version) {
-        if (!request.getRequestURI().endsWith("/")) {
-            return "redirect:" + version + "/pages/character";
-        }
-        return "redirect:pages/character";
-    }
-
     @RequestMapping(value = "/pages/info", method = RequestMethod.GET, produces = "text/html")
     public String description(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, HttpServletRequest request) throws UnsupportedEncodingException {
         try {
@@ -70,10 +58,9 @@ public class GamePagesController {
         }
     }
 
-    @RequestMapping(value = "/pages/character/{id}", method = RequestMethod.GET, produces = "text/html")
-    public String getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @PathVariable String id, @AuthenticationPrincipal User user) {
+    @RequestMapping(value = "", method = RequestMethod.GET, produces = "text/html")
+    public String getCharacterSheet(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         try {
-
             PluginDescription description = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
                     URLDecoder.decode(game, "UTF-8"),
                     URLDecoder.decode(version, "UTF-8"));
@@ -81,30 +68,49 @@ public class GamePagesController {
             if (!plugin.isPresent()) {
                 throw new MissingPluginException(description);
             }
-            String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+            Object currentUser = SecurityContextHolder.getContext().getAuthentication();
             CharacterDataWrapper wrapper;
-            if (id != null) {
-                wrapper = characters.findOne(id);
+            if (redirectAttributes.containsAttribute("character-wrapper")) {
+                wrapper = (CharacterDataWrapper) redirectAttributes.getFlashAttributes().get("character-wrapper");
             } else {
-                wrapper = new CharacterDataWrapper(description, currentUserId, null);
+                wrapper = new CharacterDataWrapper(description, currentUser, null);
             }
             model.addAttribute("wrapper", wrapper);
             model.addAttribute("author", author);
             model.addAttribute("game", game);
             model.addAttribute("version", version);
-            model.addAttribute("contentUrl", Paths.get(URLEncoder.encode(author, "UTF-8"), URLEncoder.encode(game, "UTF-8"), URLEncoder.encode(version, "UTF-8"), "pluginresource" ,plugin.get().getCharacterViewResourceName()));
             model.addAttribute("saveEnabled", true);
             model.addAttribute("deleteEnabled", true);
             model.addAttribute("exportEnabled", true);
+            model.addAttribute("contentUrl", String.format("%s:%s/pluginresource/%s/%s/%s", request.getLocalName(), request.getLocalPort(), author, game, version));
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
         return "plugin-character-page";
     }
 
-    @RequestMapping(value = {"/pages/character"}, method = RequestMethod.GET, produces = "text/html")
-    public String getNewCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @AuthenticationPrincipal User user) {
-        return getCharacter(author, game, version, model, null, user);
+    @RequestMapping(value = "/character/{id}", method = RequestMethod.GET, produces = "text/html")
+    public String getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, @PathVariable String id, RedirectAttributes redirectAttributes) {
+        try {
+            PluginDescription description = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
+                    URLDecoder.decode(game, "UTF-8"),
+                    URLDecoder.decode(version, "UTF-8"));
+            Optional<GamePlugin> plugin = plugins.getPlugin(description);
+            if (!plugin.isPresent()) {
+                throw new MissingPluginException(description);
+            }
+            Object currentUser = SecurityContextHolder.getContext().getAuthentication();
+            CharacterDataWrapper wrapper;
+            if (id != null) {
+                wrapper = characters.findOne(id);
+            } else {
+                wrapper = new CharacterDataWrapper(description, currentUser, null);
+            }
+            redirectAttributes.addAttribute("character-wrapper", wrapper);
+        } catch (UnsupportedEncodingException ex) {
+            throw new IllegalStateException(ex);
+        }
+        return "redirect:";
     }
 
     @ExceptionHandler(MissingPluginException.class)
