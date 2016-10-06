@@ -2,7 +2,7 @@ package io.github.thisisnozaku.charactercreator.test.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.thisisnozaku.charactercreator.TestConfiguration;
-import io.github.thisisnozaku.charactercreator.controllers.GameRestController;
+import io.github.thisisnozaku.charactercreator.controllers.games.GameRestController;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;

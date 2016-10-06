@@ -1,4 +1,4 @@
-package io.github.thisisnozaku.charactercreator.controllers;
+package io.github.thisisnozaku.charactercreator.controllers.games;
 
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;

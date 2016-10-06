@@ -1,7 +1,7 @@
 package io.github.thisisnozaku.charactercreator.test.controllers;
 
 import io.github.thisisnozaku.charactercreator.TestConfiguration;
-import io.github.thisisnozaku.charactercreator.controllers.GamePagesController;
+import io.github.thisisnozaku.charactercreator.controllers.games.GamePagesController;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;

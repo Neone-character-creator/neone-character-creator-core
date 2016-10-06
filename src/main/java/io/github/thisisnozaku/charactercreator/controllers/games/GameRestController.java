@@ -1,4 +1,4 @@
-package io.github.thisisnozaku.charactercreator.controllers;
+package io.github.thisisnozaku.charactercreator.controllers.games;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
