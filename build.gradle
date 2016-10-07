@@ -101,6 +101,7 @@ dependencies {
 
     compile 'org.springframework.security.oauth:spring-security-oauth2:2.0.11.RELEASE'
 
+    compile 'com.google.apis:google-api-services-plus:v1-rev454-1.22.0'
 }
 
 

@@ -10,7 +10,7 @@ $().ready(function(){
 
     $(document).on("click", ".load-character", function(event){
         var url = $(event.target).data("url");
-        window.location.href = "/games/" + author + "/" + game + "/" + version + "/pages/character/" + $(event.target).data('characterid');
+        window.location.href = "/games/" + author + "/" + game + "/" + version + "/character/" + $(event.target).data('characterid');
     })
 
     $(document).on("click", ".delete-character", function(event){

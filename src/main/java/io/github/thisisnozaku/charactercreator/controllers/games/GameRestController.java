@@ -14,6 +14,7 @@ import io.github.thisisnozaku.pdfexporter.JsonFieldValueExtractor;
 import io.github.thisisnozaku.pdfexporter.PdfExporter;
 import org.springframework.http.*;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,7 +54,7 @@ public class GameRestController {
 
     @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.POST, produces = "application/json")
-    public CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
+    public @ResponseBody CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @AuthenticationPrincipal String currentUser) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -61,11 +62,10 @@ public class GameRestController {
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
-        String currentid = SecurityContextHolder.getContext().getAuthentication().getName();
         PluginDescription description = new PluginDescription(author, game, version);
         Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
         if (plugin.isPresent()) {
-            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentid, requestBody.getBody());
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUser, requestBody.getBody());
             wrapper = characters.save(wrapper);
             return wrapper;
         } else {
