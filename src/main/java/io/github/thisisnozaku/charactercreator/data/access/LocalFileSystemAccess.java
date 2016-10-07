@@ -49,8 +49,7 @@ public class LocalFileSystemAccess implements FileAccess {
                 });
             }
         } catch (IOException ex){
-            ex.printStackTrace();
-            return null;
+            throw new RuntimeException(ex);
         }
         return urls;
     }

@@ -1,3 +1,7 @@
+var auth2;
+var user;
+var authUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+
 $().ready(function(){
     "use strict";
     var csrfToken = $("meta[name=_csrf]").attr("content");
@@ -10,6 +14,68 @@ $().ready(function(){
 
 	var contentContainer= $("#content");
 	contentContainer.attr('src', "/pluginresource/" + author + "/" + game + "/" + version + "/");
+
+	$(document).on("click", ".google-login", function(){
+	    auth2.signIn().then(function(result){
+            $("#login-modal").modal("hide");
+        });
+	});
+	$(document).on("click", ".google-logout", function(){
+	    auth2.signOut();
+    });
+
+	$("#gap").ready(function(){
+		gapi.load("auth2", function(){
+			gapi.auth2.init({
+				client_id : $("#meta[name=google_client_id]").attr("content"),
+				scope : 'email',
+				redirect_uri :  "/login/google"
+			});
+			auth2 = gapi.auth2.getAuthInstance();
+			auth2.isSignedIn.listen(function(googleUser){
+				user = auth2.currentUser.get();
+				if(googleUser){
+					$("#save-character").prop("disabled", false);
+					$("#open-character").prop("disabled", false);
+					$("#delete-character").prop("disabled", false);
+					$("#signin-warning").hide();
+					$("#login").text("Log Out").addClass("google-logout").removeClass("login-menu");
+					var headers = {};
+					headers[csrfHeader] = csrfToken;
+					$.ajax("/login/google", {
+						type : "POST",
+                    	data : user.Zi.access_token,
+                    	contentType : 'application/json; charset=UTF-8',
+                    	headers : headers
+                    }).done(function(response){
+                    	$("#login-modal").modal("hide");
+                    }).fail(function(response){
+                    	alert("Something went wrong syncing authentication with the server.");
+                    });
+				} else {
+					$("#save-character").prop("disabled", true);
+					$("#open-character").prop("disabled", true);
+		   	    	$("#delete-character").prop("disabled", true);
+		   	    	$("#signin-warning").show();
+		   	    	$("#login").text("Log In").removeClass("google-logout").addClass("login-menu");
+		   	    	$.ajax("/logout/google", {
+		   	    	    type : "POST",
+		   	    	    contentType : 'application/json; charset=UTF-8',
+		   	    	    headers : headers
+                    });
+		       	}
+			});
+		});
+	});
+
+	$(document).on("click", ".login-menu", function(){
+		$("#login-modal").modal("show");
+	});
+
+	function onSignIn(){
+		alert("Logged in");
+	}
+
     contentContainer.ready(function(){
     	$("#new-character").click(function(){
         	var url = $("#new-character").data("url");
@@ -36,6 +102,7 @@ $().ready(function(){
 	                data: typeof characterData === "string" ? characterData : JSON.stringify(characterData),
 	                contentType : "application/json;charset=UTF-8",
 	                cache : false
+
 	                }
 	            );
 	            ajax.done(function(result, response, xhr){
@@ -43,15 +110,15 @@ $().ready(function(){
 	                 if(!characterId){
 	                 	//Move to the new url if we created a new character.
                  		if(window.location.href.substring(window.location.href.length-1) !== "/"){
-	                 		window.location.href += "/" + result.id;
+	                 		window.location.href += "/character/" + result.id;
 	                 	} else {
-	                 		window.location.href += result.id;
+	                 		window.location.href += "character/" + result.id;
 	                 	}
                  	}
-                 }).fail(function(result){
-                console.log(result.responseText);
-                alert("Sorry, there was an error trying to save the character.");
-            });
+                }).fail(function(result){
+                    console.log(result.responseText);
+                    alert("Sorry, there was an error trying to save the character.");
+                });
         } else {
             var characterForm = $("#character-form");
             characterForm.submit();
@@ -130,9 +197,9 @@ $().ready(function(){
     		contentType : "application/json;charset=UTF-8",
     		cache : false
     	}).done(function(){
-    		window.location.href = urlBase+"/pages/character/";
+    		window.location.href = urlBase+"/character/";
     		alert("Character deleted");
-    	}).error(function(result){
+    	}).fail(function(result){
     		alert("Sorry, something went wrong while trying to delete the character.")
     	});
     });
@@ -150,7 +217,7 @@ $().ready(function(){
 		    	}).success(function(result){
 		    		console.log(result);
 		    		window.location = url + "/" + result;
-		    	}).error(function(result){
+		    	}).fail(function(result){
 		    		console.log(result.responseText);
 		    		alert("There was an error while trying to export the character to PDF.");
 		    	});
@@ -186,7 +253,7 @@ $().ready(function(){
 		    	    			clearInterval(timer);
 		    	    	}
 	    	    	}, 1000);
-    	    	}).error(function(result){
+    	    	}).fail(function(result){
     	    		alert("Sorry, but there was an error trying to open the character.");
     	    	});
         	};
