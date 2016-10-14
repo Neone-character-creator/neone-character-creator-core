@@ -65,7 +65,7 @@
     </div>
     <nav class="navbar navbar-default">
         <div class="container">
-            <ul class="navbar-nav nav">
+            <ul class="navbar-nav nav text-center">
                 <li>
                     <button class="btn btn-default" type="button" id="new-character"
                             th:attr="data-url=${'/games/' + author + '/' + game + '/' + version}"><span
@@ -109,18 +109,15 @@
                         Export to PDF
                     </button>
                 </li>
-                <li>
-                    <button class="btn btn-info login-menu" type="button" id="login">
-                        Login
-                    </button>
-                </li>
             </ul>
         </div>
     </nav>
-    <div class="row center-text" id="signin-warning">
-        You're not logged in. Login to save, load and delete characters.
+    <div class="row text-center" id="signin-warning">
+        <button class="btn btn-link login-menu" type="button" id="login">
+            You're not logged in. Login here to save, load and delete characters.
+        </button>
     </div>
-    <iframe src="about:blank" id="content">
+    <iframe src="about:blank" id="content" style="padding: 2%">
 
     </iframe>
 </div>
