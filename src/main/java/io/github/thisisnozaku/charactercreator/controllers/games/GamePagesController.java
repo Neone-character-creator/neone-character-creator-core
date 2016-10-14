@@ -89,7 +89,7 @@ public class GamePagesController {
             model.addAttribute("loadEnabled", currentUser != null);
             model.addAttribute("exportEnabled", true);
             model.addAttribute("google_client_id", googleClientId);
-            model.addAttribute("contentUrl", String.format("%s:%s/pluginresource/%s/%s/%s", request.getLocalName(), request.getLocalPort(), author, game, version));
+            model.addAttribute("contentUrl", String.format("%s:%s/%s/%s/%s", request.getLocalName(), request.getLocalPort(), author, game, version));
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
