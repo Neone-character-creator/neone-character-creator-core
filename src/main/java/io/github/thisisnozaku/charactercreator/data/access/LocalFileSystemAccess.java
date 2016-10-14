@@ -22,7 +22,7 @@ import java.util.List;
  */
 @Profile("dev")
 @Service
-public class LocalFileSystemAccess implements FileAccess {
+public class LocalFileSystemAccess implements FileAccessor {
     @Override
     public FileInformation getUrl(String path) {
         try {
