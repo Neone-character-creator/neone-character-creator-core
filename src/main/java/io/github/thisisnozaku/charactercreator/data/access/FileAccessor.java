@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Created by Damien on 9/11/2016.
  */
-public interface FileAccess {
+public interface FileAccessor {
     /**
      * Get URL to file at the given path, for either a directory or file.
      * @param path

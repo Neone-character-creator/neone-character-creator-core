@@ -10,9 +10,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,7 +21,7 @@ import java.util.List;
  */
 @Service
 @Profile("aws")
-public class AmazonS3Adapter implements FileAccess {
+public class AmazonS3Adapter implements FileAccessor {
     @Value("${amazon.s3.bucket}")
     private String bucket;
     private AmazonS3Client s3;
@@ -38,16 +38,18 @@ public class AmazonS3Adapter implements FileAccess {
                 s3.getObjectMetadata(bucket, path).getLastModified().toInstant());
     }
 
+    @Override
     public List<FileInformation> getUrls(String path) {
-        List<FileInformation> urls = new LinkedList<>();
+        List<FileInformation> objects = new LinkedList<>();
         s3.listObjects(bucket, path).getObjectSummaries().forEach(s3ObjectSummary -> {
             if (!Paths.get(s3ObjectSummary.getKey()).equals(Paths.get(path))) {
-                urls.add(
+                GetObjectRequest get = new GetObjectRequest(bucket, s3ObjectSummary.getKey());
+                objects.add(
                         new FileInformation(s3.getUrl(bucket, s3ObjectSummary.getKey()),
                                 s3ObjectSummary.getLastModified().toInstant()));
             }
         });
-        return urls;
+        return objects;
     }
 
     @Override

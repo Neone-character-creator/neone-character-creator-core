@@ -1,9 +1,11 @@
 package io.github.thisisnozaku.charactercreator.plugins.internal;
 
-import io.github.thisisnozaku.charactercreator.data.access.FileAccess;
+import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
 import io.github.thisisnozaku.charactercreator.data.access.FileInformation;
-import io.github.thisisnozaku.charactercreator.plugins.*;
-import org.aspectj.lang.annotation.Aspect;
+import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
+import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
+import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
+import io.github.thisisnozaku.charactercreator.plugins.PluginThymeleafResourceResolver;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
@@ -42,7 +44,7 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
     @Value("${plugins.directory}")
     private String pluginDirectory;
     @Inject
-    private FileAccess fileAccess;
+    private FileAccessor fileAccess;
     @Value("${plugins.pollingWait}")
     private int pollingWait;
 
@@ -190,7 +192,7 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
             if (bundle != null) {
                 bundle.uninstall();
             }
-            bundle = framework.getBundleContext().installBundle(path.toExternalForm());
+            bundle = framework.getBundleContext().installBundle(path.toExternalForm(), in);
             bundle.start();
             return bundle;
         } catch (Exception e) {

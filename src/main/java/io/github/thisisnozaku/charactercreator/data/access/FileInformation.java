@@ -5,7 +5,7 @@ import java.net.URL;
 import java.time.Instant;
 
 /**
- * Class describing information for a given file accessible by a FileAccess implementation.
+ * Class describing information for a given file accessible by a FileAccessor implementation.
  *
  * Contains the URL for the file and a timestamp of when it was last modified.
  */
