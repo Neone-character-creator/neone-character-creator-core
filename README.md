@@ -5,6 +5,9 @@
 This project is the core subproject of a system that is meant to provide 
 character creation aids for a multitude of tabletop RPG system.
 
+This project also includes the following subprojects:
+- Plugin API : https://bitbucket.org/ThisIsNoZaku/neone-character-creator-plugin-api
+
 This is the container which hosts the individual webapps and provides 
 shared backend functionality, such as database persistence and user authentication.
 
@@ -37,3 +40,8 @@ specifically saving and loading characters.
 
 Authentication is currently implemented via OAuth with Google as the 
 sole OAuth provider.
+
+##Future Improvements
+- Replace core with pluggable front-end.
+- Add support for addtional OAuth providers (Twitter, Facebook, etc.)
+- Remove plugin class methods
