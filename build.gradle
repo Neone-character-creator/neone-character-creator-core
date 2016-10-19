@@ -91,6 +91,7 @@ dependencies {
     compile 'org.apache.felix:org.apache.felix.framework:5.4.0'
     osgi 'org.apache.felix:org.apache.felix.scr:2.0.2'
     osgi('io.github.thisisnozaku.charactercreator:neone-plugin-api:1.0')
+    osgi 'org.apache.felix:org.apache.felix.framework.security:2.6.0'
     testOsgi project(':test-plugin')
 
     compile 'commons-io:commons-io:2.4'
@@ -102,6 +103,8 @@ dependencies {
     compile 'org.springframework.security.oauth:spring-security-oauth2:2.0.11.RELEASE'
 
     compile 'com.google.apis:google-api-services-plus:v1-rev454-1.22.0'
+
+    compile "com.jayway.jsonpath:json-path:2.2.0"
 }
 
 

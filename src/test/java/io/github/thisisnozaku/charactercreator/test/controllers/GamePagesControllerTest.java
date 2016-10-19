@@ -62,9 +62,9 @@ public class GamePagesControllerTest {
     private MockMvc mvc;
 
     @Mock
-    private GamePlugin firstPlugin;
+    private PluginWrapper firstPlugin;
     @Mock
-    private GamePlugin secondPlugin;
+    private PluginWrapper secondPlugin;
     PluginDescription desc1 = new PluginDescription("Damien Marble", "Game System", "1.1");
     PluginDescription desc2 = new PluginDescription("Mamien Darble", "Second Game System", "1.0");
 
@@ -73,7 +73,7 @@ public class GamePagesControllerTest {
         MockitoAnnotations.initMocks(this);
         controller = new GamePagesController(characters, accounts, plugins);
 
-        mvc = MockMvcBuilders.standaloneSetup(controller).setCustomArgumentResolvers(new CharacterResolver(plugins)).build();
+        mvc = MockMvcBuilders.standaloneSetup(controller).build();
 
         when(plugins.getPlugin(isA(String.class), isA(String.class), isA(String.class))).thenAnswer((invocation -> {
             Object[] args = invocation.getArguments();
@@ -107,10 +107,7 @@ public class GamePagesControllerTest {
                 character.setId(BigInteger.ONE.toString());
             }
             return character;
-        });
-
-        when(firstPlugin.getCharacterType()).thenReturn(MockCharacter.class);
-        when(secondPlugin.getCharacterType()).thenReturn(MockCharacter.class);
+        });;
     }
 
     /**

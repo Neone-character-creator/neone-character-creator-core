@@ -14,43 +14,6 @@ import java.util.Optional;
  */
 @Component
 @Service
-public class TestPlugin implements GamePlugin {
-    private final PluginDescription pluginDescription;
+public class TestPlugin extends GamePlugin {
 
-    public TestPlugin() {
-        this.pluginDescription = new PluginDescription("Damien Marble", "Test", "1.0");
-    }
-
-    @Override
-    public PluginDescription getPluginDescription() {
-        return pluginDescription;
-    }
-
-    @Override
-    public Class getCharacterType() {
-        return test.Character.class;
-    }
-
-    private final String characterViewName = "character.html";
-    private final String descriptionViewName = "description.html";
-
-    @Override
-    public String getCharacterViewResourceName() {
-        return characterViewName;
-    }
-
-    @Override
-    public String getDescriptionViewResourceName() {
-        return descriptionViewName;
-    }
-
-    @Override
-    public String getCharacterSheetPdfResourceName() {
-        return null;
-    }
-
-    @Override
-    public Optional<PluginEventListener> getPluginEventListener() {
-        return null;
-    }
 }

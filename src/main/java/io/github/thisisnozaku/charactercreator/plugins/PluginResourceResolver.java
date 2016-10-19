@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.List;
@@ -49,9 +50,9 @@ public class PluginResourceResolver implements ResourceResolver {
             if(resourcePath.equals("")){
                 resourcePath = "character";
             }
-            URI resourceUri = pluginManager.getPluginResource(incomingPluginDescription, resourcePath);
+            URL resourceUri = pluginManager.getPluginResourceURL(incomingPluginDescription, resourcePath);
             return resourceUri != null ? new UrlResource(resourceUri) : null;
-        } catch (MalformedURLException | UnsupportedEncodingException e) {
+        } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }
     }

@@ -63,7 +63,7 @@ public class GameRestController {
             throw new IllegalStateException(ex);
         }
         PluginDescription description = new PluginDescription(author, game, version);
-        Optional<GamePlugin> plugin = plugins.getPlugin(author, game, version);
+        Optional<PluginWrapper> plugin = plugins.getPlugin(author, game, version);
         if (plugin.isPresent()) {
             CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUser, requestBody.getBody());
             wrapper = characters.save(wrapper);
@@ -89,13 +89,13 @@ public class GameRestController {
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
-        GamePlugin plugin;
+        PluginWrapper plugin;
         PluginDescription description = new PluginDescription(author, game, version);
         try {
             plugin = plugins.getPlugin(description).get();
             PluginDescription targetPluginDescription = new PluginDescription(author, game, version);
             if (!description.equals(targetPluginDescription)) {
-                throw new CharacterPluginMismatchException(plugin.getPluginDescription(), targetPluginDescription);
+                throw new CharacterPluginMismatchException(targetPluginDescription, targetPluginDescription);
             }
             CharacterDataWrapper wrapper = new CharacterDataWrapper(description, SecurityContextHolder.getContext().getAuthentication().getName(), character.getBody());
             wrapper.setId(id);
@@ -131,20 +131,17 @@ public class GameRestController {
         UUID pdfId;
         try {
             PluginDescription pluginDescription = new PluginDescription(author, game, version);
-            Optional<GamePlugin> plugin = plugins.getPlugin(pluginDescription);
+            Optional<PluginWrapper> plugin = plugins.getPlugin(pluginDescription);
             if (plugin.isPresent()) {
-                URI resource = plugins.getPluginResource(pluginDescription, plugin.get().getCharacterSheetPdfResourceName());
+                InputStream resourceStream = plugin.get().getResourceAsStream("pdf");
                 ResponseEntity<String> response;
-                if (resource != null) {
-                    InputStream pdfResource = resource.toURL().openStream();
+                if (resourceStream != null) {
                     PdfExporter<String> pdfExporter = new PdfExporter(new DefaultPdfWriter(), new JsonFieldValueExtractor());
                     pdfId = UUID.randomUUID();
                     File tempPdfPath = Paths.get(Files.createTempDir().getCanonicalPath(), pdfId.toString()).toFile();
                     OutputStream out = new FileOutputStream(tempPdfPath);
-                    PluginEventListener listener = plugin.get().getPluginEventListener().isPresent() ?
-                            (PluginEventListener) plugin.get().getPluginEventListener().get() : new PluginEventListenerAdapter();
-                    String characterJson = (String)listener.prePdfExport(URLDecoder.decode(request.getBody(), "UTF-8"));
-                    pdfExporter.exportPdf(characterJson, pdfResource, out);
+                    String characterJson = URLDecoder.decode(request.getBody(), "UTF-8");
+                    pdfExporter.exportPdf(characterJson, resourceStream, out);
                     generatedPdfs.put(pdfId.toString(), tempPdfPath);
                     response = new ResponseEntity<>(pdfId.toString(), HttpStatus.OK);
                 } else {
@@ -187,12 +184,8 @@ public class GameRestController {
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.GET, produces = "application/json")
     public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
-        Optional<PluginEventListener> listener = plugins.getPlugin(pluginDescription).get().getPluginEventListener();
-        if(!listener.isPresent()){
-            listener = Optional.of(new PluginEventListenerAdapter());
-        }
         CharacterDataWrapper wrapper = characters.findOne(id);
-        wrapper = new CharacterDataWrapper(wrapper.getPlugin(), wrapper.getUser(), (String)listener.get().postCharacterLoad(wrapper.getCharacter()));
+        wrapper = new CharacterDataWrapper(wrapper.getPlugin(), wrapper.getUser(), wrapper.getCharacter());
         return wrapper;
     }
 

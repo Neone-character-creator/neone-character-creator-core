@@ -7,6 +7,7 @@ import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException
 import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
+import io.github.thisisnozaku.charactercreator.plugins.PluginWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -54,7 +55,7 @@ public class GamePagesController {
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
-        GamePlugin plugin;
+        PluginWrapper plugin;
         try {
             plugin = plugins.getPlugin(URLDecoder.decode(author, "UTF-8"), URLDecoder.decode(game, "UTF-8"), URLDecoder.decode(version, "UTF-8")).get();
             return String.format("%s-%s-%s-description", author, game, version);
@@ -69,7 +70,7 @@ public class GamePagesController {
             PluginDescription description = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
                     URLDecoder.decode(game, "UTF-8"),
                     URLDecoder.decode(version, "UTF-8"));
-            Optional<GamePlugin> plugin = plugins.getPlugin(description);
+            Optional<PluginWrapper> plugin = plugins.getPlugin(description);
             if (!plugin.isPresent()) {
                 throw new MissingPluginException(description);
             }
@@ -102,7 +103,7 @@ public class GamePagesController {
             PluginDescription description = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
                     URLDecoder.decode(game, "UTF-8"),
                     URLDecoder.decode(version, "UTF-8"));
-            Optional<GamePlugin> plugin = plugins.getPlugin(description);
+            Optional<PluginWrapper> plugin = plugins.getPlugin(description);
             if (!plugin.isPresent()) {
                 throw new MissingPluginException(description);
             }
