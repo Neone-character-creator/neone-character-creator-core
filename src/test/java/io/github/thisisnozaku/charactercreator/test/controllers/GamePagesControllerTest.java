@@ -126,7 +126,7 @@ public class GamePagesControllerTest {
         MvcResult result = mvc.perform(request)
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(view().name("plugin-character-page"))
+                .andExpect(view().name(String.format("%s-%s-%s-description", desc.getAuthor(), desc.getSystem(), desc.getVersion())))
                 .andReturn();
     }
 

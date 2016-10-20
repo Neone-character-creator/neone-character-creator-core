@@ -6,10 +6,8 @@ import io.github.thisisnozaku.charactercreator.controllers.games.GameRestControl
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
+import io.github.thisisnozaku.charactercreator.plugins.*;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
-import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
-import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
-import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,6 +15,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -53,7 +54,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class RestControllerTest {
     private GameRestController controller;
     private CharacterMongoRepositoryCustom characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
-    private UserRepository accounts;
     @Mock
     private PluginManager plugins;
     @Mock
@@ -61,23 +61,20 @@ public class RestControllerTest {
 
     private MockMvc mvc;
 
-    @Mock
-    private GamePlugin firstPlugin;
-    @Mock
-    private GamePlugin secondPlugin;
+    private PluginWrapper firstPlugin;
+    private PluginWrapper secondPlugin;
     PluginDescription desc1 = new PluginDescription("Damien Marble", "Game System", "1.1");
     PluginDescription desc2 = new PluginDescription("Mamien Darble", "Second Game System", "1.0");
 
     @Before
     public void setup() throws Exception {
         characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
-        accounts = Mockito.mock(UserRepository.class);
         plugins = Mockito.mock(PluginManager.class);
         resolver = Mockito.mock(HandlerMethodArgumentResolver.class);
-        firstPlugin = Mockito.mock(GamePlugin.class);
-        secondPlugin = Mockito.mock(GamePlugin.class);
+        firstPlugin = Mockito.mock(PluginWrapper.class);
+        secondPlugin = Mockito.mock(PluginWrapper.class);
 
-        controller = new GameRestController(characters, accounts, plugins);
+        controller = new GameRestController(characters, plugins);
 
         mvc = MockMvcBuilders.standaloneSetup(controller).build();
 
@@ -224,6 +221,10 @@ public class RestControllerTest {
                 id)
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(mockCharacter);
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(null,null)
+        );
 
         mvc.perform(request)
                 .andDo(print())

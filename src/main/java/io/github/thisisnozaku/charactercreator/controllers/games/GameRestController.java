@@ -33,14 +33,12 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("games/")
 public class GameRestController {
-    private final UserRepository accounts;
     private final CharacterMongoRepositoryCustom characters;
     private final PluginManager plugins;
     private final Cache<String, File> generatedPdfs;
 
     @Inject
-    public GameRestController(CharacterMongoRepositoryCustom characters, UserRepository accounts, PluginManager pluginManager) {
-        this.accounts = accounts;
+    public GameRestController(CharacterMongoRepositoryCustom characters,PluginManager pluginManager) {
         this.characters = characters;
         this.plugins = pluginManager;
         generatedPdfs = CacheBuilder.newBuilder()
@@ -97,7 +95,7 @@ public class GameRestController {
             if (!description.equals(targetPluginDescription)) {
                 throw new CharacterPluginMismatchException(targetPluginDescription, targetPluginDescription);
             }
-            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, SecurityContextHolder.getContext().getAuthentication().getName(), character.getBody());
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, SecurityContextHolder.getContext().getAuthentication().getPrincipal(), character.getBody());
             wrapper.setId(id);
             return characters.save(wrapper);
         } catch (NoSuchElementException ex) {
@@ -185,7 +183,6 @@ public class GameRestController {
     public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
         CharacterDataWrapper wrapper = characters.findOne(id);
-        wrapper = new CharacterDataWrapper(wrapper.getPlugin(), wrapper.getUser(), wrapper.getCharacter());
         return wrapper;
     }
 

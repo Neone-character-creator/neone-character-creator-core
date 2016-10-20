@@ -43,9 +43,9 @@ import java.util.List;
 @Controller
 public class SecurityController {
     private Logger logger = LoggerFactory.getLogger(SecurityController.class);
-    @Value("${google.oauth2.client.clientId}")
+    @Value("${google.oauth2.client.clientId?:n/a}")
     private String clientId;
-    @Value("${google.oauth2.client.clientSecret}")
+    @Value("${google.oauth2.client.clientSecret:n/a}")
     private String clientSecret;
 
 

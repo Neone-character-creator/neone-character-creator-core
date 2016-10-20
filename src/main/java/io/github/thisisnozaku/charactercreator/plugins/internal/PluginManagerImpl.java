@@ -6,7 +6,6 @@ import com.jayway.jsonpath.JsonPath;
 import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
 import io.github.thisisnozaku.charactercreator.data.access.FileInformation;
 import io.github.thisisnozaku.charactercreator.plugins.*;
-import jdk.internal.util.xml.impl.Input;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
@@ -19,7 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateProcessingParameters;
 import org.yaml.snakeyaml.util.UriEncoder;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -99,7 +97,7 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                         pluginDescriptionFile = serviceBundle.getResource("plugin.xml");
                     }
                     if(pluginDescriptionFile == null){
-                        throw new InvalidStateException(String.format("While attempting to load the plugin at %s, no " +
+                        throw new IllegalStateException(String.format("While attempting to load the plugin at %s, no " +
                                 "plugin description file was found", serviceBundle.getLocation()));
                     }
                     PluginWrapper wrapper = new PluginWrapper(pluginDescription, (GamePlugin) service, this, resourcePaths);

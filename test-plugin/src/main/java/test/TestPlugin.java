@@ -12,8 +12,8 @@ import java.util.Optional;
 /**
  * Created by Damien on 1/4/2016.
  */
+@Service(value = GamePlugin.class)
 @Component
-@Service
 public class TestPlugin extends GamePlugin {
 
 }
