@@ -10,6 +10,7 @@ buildscript {
         classpath('io.spring.gradle:dependency-management-plugin:0.5.2.RELEASE')
         classpath 'com.sourcemuse.gradle.plugin:gradle-mongo-plugin:0.9.0'
         classpath "io.spring.gradle:dependency-management-plugin:0.5.4.RELEASE"
+        classpath "net.saliman:gradle-cobertura-plugin:2.3.2"
     }
 }
 
@@ -25,6 +26,7 @@ apply plugin: 'mongo'
 apply plugin: 'idea'
 apply plugin: "io.spring.dependency-management"
 apply plugin: 'war'
+apply plugin: 'net.saliman.cobertura'
 
 dependencyManagement {
     imports {
@@ -144,4 +146,10 @@ bootRun {
         jvmArgs project.jvmArgs.split("\\s+")
         println project.jvmArgs
     }
+}
+
+cobertura {
+    coverageExcludes = [
+            ".*NeoneCoreApplication"
+    ]
 }
