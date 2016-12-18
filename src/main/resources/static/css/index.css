@@ -1,20 +1,15 @@
-#content{
-	width:100%;
-	height:100%;
+@media only screen and (max-width:  991){
+    scrollable {
+        overflow-y : scroll;
+        position: absolute;
+        top: 50%;
+        height: 50%;
+    }
 }
-
-#content-container{
-	width:100%;
-	height:100%;
-	position: fixed;
-}
-
-#character-page-container{
-	height: 90%
-}
-
-body {
-	height:100%;
-	width:100%;
-	position:fixed;
+@media only screen and (min-width:  992){
+    scrollable {
+        overflow-y : scroll;
+        position: absolute;
+        left: 50%;
+    }
 }

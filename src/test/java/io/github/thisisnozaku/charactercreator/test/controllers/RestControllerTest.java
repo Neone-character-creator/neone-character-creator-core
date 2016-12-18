@@ -2,6 +2,7 @@ package io.github.thisisnozaku.charactercreator.test.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.thisisnozaku.charactercreator.TestConfiguration;
+import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.controllers.games.GameRestController;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
@@ -35,6 +36,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 import java.math.BigInteger;
 import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
@@ -49,15 +51,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebAppConfiguration
 @ContextConfiguration(classes = {TestConfiguration.class})
-@WithMockUser
 @TestPropertySource("classpath:/application-dev.properties")
 public class RestControllerTest {
     private GameRestController controller;
     private CharacterMongoRepositoryCustom characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
     @Mock
     private PluginManager plugins;
-    @Mock
-    private HandlerMethodArgumentResolver resolver;
 
     private MockMvc mvc;
 
@@ -68,9 +67,10 @@ public class RestControllerTest {
 
     @Before
     public void setup() throws Exception {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(new User(1L, Collections.emptyList()), null));
         characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
         plugins = Mockito.mock(PluginManager.class);
-        resolver = Mockito.mock(HandlerMethodArgumentResolver.class);
         firstPlugin = Mockito.mock(PluginWrapper.class);
         secondPlugin = Mockito.mock(PluginWrapper.class);
 
@@ -93,16 +93,6 @@ public class RestControllerTest {
             PluginDescription pluginDescription = (PluginDescription) invocation.getArguments()[0];
             return plugins.getPlugin(pluginDescription.getAuthor(), pluginDescription.getSystem(), pluginDescription.getVersion());
         });
-
-        when(resolver.supportsParameter(any(MethodParameter.class))).thenAnswer(invocation -> {
-            MethodParameter param = invocation.getArgumentAt(0, MethodParameter.class);
-            return param.getParameterType().equals(Character.class);
-        });
-
-        when(resolver.resolveArgument(any(MethodParameter.class), any(ModelAndViewContainer.class), any(NativeWebRequest.class), any(WebDataBinderFactory.class)))
-                .thenAnswer(invocation -> {
-                    return invocation.getArgumentAt(2, NativeWebRequest.class).getAttribute("character", RequestAttributes.SCOPE_REQUEST);
-                });
 
         when(characters.save(isA(CharacterDataWrapper.class))).thenAnswer(invocation -> {
             CharacterDataWrapper character = invocation.getArgumentAt(0, CharacterDataWrapper.class);
@@ -222,15 +212,11 @@ public class RestControllerTest {
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(mockCharacter);
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(null,null)
-        );
-
         mvc.perform(request)
                 .andDo(print())
                 .andExpect(status().isAccepted());
-        CharacterDataWrapper characterDataWrapper = new CharacterDataWrapper(desc, null, mockCharacter);
-        characterDataWrapper.setId(BigInteger.ONE.toString());
+        CharacterDataWrapper characterDataWrapper = new CharacterDataWrapper(desc, 1L, mockCharacter);
+        characterDataWrapper.setId("1");
 
         verify(characters).save(characterDataWrapper);
     }

@@ -44,4 +44,3 @@ sole OAuth provider.
 ##Future Improvements
 - Replace core with pluggable front-end.
 - Add support for addtional OAuth providers (Twitter, Facebook, etc.)
-- Remove plugin class methods

@@ -1,0 +1,11 @@
+{
+  "description":{
+    "creator" : "Damien Marble",
+    "game" : "Test Plugin",
+    "version" : "1.0.0"
+  },
+  "resources" : {
+    "character" : "character.html",
+    "description" : "description.html"
+  }
+}

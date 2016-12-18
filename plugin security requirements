@@ -1,0 +1,3 @@
+Plugin bundles must possess the following capabilities:
+Plugin service class discoverable and loadable by Services container
+Read resources from self

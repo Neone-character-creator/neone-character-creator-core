@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css"
           integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous"/>
 
-    <link rel="stylesheet" th:href="@{/css/index.css}"/>
+    <link rel="stylesheet" th:href="@{/css/character-page.css}"/>
     <link rel="stylesheet" th:href="@{/css/bootstrap-social.css}"/>
     <script src="https://apis.google.com/js/platform.js" id="gap"></script>
 
@@ -115,6 +115,11 @@
     <div class="row text-center" id="signin-warning">
         <button class="btn btn-link login-menu" type="button" id="login">
             You're not logged in. Login here to save, load and delete characters.
+        </button>
+    </div>
+    <div class="row text-center" id="signout">
+        <button class="btn btn-link logout" type="button" id="logout">
+            Click here to logout.
         </button>
     </div>
     <iframe src="about:blank" id="content" style="padding: 2%">

@@ -1,0 +1,18 @@
+eureka server : coordinates discovery for client services
+
+server : core server.
+Serves any non-plugin resources.
+Retrieves and transforms plugin-related html.
+
+character service : Character-related functions
+Rest api for manipulating plugin character data.
+
+plugin service : Manages plugins.
+Manages loading and exposing access to plugin resources.
+Provides non-html resources directly, html is exposed to the core server for transformation first.
+
+pdf service : exposes rest api for filling out pdfs
+Receives multipart data of binary pdf form and json, fills the pdf and returns the result.
+
+user service : connects to hibernate user database and provides them for authentication
+Rest api for user instances.

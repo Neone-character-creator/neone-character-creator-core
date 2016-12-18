@@ -28,10 +28,6 @@ import javax.inject.Inject;
 @EnableOAuth2Sso
 public class
 WebSecurityConfig extends WebSecurityConfigurerAdapter {
-    @Inject
-    UserDetailsService userDetailsService;
-    @Inject
-    private PasswordEncoder passwordEncoder;
 
     @Override
     protected void configure(HttpSecurity security) throws Exception {
@@ -42,8 +38,6 @@ WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().permitAll()
                 .and()
                 .logout().permitAll();
-
-        security.userDetailsService(userDetailsService);
 
         security.headers().frameOptions().sameOrigin();
     }

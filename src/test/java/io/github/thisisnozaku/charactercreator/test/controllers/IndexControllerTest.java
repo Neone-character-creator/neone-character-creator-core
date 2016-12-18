@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebAppConfiguration
 @ContextConfiguration(classes = {TestConfiguration.class})
-@TestPropertySource("classpath:/application.properties")
+@TestPropertySource("classpath:/application-dev.properties")
 public class IndexControllerTest {
     MockMvc mvc;
 

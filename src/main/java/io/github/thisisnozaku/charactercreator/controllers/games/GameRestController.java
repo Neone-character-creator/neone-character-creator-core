@@ -3,6 +3,7 @@ package io.github.thisisnozaku.charactercreator.controllers.games;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Files;
+import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
@@ -12,6 +13,8 @@ import io.github.thisisnozaku.charactercreator.plugins.*;
 import io.github.thisisnozaku.pdfexporter.DefaultPdfWriter;
 import io.github.thisisnozaku.pdfexporter.JsonFieldValueExtractor;
 import io.github.thisisnozaku.pdfexporter.PdfExporter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,6 +39,7 @@ public class GameRestController {
     private final CharacterMongoRepositoryCustom characters;
     private final PluginManager plugins;
     private final Cache<String, File> generatedPdfs;
+    private final Logger logger = LoggerFactory.getLogger(GameRestController.class);
 
     @Inject
     public GameRestController(CharacterMongoRepositoryCustom characters,PluginManager pluginManager) {
@@ -52,7 +56,7 @@ public class GameRestController {
 
     @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.POST, produces = "application/json")
-    public @ResponseBody CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @AuthenticationPrincipal String currentUser) {
+    public @ResponseBody CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -60,13 +64,18 @@ public class GameRestController {
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        logger.info("Creating a new character for user {} using plugin {}, {}, {}", currentUser.getId(), author, game, version);
         PluginDescription description = new PluginDescription(author, game, version);
         Optional<PluginWrapper> plugin = plugins.getPlugin(author, game, version);
         if (plugin.isPresent()) {
-            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUser, requestBody.getBody());
+            logger.info("Plugin {}, {}, {} found.", author, game, version);
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUser.getId(), requestBody.getBody());
             wrapper = characters.save(wrapper);
+            logger.info("Character id {} was saved.", wrapper.getId());
             return wrapper;
         } else {
+            logger.info("Plugin {}, {}, {} was requested but unavailable.", author, game, version);
             throw new MissingPluginException(description);
         }
     }
@@ -95,8 +104,11 @@ public class GameRestController {
             if (!description.equals(targetPluginDescription)) {
                 throw new CharacterPluginMismatchException(targetPluginDescription, targetPluginDescription);
             }
-            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, SecurityContextHolder.getContext().getAuthentication().getPrincipal(), character.getBody());
+            User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            logger.info("Saving a character for user {} using plugin {}, {}, {}", currentUser.getId(), author, game, version);
+            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUser.getId(), character.getBody());
             wrapper.setId(id);
+            logger.info("Character id {} was saved.", wrapper.getId());
             return characters.save(wrapper);
         } catch (NoSuchElementException ex) {
             throw new MissingPluginException(description);
@@ -111,16 +123,19 @@ public class GameRestController {
     @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.DELETE, produces = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void delete(@PathVariable String id) {
+    public void delete(@PathVariable String id, @PathVariable String author, @PathVariable String game, @PathVariable String version) {
         characters.delete(id);
+        logger.info("Character id {} for plugin {}, {}, {} was deleted.", id, author, game, version);
     }
 
     @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.GET, produces = "application/json")
     public List<CharacterDataWrapper> getAllForUserForPlugin(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
-        String currentid = SecurityContextHolder.getContext().getAuthentication().getName();
-        List<CharacterDataWrapper> result = characters.findByUserAndPlugin(currentid, pluginDescription);
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        logger.info("Character getting all character for user {} and plugin {}, {}, {}.", currentUser.getId(), author, game, version);
+        List<CharacterDataWrapper> result = characters.findByUserAndPlugin(currentUser.getId(), pluginDescription);
+        logger.info("Found {} characters.", result.size());
         return result;
     }
 

@@ -101,12 +101,15 @@ dependencies {
 
     compile 'com.amazonaws:aws-java-sdk-s3'
     compile 'com.amazonaws:aws-java-sdk-ses'
+    compile 'com.amazonaws:aws-java-sdk-sqs'
 
     compile 'org.springframework.security.oauth:spring-security-oauth2:2.0.11.RELEASE'
 
     compile 'com.google.apis:google-api-services-plus:v1-rev454-1.22.0'
 
     compile "com.jayway.jsonpath:json-path:2.2.0"
+
+    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.6.3'
 }
 
 

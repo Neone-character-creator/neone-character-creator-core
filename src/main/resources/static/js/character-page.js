@@ -20,7 +20,7 @@ $().ready(function(){
             $("#login-modal").modal("hide");
         });
 	});
-	$(document).on("click", ".google-logout", function(){
+	$(document).on("click", ".logout", function(){
 	    auth2.signOut();
     });
 
@@ -33,40 +33,42 @@ $().ready(function(){
 			});
 			auth2 = gapi.auth2.getAuthInstance();
 			auth2.isSignedIn.listen(function(googleUser){
-				user = auth2.currentUser.get();
 				if(googleUser){
-					$("#save-character").prop("disabled", false);
-					$("#open-character").prop("disabled", false);
-					$("#delete-character").prop("disabled", false);
-					$("#signin-warning").hide();
-					$("#login").text("Log Out").addClass("google-logout").removeClass("login-menu");
-					var headers = {};
-					headers[csrfHeader] = csrfToken;
-					$.ajax("/login/google", {
-						type : "POST",
-                    	data : user.Zi.access_token,
-                    	contentType : 'application/json; charset=UTF-8',
-                    	headers : headers
-                    }).done(function(response){
-                    	$("#login-modal").modal("hide");
-                    }).fail(function(response){
+				    var user = auth2.currentUser.get();
+				    var headers = {};
+				    headers[csrfHeader] = csrfToken;
+				    $.ajax("/login/google", {
+    				    type : "POST",
+    				    data : user.Zi.access_token,
+    				    contentType : 'application/json; charset=UTF-8',
+    				    headers : headers
+    				}).done(function(response){
+    				    $("#save-character").prop("disabled", false);
+                    	$("#open-character").prop("disabled", false);
+                    	$("#delete-character").prop("disabled", false);
+                    	$("#signin-warning").hide();
+                    	$("#signout").show();
+    				    $("#login-modal").modal("hide");
+    				}).fail(function(response){
+    				    $("#save-character").prop("disabled", true);
+                    	$("#open-character").prop("disabled", true);
+                    	$("#delete-character").prop("disabled", true);
+                    	$("#signin-warning").show();
+                    	$("#login").text("You're not logged in. Login here to save, load and delete characters.").removeClass("google-logout").addClass("login-menu");
+                    	$("#logout").hide();
+                    	$.ajax("/logout/google", {
+                    	    type : "POST",
+                    	    contentType : 'application/json; charset=UTF-8',
+                    	    headers : headers
+                    	});
                     	alert("Something went wrong syncing authentication with the server.");
-                    });
-				} else {
-					$("#save-character").prop("disabled", true);
-					$("#open-character").prop("disabled", true);
-		   	    	$("#delete-character").prop("disabled", true);
-		   	    	$("#signin-warning").show();
-		   	    	$("#login").text("Log In").removeClass("google-logout").addClass("login-menu");
-		   	    	$.ajax("/logout/google", {
-		   	    	    type : "POST",
-		   	    	    contentType : 'application/json; charset=UTF-8',
-		   	    	    headers : headers
-                    });
-		       	}
+    				    });
+    				} else {
+        				$("#logout").hide();
+    				}
+				});
 			});
 		});
-	});
 
 	$(document).on("click", ".login-menu", function(){
 		$("#login-modal").modal("show");

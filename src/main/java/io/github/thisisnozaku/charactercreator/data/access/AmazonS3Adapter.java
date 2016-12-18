@@ -54,7 +54,6 @@ public class AmazonS3Adapter implements FileAccessor {
 
     @Override
     public InputStream getUrlContent(URL url) {
-        String bucket = url.getHost().substring(0, url.getHost().indexOf(".s3"));
         //Strip leading slash, s3 key doesn't expect it
         String path = url.getPath().substring(1);
         GetObjectRequest request = new GetObjectRequest(bucket, path);
