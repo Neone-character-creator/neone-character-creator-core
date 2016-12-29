@@ -2,13 +2,19 @@ package io.github.thisisnozaku.charactercreator.config;
 
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import io.github.thisisnozaku.charactercreator.plugins.PluginResourceResolver;
+import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
+import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.WebMvcProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.CacheControl;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.handler.SimpleMappingExceptionResolver;
 
 import javax.inject.Inject;
@@ -20,7 +26,7 @@ import java.util.Properties;
  */
 @Configuration
 @EnableWebMvc
-public class WebConfig extends WebMvcAutoConfiguration.WebMvcAutoConfigurationAdapter{
+public class WebConfig extends WebMvcConfigurerAdapter{
     @Inject
     private PluginManager pluginManager;
     @Inject
