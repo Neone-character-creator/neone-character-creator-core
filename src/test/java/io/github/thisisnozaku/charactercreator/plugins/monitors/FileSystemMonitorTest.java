@@ -29,8 +29,8 @@ public class FileSystemMonitorTest {
         new File("test").mkdir();
         ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1);
         FileSystemMonitor monitor = new FileSystemMonitor(executorService, 10L, "test");
-        monitor.onCreated((WatchEvent event)->{
-            Object context = event.context();
+        monitor.onCreated((PluginMonitorEvent event)->{
+            Object context = event.getPluginUrl();
             assertEquals("test file", context);
         });
         new File("test/test file").createNewFile();
@@ -70,8 +70,8 @@ public class FileSystemMonitorTest {
         testFile.createNewFile();
         ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1);
         FileSystemMonitor monitor = new FileSystemMonitor(executorService, 10L, "test");
-        monitor.onModified((WatchEvent event)->{
-            Object context = event.context();
+        monitor.onModified((PluginMonitorEvent event)->{
+            Object context = event.getPluginUrl();
             assertEquals("test file", context);
         });
         testFile.setLastModified(System.currentTimeMillis());
