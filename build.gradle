@@ -1,13 +1,14 @@
 buildscript {
     ext {
-        springBootVersion = '1.2.7.RELEASE'
+        springBootVersion = '1.4.0.RELEASE'
     }
     repositories {
         mavenCentral()
+        mavenLocal()
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-        classpath('io.spring.gradle:dependency-management-plugin:0.5.2.RELEASE')
+        classpath('io.spring.gradle:dependency-management-plugin:0.6.0.RELEASE')
         classpath 'com.sourcemuse.gradle.plugin:gradle-mongo-plugin:0.9.0'
         classpath "io.spring.gradle:dependency-management-plugin:0.5.4.RELEASE"
         classpath "net.saliman:gradle-cobertura-plugin:2.3.2"
@@ -96,7 +97,7 @@ dependencies {
     testOsgi project(':test-plugin')
 
     compile 'commons-io:commons-io:2.4'
-    compile('io.github.thisisnozaku:pdf-export:1.0.0')
+    compile('io.github.thisisnozaku:pdf-export:1.0.2')
 
     compile 'com.amazonaws:aws-java-sdk-s3'
     compile 'com.amazonaws:aws-java-sdk-ses'

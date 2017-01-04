@@ -65,4 +65,4 @@ crashlytics-build.properties
 # Ignore felix test plugin directory
 /plugins
 google_client_secret.json
-/iam-credentials.csv
+iam-credentials.csv
