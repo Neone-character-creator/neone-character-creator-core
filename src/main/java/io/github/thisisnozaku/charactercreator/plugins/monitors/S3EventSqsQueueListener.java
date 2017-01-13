@@ -5,13 +5,16 @@ import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.google.common.util.concurrent.ListenableFutureTask;
+import jdk.nashorn.internal.codegen.CompilerConstants;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.LinkedList;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 /**
  * Listens for events from one or more Amazon Simple Queue Service queues.
@@ -19,28 +22,29 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 @Profile("aws")
-public class SqsQueueEventListener extends PluginMonitorAdapter {
+public class S3EventSqsQueueListener extends PluginMonitorAdapter {
     private final AmazonSQSClient sqsClient;
     private final XmlMapper xmlMapper = new XmlMapper();
-    public SqsQueueEventListener(AmazonSQSClient sqsClient, ScheduledExecutorService executorService, String... queueNames) {
+    private ExecutorService executorService;
+    private Collection<Consumer<Message>> callbacks = new LinkedList<>();
+
+    public S3EventSqsQueueListener(AmazonSQSClient sqsClient, ScheduledExecutorService executorService, String... queueNames) {
         this.sqsClient = sqsClient;
+        this.executorService = executorService;
         Arrays.asList(queueNames).stream().forEach(q->{
             executorService.scheduleAtFixedRate(()->{
                 ReceiveMessageRequest request = new ReceiveMessageRequest(q);
                 Collection<Message> messages = sqsClient.receiveMessage(request).getMessages();
                 messages.stream().forEach(message -> {
-                    String messageBody = message.getBody();
-                    S3EventNotification notification = S3EventNotification.parseJson(messageBody);
-                    notification.getRecords().forEach(record->{
-                        // Try to determine if there's a constant that could be insterted here
-                        if(record.getEventSource().equals("aws:s3")){
-                            if(record.getS3().getBucket().getName().equals("plugins")){
-
-                            };
-                        }
+                    callbacks.stream().forEach(callable -> {
+                        callable.accept(message);
                     });
                 });
             }, 0, 1000L, TimeUnit.MILLISECONDS);
         });
+    }
+
+    public void addCallback(final Consumer<Message> callback){
+        callbacks.add(callback);
     }
 }
