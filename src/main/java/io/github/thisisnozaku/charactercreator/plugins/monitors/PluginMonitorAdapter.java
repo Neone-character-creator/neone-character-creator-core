@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 /**
  * Created by Damien on 12/3/2016.
  */
-public class PluginMonitorAdapter implements PluginMonitor {
+abstract public class PluginMonitorAdapter implements PluginMonitor {
     protected final EnumMap<EventType, Collection<Consumer<PluginMonitorEvent>>> callbacks = new EnumMap<>(EventType.class);
 
     public PluginMonitorAdapter() {
@@ -33,4 +33,6 @@ public class PluginMonitorAdapter implements PluginMonitor {
         callbacks.get(EventType.MODIFIED).add(callback);
         return this;
     }
+
+    abstract public void start();
 }

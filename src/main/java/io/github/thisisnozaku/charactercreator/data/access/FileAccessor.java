@@ -3,6 +3,7 @@ package io.github.thisisnozaku.charactercreator.data.access;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by Damien on 9/11/2016.
@@ -13,14 +14,14 @@ public interface FileAccessor {
      * @param path
      * @return
      */
-    FileInformation getUrl(String path);
+    FileInformation getFileInformation(String path);
 
     /**
      * Get all child URLs at the given path if it is a directory. Returns null if path resolves to a file
      * @param path
      * @return
      */
-    List<FileInformation> getUrls(String path);
+    List<FileInformation> getAllFileInformation(String path);
 
     /**
      * Get an input stream for the resource at the given URL. The method is primarily for implementations that
@@ -28,5 +29,5 @@ public interface FileAccessor {
      * @param path
      * @return
      */
-    InputStream getUrlContent(URL path);
+    Optional<InputStream> getUrlContent(URL path);
 }

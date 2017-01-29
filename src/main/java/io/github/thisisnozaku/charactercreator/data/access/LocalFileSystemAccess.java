@@ -16,6 +16,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by Damien on 9/11/2016.
@@ -24,7 +25,7 @@ import java.util.List;
 @Service
 public class LocalFileSystemAccess implements FileAccessor {
     @Override
-    public FileInformation getUrl(String path) {
+    public FileInformation getFileInformation(String path) {
         try {
             File file = new File(path);
             return new FileInformation(file.toURI().toURL(), Instant.ofEpochMilli(file.lastModified()));
@@ -35,7 +36,7 @@ public class LocalFileSystemAccess implements FileAccessor {
     }
 
     @Override
-    public List<FileInformation> getUrls(String path) {
+    public List<FileInformation> getAllFileInformation(String path) {
         List<FileInformation> urls = new LinkedList<>();
         Path p = Paths.get(path);
         try {
@@ -55,9 +56,9 @@ public class LocalFileSystemAccess implements FileAccessor {
     }
 
     @Override
-    public InputStream getUrlContent(URL path) {
+    public Optional<InputStream> getUrlContent(URL path) {
         try {
-            return path.openStream();
+            return Optional.of(path.openStream());
         }catch (IOException ex){
             throw new RuntimeException(ex);
         }

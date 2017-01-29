@@ -50,7 +50,12 @@ public class PluginResourceResolver implements ResourceResolver {
             if(resourcePath.equals("")){
                 resourcePath = "character";
             }
-            URL resourceUri = pluginManager.getPluginResourceURL(incomingPluginDescription, resourcePath);
+            URL resourceUri = null;
+            try {
+                resourceUri = pluginManager.getPluginResource(incomingPluginDescription, resourcePath).toURL();
+            }catch (MalformedURLException ex){
+                throw new RuntimeException(ex);
+            }
             return resourceUri != null ? new UrlResource(resourceUri) : null;
         } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException(e);

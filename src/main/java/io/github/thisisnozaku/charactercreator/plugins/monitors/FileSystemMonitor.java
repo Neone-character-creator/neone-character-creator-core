@@ -22,7 +22,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
  */
 @Profile("dev")
 @Service
-public class FileSystemMonitor extends PluginMonitorAdapter{
+public class FileSystemMonitor extends PluginMonitorAdapter {
     private final WatchService watchService;
     private long pollTime;
     private ScheduledFuture poll;
@@ -52,13 +52,13 @@ public class FileSystemMonitor extends PluginMonitorAdapter{
                     PluginMonitorEvent pluginMonitorEvent = null;
                     Collection<Consumer<PluginMonitorEvent>> callables = null;
                     if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_CREATE)) {
-                        callables = (Collection<Consumer<PluginMonitorEvent>>)callbacks.get(EventType.CREATED);
+                        callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.CREATED);
                         pluginMonitorEvent = new PluginMonitorEvent(EventType.CREATED, watchEvent.context().toString());
                     } else if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_DELETE)) {
-                        callables = (Collection<Consumer<PluginMonitorEvent>>)callbacks.get(EventType.DELETED);
+                        callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.DELETED);
                         pluginMonitorEvent = new PluginMonitorEvent(EventType.DELETED, watchEvent.context().toString());
                     } else if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
-                        callables = (Collection<Consumer<PluginMonitorEvent>>)callbacks.get(EventType.MODIFIED);
+                        callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.MODIFIED);
                         pluginMonitorEvent = new PluginMonitorEvent(EventType.MODIFIED, watchEvent.context().toString());
                     }
                     final PluginMonitorEvent pluginEvent = pluginMonitorEvent;
@@ -70,7 +70,6 @@ public class FileSystemMonitor extends PluginMonitorAdapter{
                 });
             });
         };
-        poll = executor.scheduleAtFixedRate(pollingMethod, 0, pollingTime, TimeUnit.MILLISECONDS);
     }
 
     public FileSystemMonitor(ScheduledExecutorService executor, long pollingTime, String... directories) throws IOException {
@@ -105,7 +104,12 @@ public class FileSystemMonitor extends PluginMonitorAdapter{
     }
 
     @Bean
-    public static ScheduledExecutorService scheduledExecutorService(){
+    public static ScheduledExecutorService scheduledExecutorService() {
         return Executors.newSingleThreadScheduledExecutor();
+    }
+
+    @Override
+    public void start() {
+        poll = executor.scheduleAtFixedRate(pollingMethod, 0, pollTime, TimeUnit.MILLISECONDS);
     }
 }

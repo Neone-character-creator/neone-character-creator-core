@@ -1,5 +1,7 @@
-package io.github.thisisnozaku.charactercreator.plugins.monitors;
+package monitors;
 
+import io.github.thisisnozaku.charactercreator.plugins.monitors.FileSystemMonitor;
+import io.github.thisisnozaku.charactercreator.plugins.monitors.PluginMonitorEvent;
 import org.junit.After;
 import org.junit.Test;
 

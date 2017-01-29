@@ -30,6 +30,8 @@ public interface PluginMonitor {
      */
     PluginMonitor onModified(Consumer<PluginMonitorEvent> runnable);
 
+    void start();
+
     public static enum EventType {
         CREATED, MODIFIED, DELETED
     }

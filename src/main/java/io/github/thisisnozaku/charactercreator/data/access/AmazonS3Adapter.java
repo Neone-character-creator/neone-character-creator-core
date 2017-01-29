@@ -1,20 +1,21 @@
 package io.github.thisisnozaku.charactercreator.data.access;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by Damien on 9/11/2016.
@@ -24,22 +25,21 @@ import java.util.List;
 public class AmazonS3Adapter implements FileAccessor {
     @Value("${amazon.s3.bucket}")
     private String bucket;
+    @Inject
     private AmazonS3Client s3;
 
-    public AmazonS3Adapter() {
-        AWSCredentials credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
-        ClientConfiguration config = new ClientConfiguration();
-        s3 = new AmazonS3Client(credentials, config);
+    public AmazonS3Adapter(AmazonS3Client s3Client) {
+        s3 = s3Client;
     }
 
     @Override
-    public FileInformation getUrl(String path) {
-        return new FileInformation(s3.getUrl(bucket, path),
-                s3.getObjectMetadata(bucket, path).getLastModified().toInstant());
+    public FileInformation getFileInformation(String path) {
+        ObjectMetadata metadata = null;
+        return new S3BackedFileInformation(path);
     }
 
     @Override
-    public List<FileInformation> getUrls(String path) {
+    public List<FileInformation> getAllFileInformation(String path) {
         List<FileInformation> objects = new LinkedList<>();
         s3.listObjects(bucket, path).getObjectSummaries().forEach(s3ObjectSummary -> {
             if (!Paths.get(s3ObjectSummary.getKey()).equals(Paths.get(path))) {
@@ -53,12 +53,41 @@ public class AmazonS3Adapter implements FileAccessor {
     }
 
     @Override
-    public InputStream getUrlContent(URL url) {
+    public Optional<InputStream> getUrlContent(URL url) {
         //Strip leading slash, s3 key doesn't expect it
         String path = url.getPath().substring(1);
-        GetObjectRequest request = new GetObjectRequest(bucket, path);
-
-        return s3.getObject(request).getObjectContent();
+        if (s3.doesObjectExist(bucket, path)) {
+            GetObjectRequest request = new GetObjectRequest(bucket, path);
+            return Optional.of(s3.getObject(request).getObjectContent());
+        }
+        return Optional.empty();
     }
 
+    public class S3BackedFileInformation extends FileInformation {
+        private final String objectKey;
+        private final Optional<Instant> lastModified;
+
+        public S3BackedFileInformation(String objectKey) {
+            if (s3.doesObjectExist(bucket, objectKey)) {
+                lastModified = Optional.of(s3.getObjectMetadata(bucket, objectKey).getLastModified().toInstant());
+            } else {
+                lastModified = Optional.empty();
+            }
+            this.objectKey = objectKey;
+        }
+
+        public String getObjectKey() {
+            return objectKey;
+        }
+
+        @Override
+        public URL getFileUrl() {
+            return s3.getUrl(bucket, objectKey);
+        }
+
+        @Override
+        public Optional<Instant> getLastModifiedTimestamp() {
+            return lastModified;
+        }
+    }
 }

@@ -37,12 +37,12 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("games/")
 public class GameRestController {
     private final CharacterMongoRepositoryCustom characters;
-    private final PluginManager plugins;
+    private final PluginManager<PluginWrapper> plugins;
     private final Cache<String, File> generatedPdfs;
     private final Logger logger = LoggerFactory.getLogger(GameRestController.class);
 
     @Inject
-    public GameRestController(CharacterMongoRepositoryCustom characters,PluginManager pluginManager) {
+    public GameRestController(CharacterMongoRepositoryCustom characters, PluginManager<PluginWrapper> pluginManager) {
         this.characters = characters;
         this.plugins = pluginManager;
         generatedPdfs = CacheBuilder.newBuilder()
@@ -50,13 +50,15 @@ public class GameRestController {
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    public Collection<PluginDescription> getAvailablePlugins(){
+    public Collection<PluginDescription> getAvailablePlugins() {
         return plugins.getAllPluginDescriptions();
     }
 
     @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.POST, produces = "application/json")
-    public @ResponseBody CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
+    public
+    @ResponseBody
+    CharacterDataWrapper create(HttpEntity<String> requestBody, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         try {
             author = URLDecoder.decode(author, "UTF-8");
             game = URLDecoder.decode(game, "UTF-8");
@@ -118,7 +120,7 @@ public class GameRestController {
     /**
      * Removes the given characters, if it exists and the user it authorized to access it.
      *
-     *@param id the id of the character to remove
+     * @param id the id of the character to remove
      */
     @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.DELETE, produces = "application/json")
@@ -146,9 +148,10 @@ public class GameRestController {
             PluginDescription pluginDescription = new PluginDescription(author, game, version);
             Optional<PluginWrapper> plugin = plugins.getPlugin(pluginDescription);
             if (plugin.isPresent()) {
-                InputStream resourceStream = plugin.get().getResourceAsStream("pdf");
-                ResponseEntity<String> response;
-                if (resourceStream != null) {
+                Optional<InputStream> contentStream = plugin.get().getResourceAsStream("pdf");
+                if (contentStream.isPresent()) {
+                    InputStream resourceStream = contentStream.get();
+                    ResponseEntity<String> response;
                     PdfExporter<String> pdfExporter = new PdfExporter(new DefaultPdfWriter(), new JsonFieldValueExtractor());
                     pdfId = UUID.randomUUID();
                     File tempPdfPath = Paths.get(Files.createTempDir().getCanonicalPath(), pdfId.toString()).toFile();
@@ -157,10 +160,8 @@ public class GameRestController {
                     pdfExporter.exportPdf(characterJson, resourceStream, out);
                     generatedPdfs.put(pdfId.toString(), tempPdfPath);
                     response = new ResponseEntity<>(pdfId.toString(), HttpStatus.OK);
-                } else {
-                    response = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                    return response;
                 }
-                return response;
             } else {
                 throw new MissingPluginException(pluginDescription);
             }
@@ -187,7 +188,7 @@ public class GameRestController {
                 responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
             return responseEntity;
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

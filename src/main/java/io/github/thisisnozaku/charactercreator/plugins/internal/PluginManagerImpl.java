@@ -1,7 +1,5 @@
 package io.github.thisisnozaku.charactercreator.plugins.internal;
 
-import com.amazonaws.util.json.JSONObject;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
 import io.github.thisisnozaku.charactercreator.data.access.FileInformation;
@@ -19,19 +17,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateProcessingParameters;
-import org.yaml.snakeyaml.util.UriEncoder;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.Permission;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -41,7 +35,7 @@ import java.util.function.Consumer;
  * Created by Damien on 11/27/2015.
  */
 @Service("pluginManager")
-public class PluginManagerImpl implements PluginManager, PluginThymeleafResourceResolver {
+public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginThymeleafResourceResolver {
     private final Map<PluginDescription, PluginWrapper> plugins = new HashMap<PluginDescription, PluginWrapper>();
     private final Map<PluginDescription, Bundle> pluginBundles = new HashMap<>();
     private Framework framework;
@@ -108,7 +102,7 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
                         throw new IllegalStateException(String.format("While attempting to load the plugin at %s, no " +
                                 "plugin description file was found", serviceBundle.getLocation()));
                     }
-                    PluginWrapper wrapper = new PluginWrapper(pluginDescription, (GamePlugin) service, this, resourcePaths);
+                    PluginWrapper wrapper = new PluginWrapper(pluginDescription, (GamePlugin) service, this, fileAccess, resourcePaths);
                     switch (serviceEvent.getType()) {
                         case ServiceEvent.REGISTERED:
                             logger.info("Game plugin {}-{}-{} registered.", wrapper.getPluginDescription().getAuthor(),
@@ -132,30 +126,42 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
             });
             framework.start();
             Consumer<PluginMonitorEvent> update = (event)->{
-                FileInformation info = fileAccess.getUrl(event.getPluginUrl());
-                Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
-                if (b == null || info.getLastModifiedTimestamp().isAfter(Instant.ofEpochMilli(b.getLastModified()))) {
-                    logger.info("A new plugin found at url {}, loading it.", info.getFileUrl().toExternalForm());
-                    b = loadBundle(info.getFileUrl());
+                try {
+                    FileInformation info = fileAccess.getFileInformation(event.getPluginUrl());
+                    Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
+                    Optional<Instant> timestamp = info.getLastModifiedTimestamp();
+                    if (timestamp.isPresent() && (b == null || timestamp.get().isAfter(Instant.ofEpochMilli(b.getLastModified())))) {
+                        logger.info("A new plugin found at url {}, loading it.", info.getFileUrl().toExternalForm());
+                        b = loadBundle(info.getFileUrl());
+                    }
+                } catch (Exception e){
+                    e.printStackTrace();
                 }
             };
             pluginMonitor.onCreated(update).onModified(update);
             pluginMonitor.onDeleted(event->{
-                FileInformation info = fileAccess.getUrl(event.getPluginUrl());
-                Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
                 try {
-                    b.uninstall();
-                    Optional<Map.Entry<PluginDescription, Bundle>> entry = pluginBundles.entrySet().stream().filter(e->{
-                        return e.getValue().equals(b);
-                    }).findFirst();
-                    if(entry.isPresent()){
-                        pluginBundles.remove(entry.get().getKey());
-                        plugins.remove(entry.get().getKey());
+                    FileInformation info = fileAccess.getFileInformation(event.getPluginUrl());
+                    Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
+                    try {
+                        if(b != null) {
+                            b.uninstall();
+                        }
+                        Optional<Map.Entry<PluginDescription, Bundle>> entry = pluginBundles.entrySet().stream().filter(e -> {
+                            return e.getValue().equals(b);
+                        }).findFirst();
+                        if (entry.isPresent()) {
+                            pluginBundles.remove(entry.get().getKey());
+                            plugins.remove(entry.get().getKey());
+                        }
+                    } catch (BundleException e) {
+                        e.printStackTrace();
                     }
-                } catch (BundleException e) {
+                }catch (Exception e){
                     e.printStackTrace();
                 }
             });
+            pluginMonitor.start();
         } catch (BundleException ex) {
             logger.error(ex.getLocalizedMessage());
         }
@@ -175,7 +181,8 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
 
     @Override
     public Optional<PluginWrapper> getPlugin(String author, String game, String version) {
-        return Optional.ofNullable(plugins.get(new PluginDescription(author, game, version)));
+        PluginDescription description = new PluginDescription(author, game, version);
+        return Optional.ofNullable(plugins.get(description));
     }
 
     @Override
@@ -190,29 +197,30 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
     }
 
     @Override
-    public InputStream getPluginResourceAsStream(PluginDescription incomingPluginDescription, String resourceName) {
-        URL resourceUrl = null;
+    public URI getPluginResource(PluginDescription pluginDescription, String s) {
         try {
-            resourceUrl = plugins.get(incomingPluginDescription).getResourceUrl(resourceName);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        } catch (NullPointerException ex) {
-            return null;
-        } finally {
+            return fileAccess.getFileInformation(s).getFileUrl().toURI();
+        }catch (URISyntaxException ex){
+            throw new RuntimeException(ex);
         }
-        return fileAccess.getUrlContent(resourceUrl);
     }
 
     private Bundle loadBundle(URL path) {
         try {
-            InputStream in = fileAccess.getUrlContent(path);
-            Bundle bundle = framework.getBundleContext().getBundle(path.toExternalForm());
-            if (bundle != null) {
-                bundle.uninstall();
+            Optional<InputStream> in = fileAccess.getUrlContent(path);
+            if (in.isPresent()) {
+                InputStream inStream = in.get();
+                Bundle bundle = framework.getBundleContext().getBundle(path.toExternalForm());
+                if (bundle != null) {
+                    bundle.uninstall();
+                }
+                bundle = framework.getBundleContext().installBundle(path.toExternalForm(), inStream);
+                bundle.start();
+                return bundle;
+            } else {
+                System.out.println(String.format("Tried to get stream for %s but it wasn't found.", path.toString()));
+                return null;
             }
-            bundle = framework.getBundleContext().installBundle(path.toExternalForm(), in);
-            bundle.start();
-            return bundle;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -231,8 +239,8 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
         try {
             URL resourceUrl = null;
             String resource = null;
-            resource = plugins.get(pluginDescription).getResourcePath(pluginNameTokens[3]);
-            resourceUrl = getPluginResourceURL(pluginDescription, resource);
+            resource = plugins.get(pluginDescription).getResourceMappings().get(pluginNameTokens[3]);
+            resourceUrl = getPluginResource(pluginDescription, resource).toURL();
             if (resourceUrl == null) {
                 throw new IOException("Stream for resource " + resourceName + " was null.");
             }
@@ -242,14 +250,6 @@ public class PluginManagerImpl implements PluginManager, PluginThymeleafResource
         } finally {
         }
         return null;
-    }
-
-    @Override
-    public URL getPluginResourceURL(PluginDescription pluginDescription, String name) {
-        Bundle bundle = pluginBundles.get(pluginDescription);
-        String resourcePath = this.plugins.get(pluginDescription).getResourcePath(name);
-        URL resourceUrl = this.pluginBundles.get(pluginDescription).getResource(resourcePath);
-        return resourceUrl;
     }
 
     private void uninstallBundle(Bundle b){

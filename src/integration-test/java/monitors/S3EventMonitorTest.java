@@ -1,4 +1,4 @@
-package io.github.thisisnozaku.charactercreator.plugins.monitors;
+package monitors;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
@@ -7,10 +7,14 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.event.S3EventNotification;
 import com.amazonaws.services.s3.model.S3Event;
+import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
-import org.junit.*;
+import io.github.thisisnozaku.charactercreator.plugins.monitors.S3EventSqsQueueListener;
+import org.junit.AfterClass;
+import org.junit.Test;
+import org.testng.annotations.BeforeClass;
 
 import java.util.LinkedList;
 import java.util.List;

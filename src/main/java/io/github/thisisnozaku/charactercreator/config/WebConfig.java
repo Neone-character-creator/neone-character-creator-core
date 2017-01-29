@@ -25,7 +25,6 @@ import java.util.Properties;
  * Created by Damien on 1/8/2016.
  */
 @Configuration
-@EnableWebMvc
 public class WebConfig extends WebMvcConfigurerAdapter{
     @Inject
     private PluginManager pluginManager;

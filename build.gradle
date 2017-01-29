@@ -99,9 +99,10 @@ dependencies {
     compile 'commons-io:commons-io:2.4'
     compile('io.github.thisisnozaku:pdf-export:1.0.2')
 
-    compile 'com.amazonaws:aws-java-sdk-s3'
-    compile 'com.amazonaws:aws-java-sdk-ses'
-    compile 'com.amazonaws:aws-java-sdk-sqs'
+    compile 'com.amazonaws:aws-java-sdk-core:1.11.86'
+    compile 'com.amazonaws:aws-java-sdk-s3:1.11.86'
+    compile 'com.amazonaws:aws-java-sdk-ses:1.11.86'
+    compile 'com.amazonaws:aws-java-sdk-sqs:1.11.86'
 
     compile 'org.springframework.security.oauth:spring-security-oauth2:2.0.11.RELEASE'
 
@@ -145,10 +146,7 @@ test.dependsOn copyTestRuntimeDependencies
 bootRun.dependsOn copyRuntimeDependencies
 
 bootRun {
-    if (project.hasProperty('jvmArgs')){
-        jvmArgs project.jvmArgs.split("\\s+")
-        println project.jvmArgs
-    }
+    systemProperties System.properties
 }
 
 cobertura {
