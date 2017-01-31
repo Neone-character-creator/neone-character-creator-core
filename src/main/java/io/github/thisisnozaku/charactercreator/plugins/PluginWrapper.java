@@ -1,5 +1,6 @@
 package io.github.thisisnozaku.charactercreator.plugins;
 
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
 
 import java.io.InputStream;

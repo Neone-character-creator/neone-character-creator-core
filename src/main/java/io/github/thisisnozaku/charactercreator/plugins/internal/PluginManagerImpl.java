@@ -1,5 +1,6 @@
 package io.github.thisisnozaku.charactercreator.plugins.internal;
 
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.jayway.jsonpath.JsonPath;
 import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
 import io.github.thisisnozaku.charactercreator.data.access.FileInformation;
@@ -187,8 +188,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
 
     @Override
     public Collection<PluginDescription> getAllPluginDescriptions() {
-        Collection<PluginDescription> returnVal = plugins.keySet();
-        return returnVal;
+        return plugins.keySet();
     }
 
     @Override

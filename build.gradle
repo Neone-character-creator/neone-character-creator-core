@@ -142,6 +142,7 @@ clean << {
     new File('felix-cache').deleteDir()
 }
 
+//noinspection GroovyAssignabilityCheck
 test.dependsOn copyTestRuntimeDependencies
 bootRun.dependsOn copyRuntimeDependencies
 

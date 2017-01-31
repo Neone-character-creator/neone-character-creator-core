@@ -57,7 +57,6 @@ public class RestControllerTest {
     private CharacterMongoRepositoryCustom characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
     @Mock
     private PluginManager plugins;
-
     private MockMvc mvc;
 
     private PluginWrapper firstPlugin;
@@ -208,7 +207,7 @@ public class RestControllerTest {
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getVersion(), "UTF-8") + "/characters/" +
-                id)
+                id.toString())
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(mockCharacter);
 

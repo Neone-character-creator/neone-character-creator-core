@@ -107,7 +107,7 @@ public class GamePagesControllerTest {
                 character.setId(BigInteger.ONE.toString());
             }
             return character;
-        });;
+        });
     }
 
     /**

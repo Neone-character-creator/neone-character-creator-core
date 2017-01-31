@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.WebMvcProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.http.CacheControl;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -47,5 +48,11 @@ public class WebConfig extends WebMvcConfigurerAdapter{
                 .resourceChain(true).addResolver(pluginResourceResolver);
 
         super.addResourceHandlers(registry);
+    }
+
+    @Bean
+    static public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer(){
+        PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
+        return configurer;
     }
 }

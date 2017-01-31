@@ -1,5 +1,6 @@
 package io.github.thisisnozaku.charactercreator.data.access;
 
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 

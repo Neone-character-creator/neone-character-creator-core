@@ -12,14 +12,14 @@ import java.util.Optional;
  */
 public class FileInformation {
     private URL fileUrl;
-    private Optional<Instant> lastModifiedTimestamp;
+    private Instant lastModifiedTimestamp;
 
     protected FileInformation(){}
 
     public FileInformation(@NotNull URL fileUrl,
                            Instant lastModifiedTimestamp) {
         this.fileUrl = fileUrl;
-        this.lastModifiedTimestamp = lastModifiedTimestamp != null ? Optional.of(lastModifiedTimestamp) : Optional.empty();
+        this.lastModifiedTimestamp = lastModifiedTimestamp;
     }
 
     public URL getFileUrl() {
@@ -27,6 +27,6 @@ public class FileInformation {
     }
 
     public Optional<Instant> getLastModifiedTimestamp() {
-        return lastModifiedTimestamp;
+        return Optional.ofNullable(lastModifiedTimestamp);
     }
 }

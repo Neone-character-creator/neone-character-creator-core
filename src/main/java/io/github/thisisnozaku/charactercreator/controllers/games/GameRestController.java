@@ -1,12 +1,12 @@
 package io.github.thisisnozaku.charactercreator.controllers.games;
 
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Files;
 import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
-import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
 import io.github.thisisnozaku.charactercreator.plugins.*;
@@ -17,14 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.file.Paths;
 import java.util.*;
@@ -34,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * Controller for the rest api.
  */
 @RestController
-@RequestMapping("games/")
+@RequestMapping("/games/")
 public class GameRestController {
     private final CharacterMongoRepositoryCustom characters;
     private final PluginManager<PluginWrapper> plugins;
@@ -88,7 +86,7 @@ public class GameRestController {
      * @param character the character to save
      */
     @Secured({"ROLE_USER"})
-    @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}  ", method = RequestMethod.PUT, produces = "application/json")
+    @RequestMapping(value = "{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.PUT, produces = "application/json", consumes = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public CharacterDataWrapper save(HttpEntity<String> character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable String id) {
         try {
@@ -152,7 +150,7 @@ public class GameRestController {
                 if (contentStream.isPresent()) {
                     InputStream resourceStream = contentStream.get();
                     ResponseEntity<String> response;
-                    PdfExporter<String> pdfExporter = new PdfExporter(new DefaultPdfWriter(), new JsonFieldValueExtractor());
+                    PdfExporter<String> pdfExporter = new PdfExporter<String>(new DefaultPdfWriter(), new JsonFieldValueExtractor());
                     pdfId = UUID.randomUUID();
                     File tempPdfPath = Paths.get(Files.createTempDir().getCanonicalPath(), pdfId.toString()).toFile();
                     OutputStream out = new FileOutputStream(tempPdfPath);
@@ -198,8 +196,7 @@ public class GameRestController {
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.GET, produces = "application/json")
     public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
-        CharacterDataWrapper wrapper = characters.findOne(id);
-        return wrapper;
+        return characters.findOne(id);
     }
 
     @ExceptionHandler(MissingPluginException.class)

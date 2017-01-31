@@ -1,14 +1,15 @@
 package io.github.thisisnozaku.charactercreator.data.access;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -26,7 +27,7 @@ public class AmazonS3Adapter implements FileAccessor {
     @Value("${amazon.s3.bucket}")
     private String bucket;
     @Inject
-    private AmazonS3Client s3;
+    private AmazonS3 s3;
 
     public AmazonS3Adapter(AmazonS3Client s3Client) {
         s3 = s3Client;
@@ -65,13 +66,13 @@ public class AmazonS3Adapter implements FileAccessor {
 
     public class S3BackedFileInformation extends FileInformation {
         private final String objectKey;
-        private final Optional<Instant> lastModified;
+        private final Instant lastModified;
 
         public S3BackedFileInformation(String objectKey) {
             if (s3.doesObjectExist(bucket, objectKey)) {
-                lastModified = Optional.of(s3.getObjectMetadata(bucket, objectKey).getLastModified().toInstant());
+                lastModified = s3.getObjectMetadata(bucket, objectKey).getLastModified().toInstant();
             } else {
-                lastModified = Optional.empty();
+                lastModified = null;
             }
             this.objectKey = objectKey;
         }
@@ -87,7 +88,7 @@ public class AmazonS3Adapter implements FileAccessor {
 
         @Override
         public Optional<Instant> getLastModifiedTimestamp() {
-            return lastModified;
+            return Optional.ofNullable(lastModified);
         }
     }
 }

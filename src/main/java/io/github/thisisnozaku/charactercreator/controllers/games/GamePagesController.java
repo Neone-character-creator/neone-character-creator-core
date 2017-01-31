@@ -30,14 +30,16 @@ import java.util.Optional;
 @Controller
 @RequestMapping("games/{author}/{game}/{version:.+}")
 public class GamePagesController {
+    @Inject
     private final UserRepository accounts;
+    @Inject
     private final CharacterMongoRepository characters;
+    @Inject
     private final PluginManager<PluginWrapper> plugins;
     @Value("${google.oauth2.client.clientId}")
     private String googleClientId;
 
-    @Inject
-    public GamePagesController(CharacterMongoRepository characters, UserRepository accounts, PluginManager plugins) {
+    public GamePagesController(CharacterMongoRepository characters, UserRepository accounts, PluginManager<PluginWrapper> plugins) {
         this.characters = characters;
         this.accounts = accounts;
         this.plugins = plugins;

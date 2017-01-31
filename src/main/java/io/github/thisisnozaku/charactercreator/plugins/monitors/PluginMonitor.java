@@ -32,7 +32,7 @@ public interface PluginMonitor {
 
     void start();
 
-    public static enum EventType {
+    enum EventType {
         CREATED, MODIFIED, DELETED
     }
 }

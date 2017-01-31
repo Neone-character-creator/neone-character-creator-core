@@ -5,10 +5,14 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.event.S3EventNotification;
 import com.amazonaws.services.s3.model.S3Event;
+import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.*;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,13 +41,11 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
     private final XmlMapper xmlMapper = new XmlMapper();
     private final ScheduledExecutorService executorService;
     private final List<String> monitoredQueueNamed;
-    private final AmazonS3Client s3Client;
 
-    public AmazonSqsQueueMonitor(AmazonSQSClient sqsClient, AmazonS3Client s3Client, ScheduledExecutorService executorService, @Value("${sqs.queues}") String... queueNames) {
+    public AmazonSqsQueueMonitor(AmazonSQSClient sqsClient, ScheduledExecutorService executorService, @Value("${sqs.queues}") String... queueNames) {
         this.sqsClient = sqsClient;
         this.executorService = executorService;
         monitoredQueueNamed = Arrays.asList(queueNames);
-        this.s3Client = s3Client;
     }
 
     /**
@@ -87,10 +89,10 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
                         return new DeleteMessageBatchRequestEntry(message.getMessageId(), message.getReceiptHandle());
                     }).collect(Collectors.toList());
                     //Don't send an empty collection of entries to avoid EmptyBatchException.
-                    if(deleteEntries.size() > 0) {
+                    if (deleteEntries.size() > 0) {
                         sqsClient.deleteMessageBatch(queue, deleteEntries);
                     }
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }, 0, pollingInterval.getSeconds(), TimeUnit.SECONDS);
@@ -98,18 +100,15 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
     }
 
     @Bean
-    public static AmazonSQSClient sqsClient() {
+    public static AmazonSQS sqsClient() {
         ClientConfiguration configuration = new ClientConfiguration();
-        AmazonSQSClient client = new AmazonSQSClient(configuration);
-        client.setRegion(Region.getRegion(Regions.US_WEST_1));
-        return client;
+        return AmazonSQSClientBuilder.defaultClient();
     }
 
     @Bean
-    public static AmazonS3Client s3Client() {
+    public static AmazonS3 s3Client() {
         AWSCredentials credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
-        ClientConfiguration config = new ClientConfiguration();
-        return new AmazonS3Client(credentials, config);
+        return AmazonS3ClientBuilder.defaultClient();
     }
 
     @Bean
