@@ -1,6 +1,5 @@
 package io.github.thisisnozaku.charactercreator.plugins.internal;
 
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.jayway.jsonpath.JsonPath;
 import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
 import io.github.thisisnozaku.charactercreator.data.access.FileInformation;
@@ -42,8 +41,8 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
     private Framework framework;
     Logger logger = LoggerFactory.getLogger(PluginManagerImpl.class);
     private final ReentrantReadWriteLock bundleLock = new ReentrantReadWriteLock();
-    @Value("${plugins.directory}")
-    private String pluginDirectory;
+    @Value("${plugins.path}")
+    private String pluginPath;
     @Inject
     private FileAccessor fileAccess;
     @Value("${plugins.pollingWait}")
@@ -57,8 +56,8 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
         try {
             ResourceBundle configResource = ResourceBundle.getBundle("config");
             Map<String, String> config = new HashMap<>();
-            logger.info("Looking for plugins in {}", pluginDirectory);
-            System.setProperty("felix.fileinstall.dir", pluginDirectory);
+            logger.info("Looking for plugins in {}", pluginPath);
+            System.setProperty("felix.fileinstall.dir", pluginPath);
             String property = System.getProperty("felix.fileinstall.dir");
             config.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
             config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "io.github.thisisnozaku.charactercreator.plugins; version=1.0");
