@@ -159,9 +159,11 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
             });
             framework.start();
             pluginMonitor.start();
-            logger.info("Looking for plugins in {}", pluginPath);
+            logger.info("Looking for plugins in \"{}\"", pluginPath);
             //Initial attempt to load all bundles.
-            fileAccess.getAllFileInformation(pluginPath).forEach(p->{
+            Collection<FileInformation> fileInfo = fileAccess.getAllFileInformation(pluginPath);
+            logger.info("Found {} plugins in \"{}\".", fileInfo.size(), pluginPath);
+            fileInfo.forEach(p->{
                 loadBundle(p.getFileUrl());
             });
         } catch (BundleException ex) {
