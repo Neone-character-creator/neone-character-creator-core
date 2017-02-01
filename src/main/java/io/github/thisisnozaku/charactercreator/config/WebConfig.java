@@ -26,9 +26,7 @@ import java.util.Properties;
  * Created by Damien on 1/8/2016.
  */
 @Configuration
-public class WebConfig extends WebMvcConfigurerAdapter{
-    @Inject
-    private PluginManager pluginManager;
+public class WebConfig extends WebMvcConfigurerAdapter {
     @Inject
     private PluginResourceResolver pluginResourceResolver;
 
@@ -51,7 +49,7 @@ public class WebConfig extends WebMvcConfigurerAdapter{
     }
 
     @Bean
-    static public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer(){
+    static public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
         PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
         return configurer;
     }
