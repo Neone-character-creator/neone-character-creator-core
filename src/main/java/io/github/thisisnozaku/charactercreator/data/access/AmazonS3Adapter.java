@@ -1,6 +1,7 @@
 package io.github.thisisnozaku.charactercreator.data.access;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +34,6 @@ public class AmazonS3Adapter implements FileAccessor {
 
     @Override
     public FileInformation getFileInformation(String path) {
-        ObjectMetadata metadata = null;
         return new S3BackedFileInformation(path);
     }
 
@@ -42,7 +42,7 @@ public class AmazonS3Adapter implements FileAccessor {
         List<FileInformation> objects = new LinkedList<>();
         s3.listObjects(bucket, path).getObjectSummaries().forEach(s3ObjectSummary -> {
             if (!Paths.get(s3ObjectSummary.getKey()).equals(Paths.get(path))) {
-                GetObjectRequest get = new GetObjectRequest(bucket, s3ObjectSummary.getKey());
+                GetObjectMetadataRequest metadataRequest = new GetObjectMetadataRequest(bucket, s3ObjectSummary.getKey());
                 objects.add(
                         new FileInformation(s3.getUrl(bucket, s3ObjectSummary.getKey()),
                                 s3ObjectSummary.getLastModified().toInstant()));
