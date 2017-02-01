@@ -56,7 +56,6 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
         try {
             ResourceBundle configResource = ResourceBundle.getBundle("config");
             Map<String, String> config = new HashMap<>();
-            logger.info("Looking for plugins in {}", pluginPath);
             System.setProperty("felix.fileinstall.dir", pluginPath);
             String property = System.getProperty("felix.fileinstall.dir");
             config.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
@@ -124,7 +123,6 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                         break;
                 }
             });
-            framework.start();
             Consumer<PluginMonitorEvent> update = (event)->{
                 try {
                     FileInformation info = fileAccess.getFileInformation(event.getPluginUrl());
@@ -161,7 +159,13 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                     e.printStackTrace();
                 }
             });
+            framework.start();
             pluginMonitor.start();
+            logger.info("Looking for plugins in {}", pluginPath);
+            //Initial attempt to load all bundles.
+            fileAccess.getAllFileInformation("").forEach(p->{
+                loadBundle(p.getFileUrl());
+            });
         } catch (BundleException ex) {
             logger.error(ex.getLocalizedMessage());
         }
