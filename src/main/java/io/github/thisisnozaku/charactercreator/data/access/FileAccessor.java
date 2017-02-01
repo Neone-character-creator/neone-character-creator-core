@@ -19,7 +19,7 @@ public interface FileAccessor {
     FileInformation getFileInformation(String path);
 
     /**
-     * Get all child URLs at the given path if it is a directory. Returns null if path resolves to a file
+     * Get all child URLs at the given path if it is a directory.
      * @param path
      * @return
      */
