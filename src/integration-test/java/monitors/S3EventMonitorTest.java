@@ -28,14 +28,12 @@ import static org.junit.Assert.*;
  */
 public class S3EventMonitorTest {
     private static final String testQueueName = "s3-monitor-test-queue";
-    private static AmazonSQSClient sqsClient;
+    @Inject
+    private static AmazonSQS sqsClient;
 
     @BeforeClass
     public static void setup() {
-        AWSCredentials credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
-        ClientConfiguration configuration = new ClientConfiguration();
-        sqsClient = new AmazonSQSClient(configuration);
-        sqsClient.configureRegion(Regions.US_WEST_2);
+
     }
 
     @AfterClass

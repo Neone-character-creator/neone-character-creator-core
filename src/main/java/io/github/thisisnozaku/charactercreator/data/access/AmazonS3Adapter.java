@@ -1,10 +1,8 @@
 package io.github.thisisnozaku.charactercreator.data.access;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -29,7 +27,7 @@ public class AmazonS3Adapter implements FileAccessor {
     @Inject
     private AmazonS3 s3;
 
-    public AmazonS3Adapter(AmazonS3Client s3Client) {
+    public AmazonS3Adapter(AmazonS3 s3Client) {
         s3 = s3Client;
     }
 

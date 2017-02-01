@@ -1,18 +1,8 @@
 package io.github.thisisnozaku.charactercreator.plugins.monitors;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.event.S3EventNotification;
 import com.amazonaws.services.s3.model.S3Event;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClient;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.*;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,12 +27,12 @@ import java.util.stream.Collectors;
 @Service
 @Profile("aws")
 public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
-    private final AmazonSQSClient sqsClient;
+    private final AmazonSQS sqsClient;
     private final XmlMapper xmlMapper = new XmlMapper();
     private final ScheduledExecutorService executorService;
     private final List<String> monitoredQueueNamed;
 
-    public AmazonSqsQueueMonitor(AmazonSQSClient sqsClient, ScheduledExecutorService executorService, @Value("${sqs.queues}") String... queueNames) {
+    public AmazonSqsQueueMonitor(AmazonSQS sqsClient, ScheduledExecutorService executorService, @Value("${sqs.queues}") String... queueNames) {
         this.sqsClient = sqsClient;
         this.executorService = executorService;
         monitoredQueueNamed = Arrays.asList(queueNames);
@@ -97,18 +87,6 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
                 }
             }, 0, pollingInterval.getSeconds(), TimeUnit.SECONDS);
         });
-    }
-
-    @Bean
-    public static AmazonSQS sqsClient() {
-        ClientConfiguration configuration = new ClientConfiguration();
-        return AmazonSQSClientBuilder.defaultClient();
-    }
-
-    @Bean
-    public static AmazonS3 s3Client() {
-        AWSCredentials credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
-        return AmazonS3ClientBuilder.defaultClient();
     }
 
     @Bean
