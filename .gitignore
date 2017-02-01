@@ -66,3 +66,4 @@ crashlytics-build.properties
 /plugins
 google_client_secret.json
 iam-credentials.csv
+smtp-credentials.csv
