@@ -45,8 +45,6 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
     private String pluginPath;
     @Inject
     private FileAccessor fileAccess;
-    @Value("${plugins.pollingWait}")
-    private int pollingWait;
     @Inject
     private PluginMonitor pluginMonitor;
 
