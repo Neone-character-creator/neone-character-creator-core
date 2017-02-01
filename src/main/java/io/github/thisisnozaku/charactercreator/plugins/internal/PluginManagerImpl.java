@@ -74,7 +74,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                     URL pluginDescriptionFile = null;
                     PluginDescription pluginDescription = null;
                     Map<String, String> resourcePaths = new HashMap<>();
-                    if((pluginDescriptionFile= serviceBundle.getResource("plugin.json")) != null){
+                    if ((pluginDescriptionFile = serviceBundle.getResource("plugin.json")) != null) {
                         try {
                             logger.info("Trying to read plugin.json");
                             String creator = JsonPath.read(pluginDescriptionFile.openStream(),
@@ -87,15 +87,15 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                                     JsonPath.read(pluginDescriptionFile.openStream(),
                                             "$.resources");
                             pluginDescription = new PluginDescription(creator, game, version);
-                        } catch (IOException ex){
+                        } catch (IOException ex) {
                             logger.error(ex.getLocalizedMessage());
                         }
                     }
-                    if(pluginDescriptionFile== null) {
+                    if (pluginDescriptionFile == null) {
                         logger.info("Trying to read plugin.xml");
                         pluginDescriptionFile = serviceBundle.getResource("plugin.xml");
                     }
-                    if(pluginDescriptionFile == null){
+                    if (pluginDescriptionFile == null) {
                         throw new IllegalStateException(String.format("While attempting to load the plugin at %s, no " +
                                 "plugin description file was found", serviceBundle.getLocation()));
                     }
@@ -121,7 +121,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                         break;
                 }
             });
-            Consumer<PluginMonitorEvent> update = (event)->{
+            Consumer<PluginMonitorEvent> update = (event) -> {
                 try {
                     FileInformation info = fileAccess.getFileInformation(event.getPluginUrl());
                     Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
@@ -130,17 +130,17 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                         logger.info("A new plugin found at url {}, loading it.", info.getFileUrl().toExternalForm());
                         b = loadBundle(info.getFileUrl());
                     }
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             };
             pluginMonitor.onCreated(update).onModified(update);
-            pluginMonitor.onDeleted(event->{
+            pluginMonitor.onDeleted(event -> {
                 try {
                     FileInformation info = fileAccess.getFileInformation(event.getPluginUrl());
                     Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
                     try {
-                        if(b != null) {
+                        if (b != null) {
                             b.uninstall();
                         }
                         Optional<Map.Entry<PluginDescription, Bundle>> entry = pluginBundles.entrySet().stream().filter(e -> {
@@ -153,7 +153,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                     } catch (BundleException e) {
                         e.printStackTrace();
                     }
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
@@ -163,7 +163,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
             //Initial attempt to load all bundles.
             Collection<FileInformation> fileInfo = fileAccess.getAllFileInformation(pluginPath);
             logger.info("Found {} plugins in \"{}\".", fileInfo.size(), pluginPath);
-            fileInfo.forEach(p->{
+            fileInfo.forEach(p -> {
                 loadBundle(p.getFileUrl());
             });
         } catch (BundleException ex) {
@@ -203,7 +203,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
     public URI getPluginResource(PluginDescription pluginDescription, String s) {
         try {
             return fileAccess.getFileInformation(s).getFileUrl().toURI();
-        }catch (URISyntaxException ex){
+        } catch (URISyntaxException ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -221,12 +221,15 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                 bundle.start();
                 return bundle;
             } else {
-                System.out.println(String.format("Tried to get stream for %s but it wasn't found.", path.toString()));
+                logger.debug("Tried to get stream for {} but it wasn't found.", path.toString());
                 return null;
             }
+        } catch (BundleException ex) {
+            ex.printStackTrace();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        throw new IllegalStateException();
     }
 
     @Override
@@ -255,7 +258,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
         return null;
     }
 
-    private void uninstallBundle(Bundle b){
+    private void uninstallBundle(Bundle b) {
 
     }
 }
