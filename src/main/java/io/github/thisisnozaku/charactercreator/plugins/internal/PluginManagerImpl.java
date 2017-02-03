@@ -21,6 +21,7 @@ import org.thymeleaf.TemplateProcessingParameters;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -215,10 +216,12 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                 InputStream inStream = in.get();
                 Bundle bundle = framework.getBundleContext().getBundle(path.toExternalForm());
                 if (bundle != null) {
-                    bundle.uninstall();
+                    bundle.update(inStream);
+                } else {
+                    bundle = framework.getBundleContext().installBundle(new File(path.toURI()).getName(), inStream);
+                    bundle.start();
                 }
-                bundle = framework.getBundleContext().installBundle(path.toExternalForm(), inStream);
-                bundle.start();
+
                 return bundle;
             } else {
                 logger.debug("Tried to get stream for {} but it wasn't found.", path.toString());
