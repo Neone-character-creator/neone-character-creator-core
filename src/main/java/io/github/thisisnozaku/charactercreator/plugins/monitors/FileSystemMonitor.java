@@ -6,14 +6,19 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import static java.nio.file.StandardWatchEventKinds.*;
 
 /**
  * Monitors directories on the local file system for changes and executes callbacks upon seeing changes in the watched
@@ -47,32 +52,38 @@ public class FileSystemMonitor extends PluginMonitorAdapter {
         this.executor = executor;
         pollingMethod = () -> {
             watchKeys.stream().forEach(watchKey -> {
+                Path parentPath = (Path) watchKey.watchable();
                 List<WatchEvent<?>> events = watchKey.pollEvents();
                 if (events.size() > 0) events.stream().forEach(watchEvent -> {
-                    PluginMonitorEvent pluginMonitorEvent = null;
-                    Collection<Consumer<PluginMonitorEvent>> callables = null;
-                    if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_CREATE)) {
-                        callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.CREATED);
-                        pluginMonitorEvent = new PluginMonitorEvent(EventType.CREATED, watchEvent.context().toString());
-                    } else if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_DELETE)) {
-                        callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.DELETED);
-                        pluginMonitorEvent = new PluginMonitorEvent(EventType.DELETED, watchEvent.context().toString());
-                    } else if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
-                        callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.MODIFIED);
-                        pluginMonitorEvent = new PluginMonitorEvent(EventType.MODIFIED, watchEvent.context().toString());
-                    }
-                    final PluginMonitorEvent pluginEvent = pluginMonitorEvent;
-                    if (callables != null && callables.size() > 0) {
-                        callables.forEach(c -> {
-                            c.accept(pluginEvent);
-                        });
+                    try {
+                        Collection<Consumer<PluginMonitorEvent>> callables = null;
+                        PluginMonitorEvent pluginMonitorEvent = null;
+                        if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_CREATE)) {
+                            callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.CREATED);
+                            pluginMonitorEvent = new PluginMonitorEvent(EventType.CREATED, parentPath.resolve(watchEvent.context().toString()).toFile().toURI().toURL().toExternalForm());
+                        } else if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_DELETE)) {
+                            callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.DELETED);
+                            pluginMonitorEvent = new PluginMonitorEvent(EventType.DELETED, parentPath.resolve(watchEvent.context().toString()).toFile().toURI().toURL().toExternalForm());
+                        } else if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
+                            callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.MODIFIED);
+                            pluginMonitorEvent = new PluginMonitorEvent(EventType.MODIFIED, parentPath.resolve(watchEvent.context().toString()).toFile().toURI().toURL().toExternalForm());
+                        }
+                        final PluginMonitorEvent pluginEvent = pluginMonitorEvent;
+                        if (callables != null && callables.size() > 0) {
+                            callables.forEach(c -> {
+                                c.accept(pluginEvent);
+                            });
+                        }
+                    } catch (MalformedURLException ex) {
+                        throw new IllegalStateException(ex);
                     }
                 });
             });
         };
     }
 
-    public FileSystemMonitor(ScheduledExecutorService executor, long pollingTime, String... directories) throws IOException {
+    public FileSystemMonitor(ScheduledExecutorService executor, long pollingTime, String... directories) throws
+            IOException {
         this(executor, pollingTime, Arrays.asList(directories));
     }
 
