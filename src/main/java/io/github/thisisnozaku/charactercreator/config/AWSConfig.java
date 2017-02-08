@@ -1,5 +1,6 @@
 package io.github.thisisnozaku.charactercreator.config;
 
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
@@ -28,7 +29,10 @@ public class AWSConfig {
     @Bean
     public AmazonSQS amazonSQS() {
         AmazonSQSClientBuilder builder = AmazonSQSClientBuilder.standard();
-        builder.setRegion(getRegion().getName());
+
+        AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration("sqs.us-west-1.amazonaws.com",
+                getRegion().getName());
+        builder.setEndpointConfiguration(endpointConfiguration);
         return builder.build();
     }
 
