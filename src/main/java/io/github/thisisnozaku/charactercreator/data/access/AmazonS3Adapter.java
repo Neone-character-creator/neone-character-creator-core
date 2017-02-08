@@ -2,17 +2,18 @@ package io.github.thisisnozaku.charactercreator.data.access;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.sql.Date;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +39,11 @@ public class AmazonS3Adapter implements FileAccessor {
     }
 
     @Override
+    public FileInformation getFileInformation(URL path) {
+        return getFileInformation(path.toExternalForm());
+    }
+
+    @Override
     public List<FileInformation> getAllFileInformation(String path) {
         List<FileInformation> objects = new LinkedList<>();
         s3.listObjects(bucket, path).getObjectSummaries().forEach(s3ObjectSummary -> {
@@ -52,14 +58,16 @@ public class AmazonS3Adapter implements FileAccessor {
     }
 
     @Override
-    public Optional<InputStream> getUrlContent(URL url) {
-        //Strip leading slash, s3 key doesn't expect it
-        String path = url.getPath().substring(1);
-        if (s3.doesObjectExist(bucket, path)) {
-            GetObjectRequest request = new GetObjectRequest(bucket, path);
-            return Optional.of(s3.getObject(request).getObjectContent());
+    public <T extends FileInformation> Optional<InputStream> getContent(T file) {
+        if(!S3BackedFileInformation.class.isInstance(file)){
+            throw new IllegalArgumentException("FileInformation is not for an S3 object.");
         }
-        return Optional.empty();
+        S3BackedFileInformation s3FileInformation = (S3BackedFileInformation) file;
+        try {
+            return Optional.ofNullable(s3FileInformation.getFileUrl().openStream());
+        }catch (IOException ex){
+            throw new IllegalStateException(ex);
+        }
     }
 
     public class S3BackedFileInformation extends FileInformation {
@@ -67,6 +75,8 @@ public class AmazonS3Adapter implements FileAccessor {
         private final Instant lastModified;
 
         public S3BackedFileInformation(String objectKey) {
+            //Strip leading /
+            objectKey = objectKey.startsWith("/") ? objectKey.substring(1) : objectKey;
             if (s3.doesObjectExist(bucket, objectKey)) {
                 lastModified = s3.getObjectMetadata(bucket, objectKey).getLastModified().toInstant();
             } else {
@@ -81,7 +91,7 @@ public class AmazonS3Adapter implements FileAccessor {
 
         @Override
         public URL getFileUrl() {
-            return s3.getUrl(bucket, objectKey);
+            return s3.generatePresignedUrl(bucket, objectKey, Date.from(Instant.now().plus(30, ChronoUnit.MINUTES)));
         }
 
         @Override
