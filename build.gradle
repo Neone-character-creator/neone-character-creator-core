@@ -135,12 +135,16 @@ copyRuntimeDependencies.outputs.upToDateWhen {
     false
 }
 
+task cleanCache {
+    new File('felix-cache').deleteDir()
+}
+
 clean << {
     new File('plugins').listFiles().each { f ->
         delete f
     }
-    new File('felix-cache').deleteDir()
 }
+clean.dependsOn cleanCache
 
 //noinspection GroovyAssignabilityCheck
 test.dependsOn copyTestRuntimeDependencies
