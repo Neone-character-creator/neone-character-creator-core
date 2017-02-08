@@ -1,5 +1,6 @@
 package io.github.thisisnozaku.charactercreator.plugins.internal;
 
+import com.google.common.io.Files;
 import com.jayway.jsonpath.JsonPath;
 import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
 import io.github.thisisnozaku.charactercreator.data.access.FileInformation;
@@ -21,44 +22,46 @@ import org.thymeleaf.TemplateProcessingParameters;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 /**
+ * Implementation of PluginManager.
  * Created by Damien on 11/27/2015.
  */
 @Service("pluginManager")
-public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginThymeleafResourceResolver {
-    private final Map<PluginDescription, PluginWrapper> plugins = new HashMap<PluginDescription, PluginWrapper>();
+class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginThymeleafResourceResolver {
+    private final Map<PluginDescription, PluginWrapper> plugins = new HashMap<>();
     private final Map<PluginDescription, Bundle> pluginBundles = new HashMap<>();
     private Framework framework;
-    Logger logger = LoggerFactory.getLogger(PluginManagerImpl.class);
-    private final ReentrantReadWriteLock bundleLock = new ReentrantReadWriteLock();
+    private final Logger logger = LoggerFactory.getLogger(PluginManagerImpl.class);
+    @SuppressWarnings({"CanBeFinal", "unused"})
     @Value("${plugins.path}")
     private String pluginPath;
+    @SuppressWarnings({"CanBeFinal", "unused"})
     @Inject
     private FileAccessor fileAccess;
+    @SuppressWarnings({"CanBeFinal", "unused"})
     @Inject
     private PluginMonitor pluginMonitor;
 
+    @SuppressWarnings("unused")
     @PostConstruct
     private void init() {
         logger.info("Starting Plugin manager");
         try {
             ResourceBundle configResource = ResourceBundle.getBundle("config");
             Map<String, String> config = new HashMap<>();
-            System.setProperty("felix.fileinstall.dir", pluginPath);
-            String property = System.getProperty("felix.fileinstall.dir");
             config.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
             config.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "io.github.thisisnozaku.charactercreator.plugins; version=1.0");
+            config.put(Constants.FRAMEWORK_STORAGE, Files.createTempDir().getAbsolutePath());
             for (String key : configResource.keySet()) {
                 config.put(key, configResource.getString(key));
             }
@@ -72,7 +75,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                     logger.info("Getting plugin at {} ready", serviceEvent.getServiceReference().getBundle().getLocation());
                     Bundle serviceBundle = serviceEvent.getServiceReference().getBundle();
                     //Load plugin.json.
-                    URL pluginDescriptionFile = null;
+                    URL pluginDescriptionFile;
                     PluginDescription pluginDescription = null;
                     Map<String, String> resourcePaths = new HashMap<>();
                     if ((pluginDescriptionFile = serviceBundle.getResource("plugin.json")) != null) {
@@ -100,7 +103,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                         throw new IllegalStateException(String.format("While attempting to load the plugin at %s, no " +
                                 "plugin description file was found", serviceBundle.getLocation()));
                     }
-                    PluginWrapper wrapper = new PluginWrapper(pluginDescription, (GamePlugin) service, this, fileAccess, resourcePaths);
+                    PluginWrapper wrapper = new PluginWrapper(pluginDescription, (GamePlugin) service, this, resourcePaths);
                     switch (serviceEvent.getType()) {
                         case ServiceEvent.REGISTERED:
                             logger.info("Game plugin {}-{}-{} registered.", wrapper.getPluginDescription().getAuthor(),
@@ -129,7 +132,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                     Optional<Instant> timestamp = info.getLastModifiedTimestamp();
                     if (timestamp.isPresent() && (b == null || timestamp.get().isAfter(Instant.ofEpochMilli(b.getLastModified())))) {
                         logger.info("A new plugin found at url {}, loading it.", info.getFileUrl().toExternalForm());
-                        b = loadBundle(info.getFileUrl());
+                        loadBundle(info.getFileUrl());
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -144,9 +147,7 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
                         if (b != null) {
                             b.uninstall();
                         }
-                        Optional<Map.Entry<PluginDescription, Bundle>> entry = pluginBundles.entrySet().stream().filter(e -> {
-                            return e.getValue().equals(b);
-                        }).findFirst();
+                        Optional<Map.Entry<PluginDescription, Bundle>> entry = pluginBundles.entrySet().stream().filter(e -> e.getValue().equals(b)).findFirst();
                         if (entry.isPresent()) {
                             pluginBundles.remove(entry.get().getKey());
                             plugins.remove(entry.get().getKey());
@@ -165,21 +166,25 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
             Collection<FileInformation> fileInfo = fileAccess.getAllFileInformation(pluginPath);
             logger.info("Found {} plugins in \"{}\".", fileInfo.size(), pluginPath);
             fileInfo.forEach(p -> {
-                loadBundle(p.getFileUrl());
+                logger.info("Loading {}", p.getFileUrl());
+                try {
+                    loadBundle(new URL(p.getFileUrl().toExternalForm()));
+                } catch (MalformedURLException ex) {
+                    ex.printStackTrace();
+                }
             });
         } catch (BundleException ex) {
             logger.error(ex.getLocalizedMessage());
         }
     }
 
+    @SuppressWarnings("unused")
     @PreDestroy
     private void destroy() {
         try {
             framework.stop();
             framework.waitForStop(0);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (BundleException e) {
+        } catch (InterruptedException | BundleException e) {
             e.printStackTrace();
         }
     }
@@ -201,9 +206,21 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
     }
 
     @Override
-    public URI getPluginResource(PluginDescription pluginDescription, String s) {
+    public Optional<URI> getPluginResource(PluginDescription pluginDescription, String s) {
         try {
-            return fileAccess.getFileInformation(s).getFileUrl().toURI();
+            //Find the bundle for the plugin.
+            Bundle pluginBundle = pluginBundles.get(pluginDescription);
+            Map<String, String> internalResourceMappings = plugins.get(pluginDescription).getResourceMappings();
+            if (internalResourceMappings.containsKey(s)) {
+                s = internalResourceMappings.get(s);
+            }
+            URL resourceURL = pluginBundle.getEntry(s);
+            if (resourceURL == null) {
+                logger.warn("No url for path {}.", s);
+                return Optional.empty();
+            }
+            //Extract the resource from the bundle
+            return Optional.of(pluginBundle.getResource(s).toURI());
         } catch (URISyntaxException ex) {
             throw new RuntimeException(ex);
         }
@@ -211,24 +228,24 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
 
     private Bundle loadBundle(URL path) {
         try {
-            Optional<InputStream> in = fileAccess.getUrlContent(path);
+            FileInformation file = fileAccess.getFileInformation(path.getPath());
+            Optional<InputStream> in = fileAccess.getContent(file);
             if (in.isPresent()) {
                 InputStream inStream = in.get();
                 Bundle bundle = framework.getBundleContext().getBundle(path.toExternalForm());
                 if (bundle != null) {
                     bundle.update(inStream);
                 } else {
-                    bundle = framework.getBundleContext().installBundle(new File(path.toURI()).getName(), inStream);
+                    bundle = framework.getBundleContext().installBundle(path.getPath(), inStream);
                     bundle.start();
                 }
-
                 return bundle;
             } else {
                 logger.debug("Tried to get stream for {} but it wasn't found.", path.toString());
                 return null;
             }
         } catch (BundleException ex) {
-            ex.printStackTrace();
+             ex.printStackTrace();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -245,23 +262,15 @@ public class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginTh
         String[] pluginNameTokens = resourceName.split("-");
         PluginDescription pluginDescription = new PluginDescription(pluginNameTokens[0], pluginNameTokens[1], pluginNameTokens[2]);
         Bundle bundle = pluginBundles.get(pluginDescription);
-        try {
-            URL resourceUrl = null;
-            String resource = null;
-            resource = plugins.get(pluginDescription).getResourceMappings().get(pluginNameTokens[3]);
-            resourceUrl = getPluginResource(pluginDescription, resource).toURL();
-            if (resourceUrl == null) {
-                throw new IOException("Stream for resource " + resourceName + " was null.");
-            }
-            return resourceUrl.openStream();
-        } catch (IOException ex) {
-            logger.error(String.format("Tried to get an input stream from plugin %s for resource %s but an exception occurred: %s", pluginDescription.toString(), resourceName, ex.getMessage()));
-        } finally {
+        Map<String, String> pluginResourceMappings = plugins.get(pluginDescription).getResourceMappings();
+        if (pluginResourceMappings.containsKey(pluginNameTokens[3])) {
+            resourceName = pluginResourceMappings.get(pluginNameTokens[3]);
         }
-        return null;
-    }
-
-    private void uninstallBundle(Bundle b) {
-
+        try {
+            return bundle.getResource(resourceName).openStream();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
