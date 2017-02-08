@@ -13,14 +13,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * Configuration class for Thymeleaf.
+ *
  * Created by Damien on 1/3/2016.
  */
 @Configuration
 public class ThymeleafConfig{
     @Inject
-    TemplateEngine engine;
+    private TemplateEngine engine;
     @Inject
-    PluginThymeleafResourceResolver pluginResourceLoader;
+    private PluginThymeleafResourceResolver pluginResourceLoader;
 
     @PostConstruct
     public void extension(){
@@ -32,11 +34,10 @@ public class ThymeleafConfig{
         resolvablePatterns.add("*-*-*-character");
         resolver.setResolvablePatterns(resolvablePatterns);
         resolver.setTemplateMode(StandardTemplateModeHandlers.LEGACYHTML5.getTemplateModeName());
-        resolver.setOrder(0);
+        resolver.setOrder(1);
         resolver.setCacheable(false);
         resolver.setResourceResolver(pluginResourceLoader);
 
         engine.addTemplateResolver(resolver);
-        engine.addTemplateResolver(new ClassLoaderTemplateResolver());
     }
 }
