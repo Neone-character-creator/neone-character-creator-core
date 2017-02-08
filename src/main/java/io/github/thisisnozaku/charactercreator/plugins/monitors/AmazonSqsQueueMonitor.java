@@ -1,5 +1,7 @@
 package io.github.thisisnozaku.charactercreator.plugins.monitors;
 
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.event.S3EventNotification;
 import com.amazonaws.services.s3.model.S3Event;
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -31,11 +33,13 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
     private final XmlMapper xmlMapper = new XmlMapper();
     private final ScheduledExecutorService executorService;
     private final List<String> monitoredQueueNamed;
+    private final Region currentRegion;
 
     public AmazonSqsQueueMonitor(AmazonSQS sqsClient, ScheduledExecutorService executorService, @Value("${sqs.queues}") String... queueNames) {
         this.sqsClient = sqsClient;
         this.executorService = executorService;
         monitoredQueueNamed = Arrays.asList(queueNames);
+        currentRegion = Regions.getCurrentRegion();
     }
 
     /**
@@ -45,7 +49,7 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
         //20 seconds is suggested maximum. http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-long-polling.html
         Duration pollingInterval = Duration.ofSeconds(20);
         monitoredQueueNamed.stream().forEach(queue -> {
-            System.out.println(String.format("Starting polling queue %s.", queue));
+            System.out.println(String.format("Starting polling queue %s in region %s.", queue, currentRegion != null ? currentRegion.getName() : currentRegion));
             final GetQueueUrlResult getQueueResult = sqsClient.getQueueUrl(queue);
             executorService.scheduleAtFixedRate(() -> {
                 try {
