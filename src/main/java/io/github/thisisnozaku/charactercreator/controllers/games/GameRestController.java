@@ -1,15 +1,15 @@
 package io.github.thisisnozaku.charactercreator.controllers.games;
 
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Files;
 import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
-import io.github.thisisnozaku.charactercreator.exceptions.CharacterPluginMismatchException;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
-import io.github.thisisnozaku.charactercreator.plugins.*;
+import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
+import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
+import io.github.thisisnozaku.charactercreator.plugins.PluginWrapper;
 import io.github.thisisnozaku.pdfexporter.DefaultPdfWriter;
 import io.github.thisisnozaku.pdfexporter.JsonFieldValueExtractor;
 import io.github.thisisnozaku.pdfexporter.PdfExporter;
@@ -22,10 +22,12 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -89,29 +91,23 @@ public class GameRestController {
     @RequestMapping(value = "{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.PUT, produces = "application/json", consumes = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public CharacterDataWrapper save(HttpEntity<String> character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable String id) {
+
         try {
-            author = URLDecoder.decode(author, "UTF-8");
-            game = URLDecoder.decode(game, "UTF-8");
-            version = URLDecoder.decode(version, "UTF-8");
+            String decodedAuthor = URLDecoder.decode(author, "UTF-8");
+            String decodedGame = URLDecoder.decode(game, "UTF-8");
+            String decodedVersion = URLDecoder.decode(version, "UTF-8");
+
+            PluginDescription targetPluginDescription = new PluginDescription(author, game, version);
+            return plugins.getPlugin(targetPluginDescription).map(pluginWrapper -> {
+                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                logger.info("Saving a character for user {} using plugin {}, {}, {}", currentUser.getId(), decodedAuthor, decodedGame, decodedVersion);
+                CharacterDataWrapper wrapper = new CharacterDataWrapper(targetPluginDescription, currentUser.getId(), character.getBody());
+                wrapper.setId(id);
+                logger.info("Character id {} was saved.", wrapper.getId());
+                return characters.save(wrapper);
+            }).orElseThrow(() -> new MissingPluginException(targetPluginDescription));
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
-        }
-        PluginWrapper plugin;
-        PluginDescription description = new PluginDescription(author, game, version);
-        try {
-            plugin = plugins.getPlugin(description).get();
-            PluginDescription targetPluginDescription = new PluginDescription(author, game, version);
-            if (!description.equals(targetPluginDescription)) {
-                throw new CharacterPluginMismatchException(targetPluginDescription, targetPluginDescription);
-            }
-            User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            logger.info("Saving a character for user {} using plugin {}, {}, {}", currentUser.getId(), author, game, version);
-            CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUser.getId(), character.getBody());
-            wrapper.setId(id);
-            logger.info("Character id {} was saved.", wrapper.getId());
-            return characters.save(wrapper);
-        } catch (NoSuchElementException ex) {
-            throw new MissingPluginException(description);
         }
     }
 
@@ -150,7 +146,7 @@ public class GameRestController {
                 if (contentStream.isPresent()) {
                     InputStream resourceStream = contentStream.get();
                     ResponseEntity<String> response;
-                    PdfExporter<String> pdfExporter = new PdfExporter<String>(new DefaultPdfWriter(), new JsonFieldValueExtractor());
+                    PdfExporter<String> pdfExporter = new PdfExporter<>(new DefaultPdfWriter(), new JsonFieldValueExtractor());
                     pdfId = UUID.randomUUID();
                     File tempPdfPath = Paths.get(Files.createTempDir().getCanonicalPath(), pdfId.toString()).toFile();
                     OutputStream out = new FileOutputStream(tempPdfPath);
@@ -163,10 +159,8 @@ public class GameRestController {
             } else {
                 throw new MissingPluginException(pluginDescription);
             }
-        } catch (MalformedURLException ex) {
+        } catch (IOException ex) {
             ex.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         throw new IllegalStateException();
     }
@@ -195,10 +189,10 @@ public class GameRestController {
     @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.GET, produces = "application/json")
     public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
-        PluginDescription pluginDescription = new PluginDescription(author, game, version);
         return characters.findOne(id);
     }
 
+    @SuppressWarnings("SameReturnValue")
     @ExceptionHandler(MissingPluginException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public String missingPlugin() {
