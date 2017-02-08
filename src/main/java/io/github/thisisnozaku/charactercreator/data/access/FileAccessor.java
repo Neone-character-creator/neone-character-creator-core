@@ -1,35 +1,46 @@
 package io.github.thisisnozaku.charactercreator.data.access;
 
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
 /**
+ * Interface for abstracting accessing resources.
+ * <p>
  * Created by Damien on 9/11/2016.
  */
 public interface FileAccessor {
     /**
-     * Get URL to file at the given path, for either a directory or file.
-     * @param path
-     * @return
+     * Get FileInformation for the file at the given path, for either a directory or file.
+     *
+     * @param path path to the entry at the given path
+     * @return  information about the entry
      */
     FileInformation getFileInformation(String path);
 
     /**
-     * Get all child URLs at the given path if it is a directory.
-     * @param path
-     * @return
+     * Get FileInformation for the file at the given path, for either a directory or file.
+     *
+     * @param path  URL to the entry
+     * @return  information about the entry
+     */
+    FileInformation getFileInformation(URL path);
+
+    /**
+     * Get FileInformation for all children of the directory at the given path.
+     *
+     * @param path  path to the directory
+     * @return  information of all direct children of the directory
      */
     List<FileInformation> getAllFileInformation(String path);
 
     /**
      * Get an input stream for the resource at the given URL. The method is primarily for implementations that
      * have special access requirements, such as for security reasons.
-     * @param path
-     * @return
+     *
+     * @param path  FileInformation of file to get content of
+     * @return  the content stream
      */
-    Optional<InputStream> getUrlContent(URL path);
+    <T extends FileInformation> Optional<InputStream> getContent(T path);
 }
