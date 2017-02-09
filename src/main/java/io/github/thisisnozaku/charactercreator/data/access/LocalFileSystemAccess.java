@@ -73,6 +73,9 @@ public class LocalFileSystemAccess implements FileAccessor {
 
     @Override
     public Optional<InputStream> getContent(FileInformation path) {
+        if(path == null){
+            return Optional.empty();
+        }
         try {
             return Optional.of(path.getFileUrl().openStream());
         } catch (IOException ex) {

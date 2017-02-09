@@ -59,6 +59,9 @@ public class AmazonS3Adapter implements FileAccessor {
 
     @Override
     public <T extends FileInformation> Optional<InputStream> getContent(T file) {
+        if(file == null){
+            return Optional.empty();
+        }
         if(!S3BackedFileInformation.class.isInstance(file)){
             throw new IllegalArgumentException("FileInformation is not for an S3 object.");
         }
