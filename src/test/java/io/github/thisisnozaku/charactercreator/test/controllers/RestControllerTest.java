@@ -35,6 +35,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import java.math.BigInteger;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Optional;
@@ -76,6 +77,10 @@ public class RestControllerTest {
         controller = new GameRestController(characters, plugins);
 
         mvc = MockMvcBuilders.standaloneSetup(controller).build();
+        when(plugins.getPlugin(isA(PluginDescription.class))).thenAnswer((invocation -> {
+            PluginDescription description = (PluginDescription) invocation.getArguments()[0];
+            return plugins.getPlugin(description.getAuthor(), description.getSystem(), description.getVersion());
+        }));
 
         when(plugins.getPlugin(isA(String.class), isA(String.class), isA(String.class))).thenAnswer((invocation -> {
             Object[] args = invocation.getArguments();
