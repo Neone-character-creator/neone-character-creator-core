@@ -97,7 +97,7 @@ public class GameRestController {
             String decodedGame = URLDecoder.decode(game, "UTF-8");
             String decodedVersion = URLDecoder.decode(version, "UTF-8");
 
-            PluginDescription targetPluginDescription = new PluginDescription(author, game, version);
+            PluginDescription targetPluginDescription = new PluginDescription(decodedAuthor, decodedGame, decodedVersion);
             return plugins.getPlugin(targetPluginDescription).map(pluginWrapper -> {
                 User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
                 logger.info("Saving a character for user {} using plugin {}, {}, {}", currentUser.getId(), decodedAuthor, decodedGame, decodedVersion);
