@@ -111,6 +111,8 @@ dependencies {
     compile "com.jayway.jsonpath:json-path:2.2.0"
 
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.6.3'
+
+    runtime 'mysql:mysql-connector-java'
 }
 
 
