@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * Resolves resources that are found in plugins.
  */
 @Service
-public class PluginResourceResolver implements ResourceResolver{
+public class PluginResourceResolver implements ResourceResolver {
     @SuppressWarnings({"CanBeFinal", "unused"})
     @Inject
     private PluginManager pluginManager;
@@ -39,14 +39,19 @@ public class PluginResourceResolver implements ResourceResolver{
                     URLDecoder.decode(game, "UTF-8"),
                     URLDecoder.decode(version, "UTF-8"));
             //If no resource is named, we get the character sheet
-            if(resourcePath.equals("")){
+            if (resourcePath.equals("")) {
                 resourcePath = "character";
             }
             Optional<URI> resource = pluginManager.getPluginResource(incomingPluginDescription, resourcePath);
 
             try {
-                return new UrlResource(resource.orElse(null));
-            }catch (MalformedURLException ex){
+                if (resource.isPresent()) {
+                    return new UrlResource(resource.get());
+                } else {
+                    return null;
+                }
+
+            } catch (MalformedURLException ex) {
                 throw new RuntimeException(ex);
             }
 
