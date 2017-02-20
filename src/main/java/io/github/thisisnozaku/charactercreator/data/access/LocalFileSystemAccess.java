@@ -36,7 +36,7 @@ public class LocalFileSystemAccess implements FileAccessor {
             try {
                 f = new File(url.toURI());
             } catch (IllegalArgumentException ex) {
-                logger.warn("Path {} is an invalid file URL. Reason: {} Timestamp information is unavailable.", url.toExternalForm(), ex.getMessage());
+                logger.warn("Path {} is an invalid file URL. Reason: {} - Timestamp information is unavailable.", url.toExternalForm(), ex.getMessage());
             }
             Long timestamp = f != null ? f.lastModified() : Instant.now().toEpochMilli();
             return new FileInformation(url, Instant.ofEpochMilli(Math.max(timestamp, Instant.now().toEpochMilli())));
