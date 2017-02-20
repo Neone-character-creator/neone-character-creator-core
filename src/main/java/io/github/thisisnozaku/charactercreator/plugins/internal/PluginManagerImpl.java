@@ -107,12 +107,15 @@ class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginThymeleaf
                     switch (serviceEvent.getType()) {
                         case ServiceEvent.REGISTERED:
                             logger.info("Game plugin {}-{}-{} registered.", wrapper.getPluginDescription().getAuthor(),
-                                    wrapper.getPluginDescription().getVersion(),
+                                    wrapper.getPluginDescription().getSystem(),
                                     wrapper.getPluginDescription().getVersion());
                             plugins.put(wrapper.getPluginDescription(), wrapper);
                             pluginBundles.put(wrapper.getPluginDescription(), serviceEvent.getServiceReference().getBundle());
                             break;
                         case ServiceEvent.UNREGISTERING:
+                            logger.info("Game plugin {}-{}-{} removed.", wrapper.getPluginDescription().getAuthor(),
+                                    wrapper.getPluginDescription().getSystem(),
+                                    wrapper.getPluginDescription().getVersion());
                             plugins.remove(wrapper.getPluginDescription());
                             pluginBundles.remove(wrapper.getPluginDescription());
                             break;
@@ -147,7 +150,7 @@ class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginThymeleaf
                         if (b != null) {
                             b.uninstall();
                         }
-                        Optional<Map.Entry<PluginDescription, Bundle>> entry = pluginBundles.entrySet().stream().filter(e -> e.getValue().equals(b)).findFirst();
+                         Optional<Map.Entry<PluginDescription, Bundle>> entry = pluginBundles.entrySet().stream().filter(e -> e.getValue().equals(b)).findFirst();
                         if (entry.isPresent()) {
                             pluginBundles.remove(entry.get().getKey());
                             plugins.remove(entry.get().getKey());
@@ -228,15 +231,15 @@ class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginThymeleaf
 
     private Bundle loadBundle(URL path) {
         try {
-            FileInformation file = fileAccess.getFileInformation(path.getPath());
-            Optional<InputStream> in = fileAccess.getContent(file);
+            FileInformation info = fileAccess.getFileInformation(path);
+            Optional<InputStream> in = fileAccess.getContent(info);
             if (in.isPresent()) {
                 InputStream inStream = in.get();
-                Bundle bundle = framework.getBundleContext().getBundle(path.toExternalForm());
+                Bundle bundle = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
                 if (bundle != null) {
                     bundle.update(inStream);
                 } else {
-                    bundle = framework.getBundleContext().installBundle(path.getPath(), inStream);
+                    bundle = framework.getBundleContext().installBundle(info.getFileUrl().toExternalForm(), inStream);
                     bundle.start();
                 }
                 return bundle;
