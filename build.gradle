@@ -138,7 +138,7 @@ copyRuntimeDependencies.outputs.upToDateWhen {
 }
 
 task cleanCache {
-    new File('felix-cache').deleteDir()
+    new File(System.getProperty("java.io.tmpdir")).deleteDir()
 }
 
 clean << {
