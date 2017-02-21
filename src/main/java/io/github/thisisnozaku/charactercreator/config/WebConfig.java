@@ -42,10 +42,8 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("**/pluginresource/**").setCacheControl(CacheControl.noStore())
-                .resourceChain(true).addResolver(pluginResourceResolver);
-
-        super.addResourceHandlers(registry);
+        registry.addResourceHandler("**/pluginresource/**").setCacheControl(CacheControl.noStore() )
+                .resourceChain(false).addResolver(pluginResourceResolver);
     }
 
     @Bean
