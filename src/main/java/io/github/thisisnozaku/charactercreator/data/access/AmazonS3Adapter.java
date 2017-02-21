@@ -85,7 +85,7 @@ public class AmazonS3Adapter implements FileAccessor {
             } else {
                 lastModified = null;
             }
-            this.objectKey = objectKey;
+            this.objectKey = objectKey.substring(objectKey.indexOf("amazonaws.com/") + "amazonaws.com/".length());
         }
 
         public String getObjectKey() {
