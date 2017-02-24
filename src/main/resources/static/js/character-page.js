@@ -2,6 +2,13 @@ var auth2;
 var user;
 var authUrl = "https://accounts.google.com/o/oauth2/v2/auth";
 
+function fitIframe(){
+    var precedingHeight = $("#navbar").outerHeight(true)
+        + $("#signin-warning").outerHeight(true)
+        + $("#signout").outerHeight(true);
+    $("#content").height(($(window).height() - precedingHeight) * .95)
+}
+
 $().ready(function(){
     "use strict";
     var csrfToken = $("meta[name=_csrf]").attr("content");
@@ -264,4 +271,7 @@ $().ready(function(){
         	};
         })
 	});
+	fitIframe();
 });
+
+$(window).resize(fitIframe);
