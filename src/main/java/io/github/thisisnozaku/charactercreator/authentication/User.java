@@ -20,21 +20,17 @@ public class User {
     @GeneratedValue
     private Long id;
     /**
-     * Maps OAuth providers and the accounts ids for that provider associated with this account.
+     * OAuth provider and accounts ids for this user.
      */
     @OneToMany
     private List<OAuthAccountAssociation> associatedAccounts;
 
     public User(Long id, List<OAuthAccountAssociation> associatedAccounts) {
         this.id = id;
-        this.associatedAccounts = associatedAccounts.stream().map(e->{
+        this.associatedAccounts = associatedAccounts.stream().map(e -> {
             e.setUser(this);
             return e;
         }).collect(Collectors.toList());
-    }
-
-    public User(List<OAuthAccountAssociation> associatedAccounts) {
-        this.associatedAccounts = associatedAccounts;
     }
 
     public User() {
