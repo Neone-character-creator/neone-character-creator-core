@@ -41,19 +41,17 @@ public class SecurityController {
     @Inject
     private UserRepository users;
 
+    public SecurityController(UserRepository users) {
+        this.users = users;
+    }
+
     @RequestMapping(value = "/login/google", method = RequestMethod.POST, consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
-    public void googleLogin(@RequestBody String accessToken, HttpSession session) throws IOException{
-        GoogleCredential credentials = new GoogleCredential().setAccessToken(accessToken);
-        Plus googlePlus = new Plus.Builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance(), credentials)
-                .setApplicationName("NEOne Character Builder")
-                .build();
-        Plus.People.Get get = googlePlus.people().get("me");
-        Person me = get.execute();
-        OAuthAccountAssociation accountAssociation = users.findByProviderAndOauthId("google", me.getId());
+    public void googleLogin(Person googleUser, HttpSession session) throws IOException {
+        OAuthAccountAssociation accountAssociation = users.findByProviderAndOauthId("google", googleUser.getId());
         User user = null;
-        if(accountAssociation == null){
-            accountAssociation = new OAuthAccountAssociation("google", me.getId());
+        if (accountAssociation == null) {
+            accountAssociation = new OAuthAccountAssociation("google", googleUser.getId());
             user = new User(null, Arrays.asList(accountAssociation));
             accountAssociation.setUser(user);
             users.saveAndFlush(accountAssociation);
@@ -67,7 +65,7 @@ public class SecurityController {
 
     @RequestMapping(value = "/logout/google", method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.OK)
-    public void googleLogout(){
+    public void googleLogout() {
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 }
