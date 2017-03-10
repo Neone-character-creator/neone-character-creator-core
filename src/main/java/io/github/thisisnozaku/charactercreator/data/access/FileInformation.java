@@ -14,8 +14,6 @@ public class FileInformation {
     private URL fileUrl;
     private Instant lastModifiedTimestamp;
 
-    protected FileInformation(){}
-
     public FileInformation(@NotNull URL fileUrl,
                            Instant lastModifiedTimestamp) {
         this.fileUrl = fileUrl;
@@ -26,6 +24,11 @@ public class FileInformation {
         return fileUrl;
     }
 
+    /**
+     * Returns the last modified time of the resource pointed to by this, if available.
+     *
+     * @return
+     */
     public Optional<Instant> getLastModifiedTimestamp() {
         return Optional.ofNullable(lastModifiedTimestamp);
     }
