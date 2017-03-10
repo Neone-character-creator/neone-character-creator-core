@@ -167,7 +167,8 @@ cobertura {
     coverageIgnoreTrivial = true
     coverageExcludes = [
             ".*NeoneCoreApplication",
-            ".*Config"
+            ".*Config",
+            ".*CharacterDataWrapper"
     ]
 }
 
