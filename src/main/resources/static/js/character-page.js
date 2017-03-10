@@ -27,11 +27,11 @@ $().ready(function(){
 	    var headers = {};
 	    headers[csrfHeader] = csrfToken;
 	    $.ajax("/login/google", {
-	    type : "POST",
-	    data : user.Zi.access_token,
-	    contentType : 'application/json; charset=UTF-8',
-	    headers : headers
-	}).done(function(response){
+	        type : "POST",
+	        data : user.Zi.access_token,
+	        contentType : 'application/json; charset=UTF-8',
+	        headers : headers
+    	}).done(function(response){
 	        $("#save-character").prop("disabled", false);
 	        $("#open-character").prop("disabled", false);
 	        $("#delete-character").prop("disabled", false);
