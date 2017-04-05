@@ -21,6 +21,7 @@ import java.util.Optional;
 
 /**
  * Implementation of FileAccessor for use with a local file system.
+ * <p>
  * Created by Damien on 9/11/2016.
  */
 @Profile("dev")
@@ -29,39 +30,34 @@ public class LocalFileSystemAccess implements FileAccessor {
     private final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LocalFileSystemAccess.class);
 
     @Override
-    public FileInformation getFileInformation(String path) {
-        try {
-            URL url = new URL(path);
-            File f = null;
-            try {
-                f = new File(url.toURI());
-            } catch (IllegalArgumentException ex) {
-                logger.warn("Path {} is an invalid file URL. Reason: {} - Timestamp information is unavailable.", url.toExternalForm(), ex.getMessage());
-            }
-            Long timestamp = f != null ? f.lastModified() : Instant.now().toEpochMilli();
-            return new FileInformation(url, Instant.ofEpochMilli(Math.max(timestamp, Instant.now().toEpochMilli())));
-        } catch (MalformedURLException | URISyntaxException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public FileInformation getFileInformation(String path) throws MalformedURLException, URISyntaxException {
+        return getFileInformation(new URL(path));
     }
 
     @Override
-    public FileInformation getFileInformation(URL path) {
-        return getFileInformation(path != null ? path.toExternalForm() : null);
+    public FileInformation getFileInformation(URL path) throws URISyntaxException {
+        File f = null;
+        try {
+            f = new File(path.toURI());
+        } catch (IllegalArgumentException ex) {
+            logger.warn("Path {} is an invalid file URL. Reason: {} - Timestamp information is unavailable.", path.toExternalForm(), ex.getMessage());
+        }
+        Long timestamp = f != null ? f.lastModified() : Instant.now().toEpochMilli();
+        return new FileInformation(path);
     }
 
     @Override
     public List<FileInformation> getAllFileInformation(String path) {
         List<FileInformation> urls = new LinkedList<>();
-        Path p = Paths.get(path);
         try {
+            Path p = Paths.get(new File(path).toURI());
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
                 stream.forEach(filePath -> {
                     try {
-                        urls.add(new FileInformation(filePath.toUri().toURL(), Instant.ofEpochMilli(Files.readAttributes(filePath, BasicFileAttributes.class).creationTime().toMillis())));
+                        urls.add(new FileInformation(filePath.toUri().toURL()));
                     } catch (IOException ex) {
-                        ex.printStackTrace();
+                        //Should never happen; can't throw checked exception inside a lambda
+                        throw new RuntimeException(ex);
                     }
                 });
             }
@@ -72,14 +68,10 @@ public class LocalFileSystemAccess implements FileAccessor {
     }
 
     @Override
-    public Optional<InputStream> getContent(FileInformation path) {
-        if(path == null){
+    public Optional<InputStream> getContent(FileInformation path) throws IOException {
+        if (path == null) {
             return Optional.empty();
         }
-        try {
-            return Optional.of(path.getFileUrl().openStream());
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+        return Optional.of(path.getFileUrl().openStream());
     }
 }

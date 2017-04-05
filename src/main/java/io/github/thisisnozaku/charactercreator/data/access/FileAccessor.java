@@ -28,7 +28,7 @@ public interface FileAccessor {
      * @param path  URL to the entry
      * @return  information about the entry
      */
-    FileInformation getFileInformation(URL path);
+    FileInformation getFileInformation(URL path) throws URISyntaxException;
 
     /**
      * Get FileInformation for all children of the directory at the given path.
