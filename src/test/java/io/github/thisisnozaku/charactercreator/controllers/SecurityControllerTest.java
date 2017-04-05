@@ -4,19 +4,19 @@ import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.model.Person;
 import com.google.common.net.MediaType;
 import io.github.thisisnozaku.charactercreator.authentication.GoogleOAuthUserResolver;
+import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.OAuthAccountAssociation;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.plugins.PluginResourceResolver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.MockSettings;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareEverythingForTest;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MockMvcBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -27,13 +27,11 @@ import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.*;
 
@@ -49,7 +47,7 @@ public class SecurityControllerTest {
 
     @Before
     public void setup() throws Exception {
-        userRepository = Mockito.mock(UserRepository.class);
+        userRepository = PowerMockito.mock(UserRepository.class);
         controller = new SecurityController(userRepository);
         MockMvcBuilder mvcBuilder = MockMvcBuilders.standaloneSetup(controller);
         mvc = mvcBuilder.build();
@@ -62,6 +60,7 @@ public class SecurityControllerTest {
         PowerMockito.when(mockPeople.get("me")).thenReturn(mockGet);
 
         Person me = new Person();
+        me.setId("1234567890");
         PowerMockito.suppress(mockGet.getClass().getMethod("execute"));
         PowerMockito.when(mockGet, "execute").thenReturn(me);
 
@@ -94,17 +93,46 @@ public class SecurityControllerTest {
      */
     @Test
     public void googleLogin() throws Exception {
+        PowerMockito.when(userRepository.findByProviderAndOauthId("google", "1234567890"))
+                .thenReturn(null);
+        PowerMockito.when(userRepository.saveAndFlush(isA(OAuthAccountAssociation.class))).then(
+                (invocation -> {
+                    OAuthAccountAssociation in = invocation.getArgumentAt(0, OAuthAccountAssociation.class);
+                    in.setId(1);
+                    in.setUser(new User());
+                    return in;
+                })
+        );
+
         mvc.perform(
                 MockMvcRequestBuilders.post("/login/google").content("1234567890").contentType(MediaType.JSON_UTF_8.toString())
         ).andExpect(
                 MockMvcResultMatchers.status().is(200)
         );
         verify(userRepository, times(1)).saveAndFlush(isA(OAuthAccountAssociation.class));
+        assertTrue(SecurityContextHolder.getContext().getAuthentication().isAuthenticated());
+    }
+
+    @Test
+    public void googleExistingLogin() throws Exception {
+        PowerMockito.when(userRepository.findByProviderAndOauthId("google", "1234567890"))
+                .thenReturn(new OAuthAccountAssociation("user", "1234567890"));
+        mvc.perform(
+                MockMvcRequestBuilders.post("/login/google").content("1234567890").contentType(MediaType.JSON_UTF_8.toString())
+        ).andExpect(
+                MockMvcResultMatchers.status().is(200)
+        );
+        assertTrue(SecurityContextHolder.getContext().getAuthentication().isAuthenticated());
     }
 
     @Test
     public void googleLogout() throws Exception {
-        fail();
+        mvc.perform(
+                MockMvcRequestBuilders.post("/logout/google").content("1234567890").contentType(MediaType.JSON_UTF_8.toString())
+        ).andExpect(
+                MockMvcResultMatchers.status().is(200)
+        );
+        assertTrue(SecurityContextHolder.getContext().getAuthentication() == null);
     }
 
     @Bean
