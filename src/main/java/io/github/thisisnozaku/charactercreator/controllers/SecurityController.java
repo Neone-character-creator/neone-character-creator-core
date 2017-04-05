@@ -49,16 +49,12 @@ public class SecurityController {
     @ResponseStatus(HttpStatus.OK)
     public void googleLogin(Person googleUser, HttpSession session) throws IOException {
         OAuthAccountAssociation accountAssociation = users.findByProviderAndOauthId("google", googleUser.getId());
-        User user = null;
         if (accountAssociation == null) {
             accountAssociation = new OAuthAccountAssociation("google", googleUser.getId());
-            user = new User(null, Arrays.asList(accountAssociation));
-            accountAssociation.setUser(user);
-            users.saveAndFlush(accountAssociation);
-        } else {
-            user = accountAssociation.getUser();
+            accountAssociation.setUser(new User(null, Arrays.asList(accountAssociation)));
+            accountAssociation = users.saveAndFlush(accountAssociation);
         }
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, Arrays.asList(new SimpleGrantedAuthority("ROLE_USER")));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(accountAssociation.getUser(), null, Arrays.asList(new SimpleGrantedAuthority("ROLE_USER")));
         SecurityContext securityContext = SecurityContextHolder.getContext();
         securityContext.setAuthentication(authentication);
     }
