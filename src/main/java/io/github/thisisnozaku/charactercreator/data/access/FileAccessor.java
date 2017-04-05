@@ -1,6 +1,9 @@
 package io.github.thisisnozaku.charactercreator.data.access;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +20,7 @@ public interface FileAccessor {
      * @param path path to the entry at the given path
      * @return  information about the entry
      */
-    FileInformation getFileInformation(String path);
+    FileInformation getFileInformation(String path) throws MalformedURLException, URISyntaxException;
 
     /**
      * Get FileInformation for the file at the given path, for either a directory or file.
@@ -42,5 +45,5 @@ public interface FileAccessor {
      * @param path  FileInformation of file to get content of
      * @return  the content stream
      */
-    <T extends FileInformation> Optional<InputStream> getContent(T path);
+    <T extends FileInformation> Optional<InputStream> getContent(T path) throws IOException;
 }
