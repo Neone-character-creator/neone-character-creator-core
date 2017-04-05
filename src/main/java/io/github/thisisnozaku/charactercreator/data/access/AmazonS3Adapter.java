@@ -47,11 +47,10 @@ public class AmazonS3Adapter implements FileAccessor {
     public List<FileInformation> getAllFileInformation(String path) {
         List<FileInformation> objects = new LinkedList<>();
         s3.listObjects(bucket, path).getObjectSummaries().forEach(s3ObjectSummary -> {
+            //Ignore the root of the pseudo-directory we're iterating through.
             if (!Paths.get(s3ObjectSummary.getKey()).equals(Paths.get(path))) {
                 GetObjectMetadataRequest metadataRequest = new GetObjectMetadataRequest(bucket, s3ObjectSummary.getKey());
-                objects.add(
-                        new FileInformation(s3.getUrl(bucket, s3ObjectSummary.getKey()),
-                                s3ObjectSummary.getLastModified().toInstant()));
+                objects.add(new FileInformation(s3.getUrl(bucket, s3ObjectSummary.getKey())));
             }
         });
         return objects;
@@ -59,33 +58,30 @@ public class AmazonS3Adapter implements FileAccessor {
 
     @Override
     public <T extends FileInformation> Optional<InputStream> getContent(T file) {
-        if(file == null){
+        if (file == null) {
             return Optional.empty();
         }
-        if(!S3BackedFileInformation.class.isInstance(file)){
+        if (!S3BackedFileInformation.class.isInstance(file)) {
             throw new IllegalArgumentException("FileInformation is not for an S3 object.");
         }
         S3BackedFileInformation s3FileInformation = (S3BackedFileInformation) file;
         try {
             return Optional.ofNullable(s3FileInformation.getFileUrl().openStream());
-        }catch (IOException ex){
+        } catch (IOException ex) {
             throw new IllegalStateException(ex);
         }
     }
 
     public class S3BackedFileInformation extends FileInformation {
         private final String objectKey;
-        private final Instant lastModified;
 
-        public S3BackedFileInformation(String objectKey) {
+        public S3BackedFileInformation(String resourcePath) {
             //Strip leading /
-            objectKey = objectKey.startsWith("/") ? objectKey.substring(1) : objectKey;
-            if (s3.doesObjectExist(bucket, objectKey)) {
-                lastModified = s3.getObjectMetadata(bucket, objectKey).getLastModified().toInstant();
-            } else {
-                lastModified = null;
-            }
-            this.objectKey = objectKey.substring(objectKey.indexOf("amazonaws.com/") + "amazonaws.com/".length());
+            super(s3.getUrl(AmazonS3Adapter.this.bucket,
+                    resourcePath = (resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath)
+                            .substring(resourcePath.indexOf("amazonaws.com/") + "amazonaws.com/".length())));
+            this.objectKey = resourcePath;
+            s3.getObjectMetadata(bucket, resourcePath).getLastModified().toInstant();
         }
 
         public String getObjectKey() {
@@ -99,7 +95,7 @@ public class AmazonS3Adapter implements FileAccessor {
 
         @Override
         public Optional<Instant> getLastModifiedTimestamp() {
-            return Optional.ofNullable(lastModified);
+            return Optional.ofNullable(s3.getObject(bucket, objectKey).getObjectMetadata().getLastModified().toInstant());
         }
     }
 }
