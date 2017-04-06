@@ -54,6 +54,15 @@ public class GameRestController {
         return plugins.getAllPluginDescriptions();
     }
 
+    /**
+     * Create a new character for an authorized user.
+     *
+     * @param requestBody
+     * @param author
+     * @param game
+     * @param version
+     * @return
+     */
     @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.POST, produces = "application/json")
     public
@@ -69,15 +78,15 @@ public class GameRestController {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         logger.info("Creating a new character for user {} using plugin {}, {}, {}", currentUser.getId(), author, game, version);
         PluginDescription description = new PluginDescription(author, game, version);
-        Optional<PluginWrapper> plugin = plugins.getPlugin(author, game, version);
+        Optional<PluginWrapper> plugin = plugins.getPlugin(description);
         if (plugin.isPresent()) {
             logger.info("Plugin {}, {}, {} found.", author, game, version);
             CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUser.getId(), requestBody.getBody());
             wrapper = characters.save(wrapper);
-            logger.info("Character id {} was saved.", wrapper.getId());
+            logger.info("Character (id {}) was saved.", wrapper.getId());
             return wrapper;
         } else {
-            logger.info("Plugin {}, {}, {} was requested but unavailable.", author, game, version);
+            logger.info("Plugin {} - {} - {} was requested but unavailable.", author, game, version);
             throw new MissingPluginException(description);
         }
     }
@@ -91,7 +100,6 @@ public class GameRestController {
     @RequestMapping(value = "{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.PUT, produces = "application/json", consumes = "application/json")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public CharacterDataWrapper save(HttpEntity<String> character, @PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable String id) {
-
         try {
             String decodedAuthor = URLDecoder.decode(author, "UTF-8");
             String decodedGame = URLDecoder.decode(game, "UTF-8");
@@ -121,23 +129,24 @@ public class GameRestController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void delete(@PathVariable String id, @PathVariable String author, @PathVariable String game, @PathVariable String version) {
         characters.delete(id);
-        logger.info("Character id {} for plugin {}, {}, {} was deleted.", id, author, game, version);
+        logger.info("Character (id {}) for plugin {}, {}, {} was deleted.", id, author, game, version);
     }
 
     @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters", method = RequestMethod.GET, produces = "application/json")
     public List<CharacterDataWrapper> getAllForUserForPlugin(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version) {
         PluginDescription pluginDescription = new PluginDescription(author, game, version);
+        //TODO: Lookg into making user injectable via the method arguments.
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        logger.info("Character getting all character for user {} and plugin {}, {}, {}.", currentUser.getId(), author, game, version);
+        logger.info("Getting all characters for user {} and plugin {}, {}, {}.", currentUser.getId(), author, game, version);
         List<CharacterDataWrapper> result = characters.findByUserAndPlugin(currentUser.getId(), pluginDescription);
         logger.info("Found {} characters.", result.size());
         return result;
     }
 
+    @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/pdf", method = RequestMethod.POST)
-    public ResponseEntity<String> exportToPdf(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, RequestEntity<String> request) {
-        UUID pdfId;
+    public ResponseEntity<byte[]> exportToPdf(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, RequestEntity<String> request) {
         try {
             PluginDescription pluginDescription = new PluginDescription(author, game, version);
             Optional<PluginWrapper> plugin = plugins.getPlugin(pluginDescription);
@@ -147,15 +156,16 @@ public class GameRestController {
                     InputStream resourceStream = contentStream.get();
                     ResponseEntity<String> response;
                     PdfExporter<String> pdfExporter = new PdfExporter<>(new DefaultPdfWriter(), new JsonFieldValueExtractor());
-                    pdfId = UUID.randomUUID();
-                    File tempPdfPath = Paths.get(Files.createTempDir().getCanonicalPath(), pdfId.toString()).toFile();
-                    OutputStream out = new FileOutputStream(tempPdfPath);
+                    ByteArrayOutputStream pdfOut = new ByteArrayOutputStream();
+
                     String characterJson = URLDecoder.decode(request.getBody(), "UTF-8");
-                    pdfExporter.exportPdf(characterJson, resourceStream, out);
-                    generatedPdfs.put(pdfId.toString(), tempPdfPath);
-                    response = new ResponseEntity<>(pdfId.toString(), HttpStatus.OK);
-                    return response;
+                    pdfExporter.exportPdf(characterJson, resourceStream, pdfOut);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentDispositionFormData("attachment", id + ".pdf");
+                    headers.setContentType(MediaType.parseMediaType("application/pdf"));
+                    return new ResponseEntity<>(pdfOut.toByteArray(), headers, HttpStatus.OK);
                 }
+                return new ResponseEntity<byte[]>(HttpStatus.NOT_FOUND);
             } else {
                 throw new MissingPluginException(pluginDescription);
             }
@@ -163,27 +173,6 @@ public class GameRestController {
             ex.printStackTrace();
         }
         throw new IllegalStateException();
-    }
-
-    @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/pdf/{id}", method = RequestMethod.GET)
-    public ResponseEntity<byte[]> getPdf(@PathVariable("id") String id) {
-        try {
-            ResponseEntity<byte[]> responseEntity;
-            File pdf = generatedPdfs.getIfPresent(id);
-            if (pdf != null) {
-                byte[] out = Files.toByteArray(pdf);
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentDispositionFormData("attachment", id + ".pdf");
-                headers.setContentType(MediaType.parseMediaType("application/pdf"));
-                responseEntity = new ResponseEntity<>(out, headers, HttpStatus.OK);
-            } else {
-                responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            return responseEntity;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Secured({"ROLE_USER"})
