@@ -28,7 +28,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     @Inject
     private RequestMappingHandlerAdapter handlerAdapter;
     @Inject
-    GoogleOAuthUserResolver googleOAuthUserResolver;
+    private GoogleOAuthUserResolver googleOAuthUserResolver;
 
     @Bean
     public SimpleMappingExceptionResolver exceptionResolver() {
