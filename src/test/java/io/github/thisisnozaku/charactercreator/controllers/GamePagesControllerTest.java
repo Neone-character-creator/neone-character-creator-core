@@ -1,8 +1,11 @@
-package io.github.thisisnozaku.charactercreator.test.controllers;
+package io.github.thisisnozaku.charactercreator.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.thisisnozaku.charactercreator.TestConfiguration;
+import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.controllers.games.GamePagesController;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
+import io.github.thisisnozaku.charactercreator.data.OAuthAccountAssociation;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
@@ -33,6 +36,8 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 import java.math.BigInteger;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -67,6 +72,7 @@ public class GamePagesControllerTest {
     private PluginWrapper secondPlugin;
     PluginDescription desc1 = new PluginDescription("Damien Marble", "Game System", "1.1");
     PluginDescription desc2 = new PluginDescription("Mamien Darble", "Second Game System", "1.0");
+    private User testUser = new User(1L, Collections.emptyList());
 
     @Before
     public void setup() throws Exception {
@@ -108,6 +114,13 @@ public class GamePagesControllerTest {
             }
             return character;
         });
+
+        when(characters.findOne("1")).thenAnswer(invocation -> {
+            MockCharacter character = new MockCharacter(desc1);
+            character.setId(BigInteger.ONE);
+            ObjectMapper objectMapper = new ObjectMapper();
+            return new CharacterDataWrapper(desc1, testUser, objectMapper.writeValueAsString(character));
+        });
     }
 
     /**
@@ -148,6 +161,95 @@ public class GamePagesControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(view().name("missing-plugin"));
     }
+
+    @Test
+    public void testGetCharacterSheetPageFromDefaultUrl() throws Exception {
+        PluginDescription desc = desc1;
+        RequestBuilder request = get("/games/" +
+                URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getVersion(), "UTF-8"))
+                .contentType(MediaType.TEXT_HTML);
+
+        mvc.perform(request)
+                .andExpect(status().isOk())
+                .andExpect(view().name("plugin-character-page"));
+    }
+
+    @Test
+    public void testGetCharacterSheetPageWithDefaultUrlForMissingPlugin() throws Exception {
+        final PluginDescription desc = new PluginDescription("Fake", "Fake", "Fake");
+        ObjectMapper mapper = new ObjectMapper();
+        RequestBuilder request = get("/games/" +
+                URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getVersion(), "UTF-8"))
+                .contentType(MediaType.TEXT_HTML);
+        MockCharacter expectedCharacter = new MockCharacter(desc);
+        expectedCharacter.setId(BigInteger.ONE);
+
+        mvc.perform(request)
+                .andExpect(status().isNotFound())
+                .andExpect(view().name("missing-plugin"));
+    }
+
+    @Test
+    public void testGetCharacterSheetPageById() throws Exception {
+        final PluginDescription desc = desc1;
+        ObjectMapper mapper = new ObjectMapper();
+        RequestBuilder request = get("/games/" +
+                URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getVersion(), "UTF-8") + "/character/1")
+                .contentType(MediaType.TEXT_HTML);
+        MockCharacter expectedCharacter = new MockCharacter(desc);
+        expectedCharacter.setId(BigInteger.ONE);
+
+        mvc.perform(request)
+                .andExpect(status().isFound())
+                .andExpect(view().name(String.format("redirect:/games/%s/%s/%s", URLEncoder.encode(desc.getAuthor(), "UTF-8"),
+                        URLEncoder.encode(desc.getSystem(), "UTF-8"),
+                        URLEncoder.encode(desc.getVersion(), "UTF-8"))))
+                .andExpect(flash().attribute("character-wrapper", new CharacterDataWrapper(desc,
+                        testUser,
+                        mapper.writeValueAsString(expectedCharacter))));
+    }
+
+    @Test
+    public void testGetCharacterSheetPageByIdForMissingPlugin() throws Exception {
+        final PluginDescription desc = new PluginDescription("Fake", "Fake", "Fake");
+        ObjectMapper mapper = new ObjectMapper();
+
+        RequestBuilder request = get("/games/" +
+                URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getVersion(), "UTF-8") + "/character/1")
+                .contentType(MediaType.TEXT_HTML);
+
+        mvc.perform(request)
+                .andExpect(status().isNotFound())
+                .andExpect(view().name("missing-plugin"));
+    }
+
+    @Test
+    public void testGetCharacterSheetFromDefaultUrlAfterRedirectFromExistingCharacter() throws Exception {
+        final PluginDescription desc = desc1;
+        ObjectMapper mapper = new ObjectMapper();
+        MockCharacter character = new MockCharacter(desc);
+        character.setId(BigInteger.ONE);
+        RequestBuilder request = get("/games/" +
+                URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
+                URLEncoder.encode(desc.getVersion(), "UTF-8"))
+                .contentType(MediaType.TEXT_HTML)
+                .flashAttr("character-wrapper", new CharacterDataWrapper(desc, testUser, mapper.writeValueAsString(character)));
+
+        mvc.perform(request)
+                .andExpect(status().isOk())
+                .andExpect(view().name("plugin-character-page"))
+                .andExpect(model().attribute("wrapper", new CharacterDataWrapper(desc, testUser, mapper.writeValueAsString(character))));
+    }
+
 
     public static class MockCharacter extends Character {
         private BigInteger id;
