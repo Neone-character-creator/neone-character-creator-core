@@ -1,5 +1,6 @@
 package io.github.thisisnozaku.charactercreator.plugins.monitors;
 
+import java.awt.*;
 import java.nio.file.WatchEvent;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -19,6 +20,7 @@ public interface PluginMonitor {
 
     /**
      * Registers a callback that is executed when the monitor detects that a new file is present.
+     *
      * @return
      */
     PluginMonitor onCreated(Consumer<PluginMonitorEvent> consumer);
@@ -30,7 +32,17 @@ public interface PluginMonitor {
      */
     PluginMonitor onModified(Consumer<PluginMonitorEvent> runnable);
 
-    void start();
+    /**
+     * Removes the given consumer from the consumers registered for the given event type.
+     */
+    void removeConsumer(Consumer consumer, EventType type);
+
+    /**
+     * Handle the given event, triggering any consumers.
+     *
+     * @param event the plugin event
+     */
+    void handle(PluginMonitorEvent event);
 
     enum EventType {
         CREATED, MODIFIED, DELETED
