@@ -30,11 +30,13 @@ public class ThymeleafConfig{
         resolver.setPrefix("");
         resolver.setSuffix("");
         Set<String> resolvablePatterns = new HashSet<>();
+        //Support resolving special plugin files.
         resolvablePatterns.add("*-*-*-description");
         resolvablePatterns.add("*-*-*-character");
         resolver.setResolvablePatterns(resolvablePatterns);
         resolver.setTemplateMode(StandardTemplateModeHandlers.LEGACYHTML5.getTemplateModeName());
         resolver.setOrder(1);
+        //Because plugins are dynamic, avoid caching.
         resolver.setCacheable(false);
         resolver.setResourceResolver(pluginResourceLoader);
 
