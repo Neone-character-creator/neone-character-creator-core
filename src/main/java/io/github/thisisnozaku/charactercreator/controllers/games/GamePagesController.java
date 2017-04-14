@@ -109,10 +109,8 @@ public class GamePagesController {
             CharacterDataWrapper wrapper;
             if (id != null) {
                 wrapper = characters.findOne(id);
-            } else {
-                wrapper = new CharacterDataWrapper(description, currentUser, null);
+                redirectAttributes.addFlashAttribute("character-wrapper", wrapper);
             }
-            redirectAttributes.addFlashAttribute("character-wrapper", wrapper);
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
