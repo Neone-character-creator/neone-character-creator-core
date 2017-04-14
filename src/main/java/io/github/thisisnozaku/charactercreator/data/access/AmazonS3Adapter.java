@@ -19,18 +19,20 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+ * Implementation of FileAccessor backed by an Amazon S3 bucket.
  * Created by Damien on 9/11/2016.
  */
 @Service
 @Profile("aws")
 public class AmazonS3Adapter implements FileAccessor {
-    @Value("${amazon.s3.bucket}")
     private String bucket;
     @Inject
     private AmazonS3 s3;
 
-    public AmazonS3Adapter(AmazonS3 s3Client) {
+    //FIXME: Allows only a single bucket to be used in the whole application. Make into a list?
+    public AmazonS3Adapter(AmazonS3 s3Client, @Value("${amazon.s3.bucket}")String s3Bucket) {
         s3 = s3Client;
+        bucket = s3Bucket;
     }
 
     @Override
@@ -97,5 +99,9 @@ public class AmazonS3Adapter implements FileAccessor {
         public Optional<Instant> getLastModifiedTimestamp() {
             return Optional.ofNullable(s3.getObject(bucket, objectKey).getObjectMetadata().getLastModified().toInstant());
         }
+    }
+
+    public String getBucket() {
+        return bucket;
     }
 }
