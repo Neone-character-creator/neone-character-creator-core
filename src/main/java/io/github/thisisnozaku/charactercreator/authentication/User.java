@@ -1,9 +1,6 @@
 package io.github.thisisnozaku.charactercreator.authentication;
 
 import io.github.thisisnozaku.charactercreator.data.OAuthAccountAssociation;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
 
 import javax.persistence.*;
 import java.util.*;
@@ -14,7 +11,6 @@ import java.util.stream.Collectors;
  */
 @Entity
 @Table(name = "app_users")
-@Component
 public class User {
     @Id
     @GeneratedValue
@@ -31,9 +27,6 @@ public class User {
             e.setUser(this);
             return e;
         }).collect(Collectors.toList());
-    }
-
-    public User() {
     }
 
     public Long getId() {
