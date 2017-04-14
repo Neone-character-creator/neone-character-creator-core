@@ -27,7 +27,8 @@ apply plugin: 'mongo'
 apply plugin: 'idea'
 apply plugin: "io.spring.dependency-management"
 apply plugin: 'war'
-apply plugin: 'net.saliman.cobertura'
+apply plugin: "jacoco"
+
 
 dependencyManagement {
     imports {
@@ -163,12 +164,4 @@ bootRun {
     systemProperties System.properties
 }
 
-cobertura {
-    coverageIgnoreTrivial = true
-    coverageExcludes = [
-            ".*NeoneCoreApplication",
-            ".*Config",
-            ".*CharacterDataWrapper"
-    ]
-}
-
+jacocoTestReport.dependsOn test
