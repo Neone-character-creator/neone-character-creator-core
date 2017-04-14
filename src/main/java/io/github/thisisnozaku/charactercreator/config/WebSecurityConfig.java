@@ -26,7 +26,7 @@ WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity security) throws Exception {
         security.csrf().csrfTokenRepository(csrfTokenRepository());
 
-        //Security is controlled in REST Controller now
+        //Security is controlled in REST Controller via annotation now
         security.authorizeRequests()
                 .anyRequest().permitAll()
                 .and()
