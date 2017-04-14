@@ -2,9 +2,8 @@ package io.github.thisisnozaku.charactercreator;
 
 
 import io.github.thisisnozaku.charactercreator.config.ThymeleafConfig;
-import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
-import io.github.thisisnozaku.charactercreator.data.access.LocalFileSystemAccess;
-import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
+import io.github.thisisnozaku.charactercreator.access.FileAccessor;
+import io.github.thisisnozaku.charactercreator.access.LocalFileSystemAccess;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
