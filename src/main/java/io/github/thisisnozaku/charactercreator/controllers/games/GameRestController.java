@@ -1,8 +1,5 @@
 package io.github.thisisnozaku.charactercreator.controllers.games;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.io.Files;
 import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
@@ -23,11 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import java.io.*;
 import java.net.URLDecoder;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,15 +33,12 @@ import java.util.concurrent.TimeUnit;
 public class GameRestController {
     private final CharacterMongoRepositoryCustom characters;
     private final PluginManager<PluginWrapper> plugins;
-    private final Cache<String, File> generatedPdfs;
     private final Logger logger = LoggerFactory.getLogger(GameRestController.class);
 
     @Inject
     public GameRestController(CharacterMongoRepositoryCustom characters, PluginManager<PluginWrapper> pluginManager) {
         this.characters = characters;
         this.plugins = pluginManager;
-        generatedPdfs = CacheBuilder.newBuilder()
-                .expireAfterAccess(5, TimeUnit.MINUTES).build();
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
@@ -161,7 +153,6 @@ public class GameRestController {
                     String characterJson = URLDecoder.decode(request.getBody(), "UTF-8");
                     pdfExporter.exportPdf(characterJson, resourceStream, pdfOut);
                     HttpHeaders headers = new HttpHeaders();
-                    headers.setContentDispositionFormData("attachment", id + ".pdf");
                     headers.setContentType(MediaType.parseMediaType("application/pdf"));
                     return new ResponseEntity<>(pdfOut.toByteArray(), headers, HttpStatus.OK);
                 }
