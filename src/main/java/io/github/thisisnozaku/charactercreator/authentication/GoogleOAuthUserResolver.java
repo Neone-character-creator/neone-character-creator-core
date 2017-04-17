@@ -6,15 +6,12 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.model.Person;
 import org.springframework.core.MethodParameter;
-import org.springframework.messaging.Message;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
 /**
