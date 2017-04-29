@@ -27,6 +27,7 @@ import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,7 +100,7 @@ public class SecurityControllerTest {
                 (invocation -> {
                     OAuthAccountAssociation in = invocation.getArgumentAt(0, OAuthAccountAssociation.class);
                     in.setId(1);
-                    in.setUser(new User());
+                    in.setUser(new User(1L, Arrays.asList(in)));
                     return in;
                 })
         );
