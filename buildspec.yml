@@ -1,0 +1,10 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      gradle build
+
+artifacts:
+  files:
+    neone-character-builder-$CODEBUILD_BUILD_ID
