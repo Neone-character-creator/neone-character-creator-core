@@ -56,7 +56,6 @@ crashlytics-build.properties
 
 # Ignore gradle cache
 **/.gradle
-**/gradle
 
 
 # Ignore felix cache
