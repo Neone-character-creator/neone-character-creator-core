@@ -2,7 +2,7 @@ package io.github.thisisnozaku.charactercreator.config;
 
 import io.github.thisisnozaku.charactercreator.NeoneCoreApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.context.web.SpringBootServletInitializer;
+import org.springframework.boot.web.support.SpringBootServletInitializer;
 
 /**
  * Created by Damien on 9/11/2016.

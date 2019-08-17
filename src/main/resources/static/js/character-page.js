@@ -2,6 +2,13 @@ var auth2;
 var user;
 var authUrl = "https://accounts.google.com/o/oauth2/v2/auth";
 
+function fitIframe(){
+    var precedingHeight = $("#navbar").outerHeight(true)
+        + $("#signin-warning").outerHeight(true)
+        + $("#signout").outerHeight(true);
+    $("#content").height(($(window).height() - precedingHeight) * .95)
+}
+
 $().ready(function(){
     "use strict";
     var csrfToken = $("meta[name=_csrf]").attr("content");
@@ -14,6 +21,37 @@ $().ready(function(){
 
 	var contentContainer= $("#content");
 	contentContainer.attr('src', "/pluginresource/" + author + "/" + game + "/" + version + "/");
+
+	function login(){
+	    var user = auth2.currentUser.get();
+	    var headers = {};
+	    headers[csrfHeader] = csrfToken;
+	    $.ajax("/login/google", {
+	        type : "POST",
+	        data : user.Zi.access_token,
+	        contentType : 'application/json; charset=UTF-8',
+	        headers : headers
+    	}).done(function(response){
+	        $("#save-character").prop("disabled", false);
+	        $("#open-character").prop("disabled", false);
+	        $("#delete-character").prop("disabled", false);
+	        $("#signin-warning").hide();
+	        $("#signout").show();
+	        $("#login-modal").modal("hide");
+	    }).fail(function(response){
+	    logout();
+	    alert("Something went wrong syncing authentication with the server.");
+	});
+	}
+
+	function logout(){
+	    var headers = {};
+    	headers[csrfHeader] = csrfToken;
+    	$.post("logout/google", {
+    	    headers: headers
+    	});
+	}
+
 
 	$(document).on("click", ".google-login", function(){
 	    auth2.signIn().then(function(result){
@@ -34,38 +72,10 @@ $().ready(function(){
 			auth2 = gapi.auth2.getAuthInstance();
 			auth2.isSignedIn.listen(function(googleUser){
 				if(googleUser){
-				    var user = auth2.currentUser.get();
-				    var headers = {};
-				    headers[csrfHeader] = csrfToken;
-				    $.ajax("/login/google", {
-    				    type : "POST",
-    				    data : user.Zi.access_token,
-    				    contentType : 'application/json; charset=UTF-8',
-    				    headers : headers
-    				}).done(function(response){
-    				    $("#save-character").prop("disabled", false);
-                    	$("#open-character").prop("disabled", false);
-                    	$("#delete-character").prop("disabled", false);
-                    	$("#signin-warning").hide();
-                    	$("#signout").show();
-    				    $("#login-modal").modal("hide");
-    				}).fail(function(response){
-    				    $("#save-character").prop("disabled", true);
-                    	$("#open-character").prop("disabled", true);
-                    	$("#delete-character").prop("disabled", true);
-                    	$("#signin-warning").show();
-                    	$("#login").text("You're not logged in. Login here to save, load and delete characters.").removeClass("google-logout").addClass("login-menu");
-                    	$("#logout").hide();
-                    	$.ajax("/logout/google", {
-                    	    type : "POST",
-                    	    contentType : 'application/json; charset=UTF-8',
-                    	    headers : headers
-                    	});
-                    	alert("Something went wrong syncing authentication with the server.");
-    				    });
-    				} else {
-        				$("#logout").hide();
-    				}
+				    login();
+    		    } else {
+    		    	logout();
+    		    }
 				});
 			});
 		});
@@ -261,4 +271,7 @@ $().ready(function(){
         	};
         })
 	});
+	fitIframe();
 });
+
+$(window).resize(fitIframe);

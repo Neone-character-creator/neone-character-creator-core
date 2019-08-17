@@ -7,10 +7,12 @@ import java.util.LinkedList;
 import java.util.function.Consumer;
 
 /**
+ * Abstract base class for
+ *
  * Created by Damien on 12/3/2016.
  */
-public class PluginMonitorAdapter implements PluginMonitor {
-    protected final EnumMap<EventType, Collection<Consumer<PluginMonitorEvent>>> callbacks = new EnumMap<>(EventType.class);
+abstract public class PluginMonitorAdapter implements PluginMonitor {
+    private final EnumMap<EventType, Collection<Consumer<PluginMonitorEvent>>> callbacks = new EnumMap<>(EventType.class);
 
     public PluginMonitorAdapter() {
         Arrays.asList(EventType.values()).stream().forEach(v -> callbacks.put(v, new LinkedList<>()));
@@ -33,4 +35,21 @@ public class PluginMonitorAdapter implements PluginMonitor {
         callbacks.get(EventType.MODIFIED).add(callback);
         return this;
     }
+
+    /**
+     * Remove
+     * @param type
+     * @param consumer
+     * @return
+     */
+    @Override
+    public void removeConsumer(Consumer consumer, EventType type){
+        callbacks.get(type).remove(consumer);
+    }
+
+    public void handle(PluginMonitorEvent event) {
+        callbacks.get(event.getEventType()).forEach(c -> c.accept(event));
+    }
+
+    abstract public void start();
 }

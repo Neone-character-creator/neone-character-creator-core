@@ -1,23 +1,20 @@
 package io.github.thisisnozaku.charactercreator.config;
 
-import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
+import io.github.thisisnozaku.charactercreator.authentication.GoogleOAuthUserResolver;
 import io.github.thisisnozaku.charactercreator.plugins.PluginResourceResolver;
-import org.springframework.beans.factory.ListableBeanFactory;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
-import org.springframework.boot.autoconfigure.web.ResourceProperties;
-import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.WebMvcProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.http.CacheControl;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.handler.SimpleMappingExceptionResolver;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -25,12 +22,13 @@ import java.util.Properties;
  * Created by Damien on 1/8/2016.
  */
 @Configuration
-@EnableWebMvc
-public class WebConfig extends WebMvcConfigurerAdapter{
-    @Inject
-    private PluginManager pluginManager;
+public class WebConfig extends WebMvcConfigurerAdapter {
     @Inject
     private PluginResourceResolver pluginResourceResolver;
+    @Inject
+    private RequestMappingHandlerAdapter handlerAdapter;
+    @Inject
+    private GoogleOAuthUserResolver googleOAuthUserResolver;
 
     @Bean
     public SimpleMappingExceptionResolver exceptionResolver() {
@@ -45,8 +43,37 @@ public class WebConfig extends WebMvcConfigurerAdapter{
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("**/pluginresource/**").setCacheControl(CacheControl.noStore())
-                .resourceChain(true).addResolver(pluginResourceResolver);
-
-        super.addResourceHandlers(registry);
+                .resourceChain(false).addResolver(pluginResourceResolver);
     }
+
+    @Bean
+    static public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+        PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
+        return configurer;
+    }
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+        argumentResolvers.add(googleOAuthUserResolver);
+    }
+
+    /**
+     * http://stackoverflow.com/a/19847526/1503554
+     */
+    @PostConstruct
+    private void prioritizeCustomArgumentHandlers() {
+        List<HandlerMethodArgumentResolver> argumentResolvers =
+                new ArrayList<>(handlerAdapter.getArgumentResolvers());
+        List<HandlerMethodArgumentResolver> customResolvers =
+                handlerAdapter.getCustomArgumentResolvers();
+        argumentResolvers.removeAll(customResolvers);
+        argumentResolvers.addAll(0, customResolvers);
+        handlerAdapter.setArgumentResolvers(argumentResolvers);
+    }
+
+    @Bean
+    public static GoogleOAuthUserResolver googleOAuthUserResolver(){
+        return new GoogleOAuthUserResolver();
+    }
+
 }

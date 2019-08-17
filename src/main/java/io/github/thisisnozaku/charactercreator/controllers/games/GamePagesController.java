@@ -4,15 +4,12 @@ import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
-import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import io.github.thisisnozaku.charactercreator.plugins.PluginWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -33,14 +30,16 @@ import java.util.Optional;
 @Controller
 @RequestMapping("games/{author}/{game}/{version:.+}")
 public class GamePagesController {
+    @Inject
     private final UserRepository accounts;
+    @Inject
     private final CharacterMongoRepository characters;
-    private final PluginManager plugins;
+    @Inject
+    private final PluginManager<PluginWrapper> plugins;
     @Value("${google.oauth2.client.clientId}")
     private String googleClientId;
 
-    @Inject
-    public GamePagesController(CharacterMongoRepository characters, UserRepository accounts, PluginManager plugins) {
+    public GamePagesController(CharacterMongoRepository characters, UserRepository accounts, PluginManager<PluginWrapper> plugins) {
         this.characters = characters;
         this.accounts = accounts;
         this.plugins = plugins;
@@ -110,10 +109,8 @@ public class GamePagesController {
             CharacterDataWrapper wrapper;
             if (id != null) {
                 wrapper = characters.findOne(id);
-            } else {
-                wrapper = new CharacterDataWrapper(description, currentUser, null);
+                redirectAttributes.addFlashAttribute("character-wrapper", wrapper);
             }
-            redirectAttributes.addFlashAttribute("character-wrapper", wrapper);
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }

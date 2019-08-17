@@ -35,6 +35,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import java.math.BigInteger;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Optional;
@@ -57,7 +58,6 @@ public class RestControllerTest {
     private CharacterMongoRepositoryCustom characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
     @Mock
     private PluginManager plugins;
-
     private MockMvc mvc;
 
     private PluginWrapper firstPlugin;
@@ -77,6 +77,10 @@ public class RestControllerTest {
         controller = new GameRestController(characters, plugins);
 
         mvc = MockMvcBuilders.standaloneSetup(controller).build();
+        when(plugins.getPlugin(isA(PluginDescription.class))).thenAnswer((invocation -> {
+            PluginDescription description = (PluginDescription) invocation.getArguments()[0];
+            return plugins.getPlugin(description.getAuthor(), description.getSystem(), description.getVersion());
+        }));
 
         when(plugins.getPlugin(isA(String.class), isA(String.class), isA(String.class))).thenAnswer((invocation -> {
             Object[] args = invocation.getArguments();
@@ -208,7 +212,7 @@ public class RestControllerTest {
                 URLEncoder.encode(desc.getAuthor(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getSystem(), "UTF-8") + "/" +
                 URLEncoder.encode(desc.getVersion(), "UTF-8") + "/characters/" +
-                id)
+                id.toString())
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(mockCharacter);
 

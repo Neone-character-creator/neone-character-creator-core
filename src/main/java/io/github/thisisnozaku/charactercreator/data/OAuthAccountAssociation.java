@@ -5,6 +5,8 @@ import io.github.thisisnozaku.charactercreator.authentication.User;
 import javax.persistence.*;
 
 /**
+ * An association between an app user account and a third party OAuth account.
+ * <p>
  * Created by Damien on 10/19/2016.
  */
 @Entity
