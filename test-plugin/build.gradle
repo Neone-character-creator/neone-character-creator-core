@@ -3,17 +3,20 @@ version 'unspecified'
 
 buildscript {
     dependencies {
-        classpath 'be.jlr-home.gradle:scrPlugin:0.1.+'
+        classpath "com.twcable.gradle:gradle-plugin-scr:1.2.0"
     }
     repositories {
         mavenLocal()
         mavenCentral()
+        maven {
+            url "http://dl.bintray.com/twcable/aem"
+        }
     }
 }
 
 apply plugin: "java"
-apply plugin: 'scr'
 apply plugin: 'osgi'
+apply plugin: 'com.twcable.scr'
 
 sourceCompatibility = 1.8
 

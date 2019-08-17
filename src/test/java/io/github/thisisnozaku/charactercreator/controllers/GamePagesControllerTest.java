@@ -67,9 +67,9 @@ public class GamePagesControllerTest {
     private MockMvc mvc;
 
     @Mock
-    private PluginWrapper firstPlugin;
+    private GamePlugin firstPlugin;
     @Mock
-    private PluginWrapper secondPlugin;
+    private GamePlugin secondPlugin;
     PluginDescription desc1 = new PluginDescription("Damien Marble", "Game System", "1.1");
     PluginDescription desc2 = new PluginDescription("Mamien Darble", "Second Game System", "1.0");
     private User testUser = new User(1L, Collections.emptyList());

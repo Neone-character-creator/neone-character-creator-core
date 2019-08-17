@@ -2,6 +2,7 @@ package io.github.thisisnozaku.charactercreator.data.access;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +37,7 @@ public class LocalFileSystemAccess implements FileAccessor {
 
     @Override
     public FileInformation getFileInformation(URL path) throws URISyntaxException {
+        Assert.notNull(path);
         File f = null;
         try {
             f = new File(path.toURI());

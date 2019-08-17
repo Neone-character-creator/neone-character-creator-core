@@ -228,7 +228,7 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
         }
     }
 
-    private Bundle loadBundle(URL path) {
+    private Optional<Bundle> loadBundle(URL path) {
         try {
             FileInformation info = fileAccess.getFileInformation(path);
             Optional<InputStream> in = fileAccess.getContent(info);
@@ -241,17 +241,18 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
                     bundle = framework.getBundleContext().installBundle(info.getFileUrl().toExternalForm(), inStream);
                     bundle.start();
                 }
-                return bundle;
+                return Optional.of(bundle);
             } else {
                 logger.debug("Tried to get stream for {} but it wasn't found.", path.toString());
-                return null;
+                return Optional.empty();
             }
         } catch (BundleException ex) {
              ex.printStackTrace();
+            return Optional.empty();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        throw new IllegalStateException();
+
     }
 
     @Override

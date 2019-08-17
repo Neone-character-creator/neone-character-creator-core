@@ -54,15 +54,11 @@ public class FileAccessorTest {
         assertNotNull(fileAccessor.getFileInformation(tmp.toURI().toURL()));
     }
 
-    @Test
-    public void getFileInformationFromNullUrl() throws IOException, URISyntaxException {
+    @Test(expected = IllegalArgumentException.class)
+    public void getFileInformationFromNullUrl() throws Throwable {
         FileAccessor fileAccessor = new LocalFileSystemAccess();
         URL url = null;
-        try {
-            assertNotNull(fileAccessor.getFileInformation(url));
-        } catch (RuntimeException ex){
-            assertTrue(ex.getCause().getClass() == MalformedURLException.class);
-        }
+        assertNotNull(fileAccessor.getFileInformation(url));
     }
 
     @Test

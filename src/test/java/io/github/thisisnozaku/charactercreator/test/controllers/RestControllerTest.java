@@ -60,8 +60,8 @@ public class RestControllerTest {
     private PluginManager plugins;
     private MockMvc mvc;
 
-    private PluginWrapper firstPlugin;
-    private PluginWrapper secondPlugin;
+    private GamePlugin firstPlugin;
+    private GamePlugin secondPlugin;
     PluginDescription desc1 = new PluginDescription("Damien Marble", "Game System", "1.1");
     PluginDescription desc2 = new PluginDescription("Mamien Darble", "Second Game System", "1.0");
 
@@ -71,8 +71,8 @@ public class RestControllerTest {
         securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(new User(1L, Collections.emptyList()), null));
         characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
         plugins = Mockito.mock(PluginManager.class);
-        firstPlugin = Mockito.mock(PluginWrapper.class);
-        secondPlugin = Mockito.mock(PluginWrapper.class);
+        firstPlugin = Mockito.mock(GamePlugin.class);
+        secondPlugin = Mockito.mock(GamePlugin.class);
 
         controller = new GameRestController(characters, plugins);
 
