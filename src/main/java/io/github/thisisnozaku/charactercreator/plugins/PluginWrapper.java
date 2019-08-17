@@ -14,7 +14,7 @@ import java.util.Optional;
 public class PluginWrapper {
     private final PluginDescription pluginDescription;
     private final GamePlugin plugin;
-    private final PluginManager<PluginWrapper> pluginManager;
+    private final PluginManager<GamePlugin<Character>, Character> pluginManager;
     private final Map<String, String> resourceMappings;
 
     public PluginWrapper(PluginDescription pluginDescription,

@@ -59,16 +59,14 @@ public class FileSystemMonitor extends PluginMonitorAdapter {
                         Collection<Consumer<PluginMonitorEvent>> callables = null;
                         PluginMonitorEvent pluginMonitorEvent = null;
                         if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_CREATE)) {
-                            callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.CREATED);
                             pluginMonitorEvent = new PluginMonitorEvent(EventType.CREATED, parentPath.resolve(watchEvent.context().toString()).toFile().toURI().toURL().toExternalForm());
                         } else if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_DELETE)) {
-                            callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.DELETED);
                             pluginMonitorEvent = new PluginMonitorEvent(EventType.DELETED, parentPath.resolve(watchEvent.context().toString()).toFile().toURI().toURL().toExternalForm());
                         } else if (watchEvent.kind().equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
-                            callables = (Collection<Consumer<PluginMonitorEvent>>) callbacks.get(EventType.MODIFIED);
                             pluginMonitorEvent = new PluginMonitorEvent(EventType.MODIFIED, parentPath.resolve(watchEvent.context().toString()).toFile().toURI().toURL().toExternalForm());
                         }
                         final PluginMonitorEvent pluginEvent = pluginMonitorEvent;
+                        handle(pluginMonitorEvent);
                         if (callables != null && callables.size() > 0) {
                             callables.forEach(c -> {
                                 c.accept(pluginEvent);

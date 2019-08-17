@@ -5,6 +5,7 @@ import com.jayway.jsonpath.JsonPath;
 import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
 import io.github.thisisnozaku.charactercreator.data.access.FileInformation;
 import io.github.thisisnozaku.charactercreator.plugins.*;
+import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.monitors.PluginMonitor;
 import io.github.thisisnozaku.charactercreator.plugins.monitors.PluginMonitorEvent;
 import org.osgi.framework.Bundle;
@@ -37,7 +38,7 @@ import java.util.function.Consumer;
  * Created by Damien on 11/27/2015.
  */
 @Service("pluginManager")
-class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginThymeleafResourceResolver {
+class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Character>, PluginThymeleafResourceResolver {
     private final Map<PluginDescription, PluginWrapper> plugins = new HashMap<>();
     private final Map<PluginDescription, Bundle> pluginBundles = new HashMap<>();
     private Framework framework;
@@ -163,7 +164,6 @@ class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginThymeleaf
                 }
             });
             framework.start();
-            pluginMonitor.start();
             logger.info("Looking for plugins in \"{}\"", pluginPath);
             //Initial attempt to load all bundles.
             Collection<FileInformation> fileInfo = fileAccess.getAllFileInformation(pluginPath);
@@ -193,9 +193,8 @@ class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginThymeleaf
     }
 
     @Override
-    public Optional<PluginWrapper> getPlugin(String author, String game, String version) {
-        PluginDescription description = new PluginDescription(author, game, version);
-        return Optional.ofNullable(plugins.get(description));
+    public Optional<GamePlugin<Character>> getPlugin(String author, String game, String version) {
+        return getPlugin(new PluginDescription(author, game, version));
     }
 
     @Override
@@ -204,8 +203,8 @@ class PluginManagerImpl implements PluginManager<PluginWrapper>, PluginThymeleaf
     }
 
     @Override
-    public Optional<PluginWrapper> getPlugin(PluginDescription pluginDescription) {
-        return Optional.ofNullable(plugins.get(pluginDescription));
+    public Optional<GamePlugin<Character>> getPlugin(PluginDescription pluginDescription) {
+        return Optional.ofNullable(plugins.get(pluginDescription)).map(w -> w.getPlugin());
     }
 
     @Override

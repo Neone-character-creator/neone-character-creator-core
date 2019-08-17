@@ -4,6 +4,8 @@ import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
+import io.github.thisisnozaku.charactercreator.plugins.Character;
+import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
 import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
 import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import io.github.thisisnozaku.charactercreator.plugins.PluginWrapper;
@@ -32,11 +34,11 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/games/")
 public class GameRestController {
     private final CharacterMongoRepositoryCustom characters;
-    private final PluginManager<PluginWrapper> plugins;
+    private final PluginManager<GamePlugin<Character>, Character> plugins;
     private final Logger logger = LoggerFactory.getLogger(GameRestController.class);
 
     @Inject
-    public GameRestController(CharacterMongoRepositoryCustom characters, PluginManager<PluginWrapper> pluginManager) {
+    public GameRestController(CharacterMongoRepositoryCustom characters, PluginManager<GamePlugin<Character>, Character> pluginManager) {
         this.characters = characters;
         this.plugins = pluginManager;
     }
@@ -70,7 +72,7 @@ public class GameRestController {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         logger.info("Creating a new character for user {} using plugin {}, {}, {}", currentUser.getId(), author, game, version);
         PluginDescription description = new PluginDescription(author, game, version);
-        Optional<PluginWrapper> plugin = plugins.getPlugin(description);
+        Optional<GamePlugin<Character>> plugin = plugins.getPlugin(description);
         if (plugin.isPresent()) {
             logger.info("Plugin {}, {}, {} found.", author, game, version);
             CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUser.getId(), requestBody.getBody());
@@ -141,9 +143,15 @@ public class GameRestController {
     public ResponseEntity<byte[]> exportToPdf(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, RequestEntity<String> request) {
         try {
             PluginDescription pluginDescription = new PluginDescription(author, game, version);
-            Optional<PluginWrapper> plugin = plugins.getPlugin(pluginDescription);
+            Optional<GamePlugin<Character>> plugin = plugins.getPlugin(pluginDescription);
             if (plugin.isPresent()) {
-                Optional<InputStream> contentStream = plugin.get().getResourceAsStream("pdf");
+                Optional<InputStream> contentStream = plugins.getPluginResource(pluginDescription, "pdf").map(uri -> {
+                    try {
+                        return uri.toURL().openStream();
+                    } catch (IOException ex) {
+                        return null;
+                    }
+                });
                 if (contentStream.isPresent()) {
                     InputStream resourceStream = contentStream.get();
                     ResponseEntity<String> response;

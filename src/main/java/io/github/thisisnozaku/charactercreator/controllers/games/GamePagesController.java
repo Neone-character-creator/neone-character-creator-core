@@ -4,9 +4,8 @@ import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepository;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
-import io.github.thisisnozaku.charactercreator.plugins.PluginDescription;
-import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
-import io.github.thisisnozaku.charactercreator.plugins.PluginWrapper;
+import io.github.thisisnozaku.charactercreator.plugins.*;
+import io.github.thisisnozaku.charactercreator.plugins.Character;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,11 +34,11 @@ public class GamePagesController {
     @Inject
     private final CharacterMongoRepository characters;
     @Inject
-    private final PluginManager<PluginWrapper> plugins;
+    private final PluginManager<GamePlugin<Character>, Character> plugins;
     @Value("${google.oauth2.client.clientId}")
     private String googleClientId;
 
-    public GamePagesController(CharacterMongoRepository characters, UserRepository accounts, PluginManager<PluginWrapper> plugins) {
+    public GamePagesController(CharacterMongoRepository characters, UserRepository accounts, PluginManager<GamePlugin<Character>, Character> plugins) {
         this.characters = characters;
         this.accounts = accounts;
         this.plugins = plugins;
@@ -54,8 +53,9 @@ public class GamePagesController {
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
-        PluginWrapper plugin;
+        GamePlugin plugin;
         try {
+            // TODO: Refactor.
             plugin = plugins.getPlugin(URLDecoder.decode(author, "UTF-8"), URLDecoder.decode(game, "UTF-8"), URLDecoder.decode(version, "UTF-8")).get();
             return String.format("%s-%s-%s-description", author, game, version);
         } catch (NoSuchElementException ex) {
@@ -69,7 +69,7 @@ public class GamePagesController {
             PluginDescription description = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
                     URLDecoder.decode(game, "UTF-8"),
                     URLDecoder.decode(version, "UTF-8"));
-            Optional<PluginWrapper> plugin = plugins.getPlugin(description);
+            Optional<GamePlugin<Character>> plugin = plugins.getPlugin(description);
             if (!plugin.isPresent()) {
                 throw new MissingPluginException(description);
             }
@@ -102,7 +102,7 @@ public class GamePagesController {
             PluginDescription description = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
                     URLDecoder.decode(game, "UTF-8"),
                     URLDecoder.decode(version, "UTF-8"));
-            Optional<PluginWrapper> plugin = plugins.getPlugin(description);
+            Optional<GamePlugin<Character>> plugin = plugins.getPlugin(description);
             if (!plugin.isPresent()) {
                 throw new MissingPluginException(description);
             }
