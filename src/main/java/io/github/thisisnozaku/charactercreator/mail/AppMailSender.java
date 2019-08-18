@@ -1,6 +1,7 @@
 package io.github.thisisnozaku.charactercreator.mail;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import javax.mail.internet.MimeMessage;
  * Created by Damien on 9/15/2016.
  */
 @Service
+@Profile("mail")
 public class AppMailSender implements EmailSender {
     @Inject
     private JavaMailSender mailSender;
