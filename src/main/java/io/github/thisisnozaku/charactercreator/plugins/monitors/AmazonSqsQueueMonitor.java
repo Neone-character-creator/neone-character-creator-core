@@ -7,11 +7,14 @@ import com.amazonaws.services.s3.model.S3Event;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.*;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -27,6 +30,7 @@ import java.util.stream.Collectors;
 @Service
 @Profile("aws")
 public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
+    private static final Logger logger = LoggerFactory.getLogger(AmazonSqsQueueMonitor.class);
     private final AmazonSQS sqsClient;
     private final ScheduledExecutorService executorService;
     private final List<String> monitoredQueueNames;
@@ -42,7 +46,9 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
     /**
      *
      */
+    @PostConstruct
     public void start() {
+        logger.info("Begun polling queue for plugin events.");
         //20 seconds is suggested maximum. http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-long-polling.html
         Duration pollingInterval = Duration.ofSeconds(20);
         monitoredQueueNames.stream().forEach(queue -> {
