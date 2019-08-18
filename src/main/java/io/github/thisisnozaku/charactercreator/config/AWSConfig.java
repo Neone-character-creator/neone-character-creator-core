@@ -1,5 +1,6 @@
 package io.github.thisisnozaku.charactercreator.config;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -10,6 +11,8 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import static java.lang.String.format;
 
 /**
  * Created by Damie on 1/30/2017.
@@ -30,7 +33,9 @@ public class AWSConfig {
     public AmazonSQS amazonSQS() {
         AmazonSQSClientBuilder builder = AmazonSQSClientBuilder.standard();
 
-        AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration("sqs.us-west-1.amazonaws.com",
+        String serviceEndpoint = format("sqs.%s.com", getRegion().getName());
+
+        AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(serviceEndpoint,
                 getRegion().getName());
         builder.setEndpointConfiguration(endpointConfiguration);
         return builder.build();
