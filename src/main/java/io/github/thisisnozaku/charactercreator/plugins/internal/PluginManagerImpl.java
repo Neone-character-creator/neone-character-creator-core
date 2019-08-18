@@ -57,6 +57,7 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
     @PostConstruct
     private void init() {
         logger.info("Starting Plugin manager");
+        logger.info("Using {} as file accessor", fileAccess.getClass().getName());
         try {
             ResourceBundle configResource = ResourceBundle.getBundle("config");
             Map<String, String> config = new HashMap<>();
@@ -137,6 +138,8 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
                     if (timestamp.isPresent() && (b == null || timestamp.get().isAfter(Instant.ofEpochMilli(b.getLastModified())))) {
                         logger.info("A new plugin found at url {}, loading it.", info.getFileUrl().toExternalForm());
                         loadBundle(info.getFileUrl());
+                    } else {
+                        logger.info("Previous plugin found at url {}, skipping loading", info.getFileUrl().toExternalForm());
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
