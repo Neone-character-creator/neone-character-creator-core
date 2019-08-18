@@ -52,7 +52,7 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
         //20 seconds is suggested maximum. http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-long-polling.html
         Duration pollingInterval = Duration.ofSeconds(20);
         monitoredQueueNames.stream().forEach(queue -> {
-            System.out.println(String.format("Starting polling queue %s in region %s.", queue, currentRegion != null ? currentRegion.getName() : currentRegion));
+            logger.info(String.format("Starting polling queue %s in region %s.", queue, currentRegion != null ? currentRegion.getName() : currentRegion));
             final GetQueueUrlResult getQueueResult = sqsClient.getQueueUrl(queue);
             executorService.scheduleAtFixedRate(() -> {
                 try {
@@ -61,11 +61,11 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
                     Collection<Message> messages = sqsClient.receiveMessage(request).getMessages();
                     messages.stream().forEach(message -> {
                         S3EventNotification notification = S3EventNotification.parseJson(message.getBody());
-                        notification.getRecords().stream().forEach(record -> {
-                            String appendedEventName = "";
+                        Optional.ofNullable(notification.getRecords()).ifPresent(records -> {
+                                records.stream().forEach(record -> {
                             PluginMonitorEvent event = null;
                             //S3Event has names like "s3:ObjectCreated:Put", but the record event name lacks the leading "s3:"
-                            appendedEventName = "s3:" + record.getEventName();
+                            String appendedEventName = "s3:" + record.getEventName();
                             if (S3Event.ObjectCreatedByPut.toString().equals(appendedEventName) ||
                                     S3Event.ObjectCreatedByPost.toString().equals(appendedEventName)) {
                                 event = new PluginMonitorEvent(EventType.CREATED, record.getS3().getObject().getKey());
@@ -77,10 +77,12 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
                             }
                         });
                     });
+                    });
                     List<DeleteMessageBatchRequestEntry> deleteEntries = messages.stream().map(message -> {
                         return new DeleteMessageBatchRequestEntry(message.getMessageId(), message.getReceiptHandle());
                     }).collect(Collectors.toList());
                     //Don't send an empty collection of entries to avoid EmptyBatchException.
+                    logger.info("Notifying SQS that {} messages were consumed", messages.size());
                     if (deleteEntries.size() > 0) {
                         sqsClient.deleteMessageBatch(queue, deleteEntries);
                     }
@@ -91,8 +93,8 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
         });
     }
 
-    @Bean
-    public static ScheduledExecutorService executorService() {
-        return Executors.newScheduledThreadPool(1);
+        @Bean
+        public static ScheduledExecutorService executorService () {
+            return Executors.newScheduledThreadPool(1);
+        }
     }
-}
