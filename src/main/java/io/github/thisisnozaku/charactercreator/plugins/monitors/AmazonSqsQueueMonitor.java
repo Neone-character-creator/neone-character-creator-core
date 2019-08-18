@@ -28,33 +28,15 @@ import java.util.stream.Collectors;
 @Profile("aws")
 public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
     private final AmazonSQS sqsClient;
-    private final XmlMapper xmlMapper = new XmlMapper();
     private final ScheduledExecutorService executorService;
     private final List<String> monitoredQueueNames;
     private final Region currentRegion;
 
-    public AmazonSqsQueueMonitor(AmazonSQS sqsClient, ScheduledExecutorService executorService, Map<EventType, Collection<Consumer>> eventHandlers, @Value("${sqs.queues}") String... queueNames) {
+    public AmazonSqsQueueMonitor(AmazonSQS sqsClient, ScheduledExecutorService executorService, @Value("${sqs.queues}") String... queueNames) {
         this.sqsClient = sqsClient;
         this.executorService = executorService;
         monitoredQueueNames = Arrays.asList(queueNames);
         currentRegion = Regions.getCurrentRegion();
-        eventHandlers.entrySet().stream().flatMap(e -> {
-            return e.getValue().stream().map(v -> {
-                return new AbstractMap.SimpleEntry<>(e.getKey(), v);
-            });
-        }).forEach(e -> {
-            switch (e.getKey()) {
-                case CREATED:
-                    this.onCreated(e.getValue());
-                    break;
-                case DELETED:
-                    this.onDeleted(e.getValue());
-                    break;
-                case MODIFIED:
-                    this.onModified(e.getValue());
-                    break;
-            }
-        });
     }
 
     /**
@@ -71,7 +53,6 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
                     ReceiveMessageRequest request = new ReceiveMessageRequest(getQueueResult.getQueueUrl());
                     request.setWaitTimeSeconds((int) pollingInterval.getSeconds());
                     Collection<Message> messages = sqsClient.receiveMessage(request).getMessages();
-                    Collection<Message> handledMessages = new LinkedList<>();
                     messages.stream().forEach(message -> {
                         S3EventNotification notification = S3EventNotification.parseJson(message.getBody());
                         notification.getRecords().stream().forEach(record -> {
