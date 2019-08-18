@@ -16,7 +16,9 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * Created by Damien on 1/8/2016.
@@ -68,7 +70,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
                 handlerAdapter.getCustomArgumentResolvers();
         argumentResolvers.removeAll(customResolvers);
         argumentResolvers.addAll(0, customResolvers);
-        handlerAdapter.setArgumentResolvers(argumentResolvers);
+        handlerAdapter.setArgumentResolvers(argumentResolvers.stream().filter(Objects::nonNull).collect(Collectors.toList()));
     }
 
     @Bean
