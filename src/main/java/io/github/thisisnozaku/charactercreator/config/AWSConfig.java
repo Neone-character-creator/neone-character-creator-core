@@ -33,7 +33,7 @@ public class AWSConfig {
     public AmazonSQS amazonSQS() {
         AmazonSQSClientBuilder builder = AmazonSQSClientBuilder.standard();
 
-        String serviceEndpoint = format("sqs.%s.com", getRegion().getName());
+        String serviceEndpoint = format("sqs.%s.amazonaws.com", getRegion().getName());
 
         AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(serviceEndpoint,
                 getRegion().getName());
