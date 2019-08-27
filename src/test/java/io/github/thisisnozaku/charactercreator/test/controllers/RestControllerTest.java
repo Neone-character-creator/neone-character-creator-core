@@ -74,7 +74,7 @@ public class RestControllerTest {
         firstPlugin = Mockito.mock(GamePlugin.class);
         secondPlugin = Mockito.mock(GamePlugin.class);
 
-        controller = new GameRestController(characters, plugins);
+        controller = new GameRestController(characters, plugins, new org.codehaus.jackson.map.ObjectMapper());
 
         mvc = MockMvcBuilders.standaloneSetup(controller).build();
         when(plugins.getPlugin(isA(PluginDescription.class))).thenAnswer((invocation -> {

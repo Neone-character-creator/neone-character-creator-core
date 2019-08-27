@@ -2,6 +2,7 @@ package io.github.thisisnozaku.charactercreator.config;
 
 import io.github.thisisnozaku.charactercreator.authentication.GoogleOAuthUserResolver;
 import io.github.thisisnozaku.charactercreator.plugins.PluginResourceResolver;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
@@ -76,6 +77,11 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     @Bean
     public static GoogleOAuthUserResolver googleOAuthUserResolver(){
         return new GoogleOAuthUserResolver();
+    }
+
+    @Bean
+    public static ObjectMapper defaultObjectMapper(){
+        return new ObjectMapper();
     }
 
 }
