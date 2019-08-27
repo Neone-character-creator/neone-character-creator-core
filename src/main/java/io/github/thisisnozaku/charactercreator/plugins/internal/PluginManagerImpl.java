@@ -239,11 +239,15 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
                 InputStream inStream = in.get();
                 Bundle bundle = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
                 if (bundle != null) {
+                    logger.info("Bundle already exists, updating");
                     bundle.update(inStream);
                 } else {
+                    logger.info("New bundle, installing");
                     bundle = framework.getBundleContext().installBundle(info.getFileUrl().toExternalForm(), inStream);
+                    logger.info("Starting bundle");
                     bundle.start();
                 }
+                logger.info("Bundle loaded");
                 return Optional.of(bundle);
             } else {
                 logger.debug("Tried to get stream for {} but it wasn't found.", path.toString());
