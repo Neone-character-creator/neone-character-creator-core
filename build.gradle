@@ -1,7 +1,7 @@
 buildscript {
     ext {
         springBootVersion = '1.4.3.RELEASE'
-        appVersion = "0.0.2-SNAPSHOT-10"
+        appVersion = "0.0.3"
     }
     repositories {
         mavenCentral()
@@ -100,7 +100,7 @@ dependencies {
     testOsgi project(':test-plugin')
 
     compile 'commons-io:commons-io:2.4'
-    compile('io.github.thisisnozaku:pdf-export:1.0.2')
+    compile('io.github.thisisnozaku:pdf-export:1.1.0')
 
     compile 'com.amazonaws:aws-java-sdk-core:1.11.86'
     compile 'com.amazonaws:aws-java-sdk-s3:1.11.86'

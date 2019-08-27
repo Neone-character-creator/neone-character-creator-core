@@ -12,6 +12,8 @@ import io.github.thisisnozaku.charactercreator.plugins.PluginWrapper;
 import io.github.thisisnozaku.pdfexporter.DefaultPdfWriter;
 import io.github.thisisnozaku.pdfexporter.JsonFieldValueExtractor;
 import io.github.thisisnozaku.pdfexporter.PdfExporter;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
@@ -21,10 +23,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URLDecoder;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,11 +38,12 @@ public class GameRestController {
     private final CharacterMongoRepositoryCustom characters;
     private final PluginManager<GamePlugin<Character>, Character> plugins;
     private final Logger logger = LoggerFactory.getLogger(GameRestController.class);
-
+    private final ObjectMapper objectMapper;
     @Inject
-    public GameRestController(CharacterMongoRepositoryCustom characters, PluginManager<GamePlugin<Character>, Character> pluginManager) {
+    public GameRestController(CharacterMongoRepositoryCustom characters, PluginManager<GamePlugin<Character>, Character> pluginManager, ObjectMapper objectMapper) {
         this.characters = characters;
         this.plugins = pluginManager;
+        this.objectMapper = objectMapper;
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
@@ -154,12 +157,19 @@ public class GameRestController {
                 });
                 if (contentStream.isPresent()) {
                     InputStream resourceStream = contentStream.get();
-                    ResponseEntity<String> response;
+                    Map<String, String> overrideMappings = plugins.getPluginResource(pluginDescription, "fields.json")
+                            .map(fm -> {
+                                try {
+                                    return objectMapper.<Map<String, String>>readValue(fm.toURL(), new TypeReference<Map<String, String>>(){});
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }).orElse(Collections.EMPTY_MAP);
                     PdfExporter<String> pdfExporter = new PdfExporter<>(new DefaultPdfWriter(), new JsonFieldValueExtractor());
                     ByteArrayOutputStream pdfOut = new ByteArrayOutputStream();
 
                     String characterJson = URLDecoder.decode(request.getBody(), "UTF-8");
-                    pdfExporter.exportPdf(characterJson, resourceStream, pdfOut);
+                    pdfExporter.exportPdf(characterJson, resourceStream, pdfOut, overrideMappings);
                     HttpHeaders headers = new HttpHeaders();
                     headers.setContentType(MediaType.parseMediaType("application/pdf"));
                     return new ResponseEntity<>(pdfOut.toByteArray(), headers, HttpStatus.OK);
