@@ -23,6 +23,8 @@ public class FileInformation {
         this.fileUrl = fileUrl;
     }
 
+    protected FileInformation(){}
+
     public URL getFileUrl() {
         return fileUrl;
     }
