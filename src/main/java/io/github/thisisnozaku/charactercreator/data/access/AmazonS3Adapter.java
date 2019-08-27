@@ -2,6 +2,8 @@ package io.github.thisisnozaku.charactercreator.data.access;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.util.Optional;
 @Service
 @Profile("aws")
 public class AmazonS3Adapter implements FileAccessor {
+    private static final Logger logger = LoggerFactory.getLogger(AmazonS3Adapter.class);
     private String bucket;
     @Inject
     private AmazonS3 s3;
@@ -77,13 +80,19 @@ public class AmazonS3Adapter implements FileAccessor {
     public class S3BackedFileInformation extends FileInformation {
         private final String objectKey;
 
+        @Override
+        public String toString() {
+            return "S3BackedFileInformation{" +
+                    "objectKey='" + objectKey + '\'' +
+                    '}';
+        }
+
         public S3BackedFileInformation(String resourcePath) {
-            //Strip leading /
-            super(s3.getUrl(AmazonS3Adapter.this.bucket,
-                    resourcePath = (resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath)
-                            .substring(resourcePath.indexOf("amazonaws.com/") + "amazonaws.com/".length())));
+            logger.info("Creating S3-backed FileInformation for path {}", resourcePath);
+            resourcePath = (resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath)
+                    .substring(resourcePath.indexOf("amazonaws.com/") + "amazonaws.com/".length());
+            logger.info("Adjusted resourcePath {}", resourcePath);
             this.objectKey = resourcePath;
-            s3.getObjectMetadata(bucket, resourcePath).getLastModified().toInstant();
         }
 
         public String getObjectKey() {
