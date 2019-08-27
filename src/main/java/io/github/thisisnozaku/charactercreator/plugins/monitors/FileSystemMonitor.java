@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -118,6 +119,7 @@ public class FileSystemMonitor extends PluginMonitorAdapter {
     }
 
     @Override
+    @PostConstruct
     public void start() {
         poll = executor.scheduleAtFixedRate(pollingMethod, 0, pollTime, TimeUnit.MILLISECONDS);
     }
