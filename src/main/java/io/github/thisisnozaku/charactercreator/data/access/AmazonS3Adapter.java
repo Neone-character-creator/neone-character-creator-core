@@ -90,7 +90,9 @@ public class AmazonS3Adapter implements FileAccessor {
         public S3BackedFileInformation(String resourcePath) {
             logger.info("Creating S3-backed FileInformation for path {}", resourcePath);
             resourcePath = (resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath);
-            resourcePath = resourcePath.substring(resourcePath.indexOf("s3.amazonaws.com/") + "s3.amazonaws.com/".length());
+            resourcePath = resourcePath.contains("s3.amazonaws.com/") ?
+                    resourcePath.substring(resourcePath.indexOf("s3.amazonaws.com/") + "s3.amazonaws.com/".length()) :
+                    resourcePath;
             logger.info("Adjusted resourcePath {}", resourcePath);
             this.objectKey = resourcePath;
         }
