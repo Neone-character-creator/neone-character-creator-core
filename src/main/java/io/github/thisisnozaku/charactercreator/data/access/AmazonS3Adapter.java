@@ -106,7 +106,12 @@ public class AmazonS3Adapter implements FileAccessor {
 
         @Override
         public Optional<Instant> getLastModifiedTimestamp() {
-            return Optional.ofNullable(s3.getObject(bucket, objectKey).getObjectMetadata().getLastModified().toInstant());
+            try {
+                return Optional.ofNullable(s3.getObject(bucket, objectKey).getObjectMetadata().getLastModified().toInstant());
+            } catch (Exception ex) {
+                logger.error("Something went wrong trying to get S3 info for bucket: [{}], object: [{}]", bucket, this.objectKey);
+                throw ex;
+            }
         }
     }
 
