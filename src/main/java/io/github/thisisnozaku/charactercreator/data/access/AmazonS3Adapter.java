@@ -93,6 +93,7 @@ public class AmazonS3Adapter implements FileAccessor {
             resourcePath = resourcePath.contains("s3.amazonaws.com/") ?
                     resourcePath.substring(resourcePath.indexOf("s3.amazonaws.com/") + "s3.amazonaws.com/".length()) :
                     resourcePath;
+            resourcePath = resourcePath.contains("?") ? resourcePath.substring(0, resourcePath.indexOf("?")) : resourcePath;
             logger.info("Adjusted resourcePath {}", resourcePath);
             this.objectKey = resourcePath;
         }
