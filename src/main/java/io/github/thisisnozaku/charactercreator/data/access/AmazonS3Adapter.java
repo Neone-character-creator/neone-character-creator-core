@@ -89,8 +89,9 @@ public class AmazonS3Adapter implements FileAccessor {
 
         public S3BackedFileInformation(String resourcePath) {
             logger.info("Creating S3-backed FileInformation for path {}", resourcePath);
-            resourcePath = (resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath)
-                    .substring(resourcePath.indexOf("amazonaws.com/") + "amazonaws.com/".length());
+            resourcePath = (resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath);
+            resourcePath = resourcePath.startsWith("amazonaws.com/") ? resourcePath.substring(resourcePath.indexOf("amazonaws.com/") + "amazonaws.com/".length()) :
+                    resourcePath;
             logger.info("Adjusted resourcePath {}", resourcePath);
             this.objectKey = resourcePath;
         }
@@ -106,7 +107,12 @@ public class AmazonS3Adapter implements FileAccessor {
 
         @Override
         public Optional<Instant> getLastModifiedTimestamp() {
-            return Optional.ofNullable(s3.getObject(bucket, objectKey).getObjectMetadata().getLastModified().toInstant());
+            try {
+                return Optional.ofNullable(s3.getObject(bucket, objectKey).getObjectMetadata().getLastModified().toInstant());
+            } catch (Exception ex) {
+                logger.error("Something went wrong trying to get S3 info for bucket: [{}], object: [{}]", bucket, this.objectKey);
+                throw ex;
+            }
         }
     }
 
