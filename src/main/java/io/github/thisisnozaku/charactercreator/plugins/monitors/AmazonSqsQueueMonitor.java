@@ -82,8 +82,8 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
                         return new DeleteMessageBatchRequestEntry(message.getMessageId(), message.getReceiptHandle());
                     }).collect(Collectors.toList());
                     //Don't send an empty collection of entries to avoid EmptyBatchException.
-                    logger.info("Notifying SQS that {} messages were consumed", messages.size());
                     if (deleteEntries.size() > 0) {
+                        logger.info("Notifying SQS that {} messages were consumed", messages.size());
                         sqsClient.deleteMessageBatch(queue, deleteEntries);
                     }
                 } catch (Exception e) {
