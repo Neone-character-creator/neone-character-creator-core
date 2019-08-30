@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -64,7 +65,9 @@ public class GamePagesController {
     }
 
     @RequestMapping(value = "", method = RequestMethod.GET, produces = "text/html")
-    public String getCharacterSheet(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, HttpServletRequest request, @AuthenticationPrincipal String currentUser) {
+    public String getCharacterSheet(@PathVariable("author") String author, @PathVariable("game") String game,
+                                    @PathVariable("version") String version, ModelMap model, HttpServletRequest request,
+                                    @AuthenticationPrincipal String currentUser) {
         try {
             PluginDescription description = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
                     URLDecoder.decode(game, "UTF-8"),
@@ -75,7 +78,7 @@ public class GamePagesController {
             }
             CharacterDataWrapper wrapper;
             if (model.containsAttribute("character-wrapper")) {
-                wrapper = (CharacterDataWrapper) model.asMap().get("character-wrapper");
+                wrapper = (CharacterDataWrapper) model.get("character-wrapper");
             } else {
                 wrapper = new CharacterDataWrapper(description, currentUser, null);
             }
@@ -89,7 +92,7 @@ public class GamePagesController {
             model.addAttribute("loadEnabled", currentUser != null);
             model.addAttribute("exportEnabled", true);
             model.addAttribute("google_client_id", googleClientId);
-            model.addAttribute("contentUrl", String.format("%s:%s/%s/%s/%s", request.getLocalName(), request.getLocalPort(), author, game, version));
+            model.addAttribute("contentUrl", String.format("%s/%s/%s", author, game, version));
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
