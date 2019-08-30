@@ -1,5 +1,7 @@
 package io.github.thisisnozaku.charactercreator.plugins;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
  */
 @Service
 public class PluginResourceResolver implements ResourceResolver {
+    private static final Logger logger = LoggerFactory.getLogger(PluginResourceResolver.class);
     @SuppressWarnings({"CanBeFinal", "unused"})
     @Inject
     private PluginManager pluginManager;
@@ -29,15 +32,17 @@ public class PluginResourceResolver implements ResourceResolver {
     @Override
     public Resource resolveResource(HttpServletRequest request, String requestPath, List<? extends Resource> locations, ResourceResolverChain chain) {
         try {
+            logger.debug("Initial path {}", requestPath);
             requestPath = URLDecoder.decode(requestPath, "UTF-8");
+            logger.debug("URL Decoded path {}", requestPath);
             String[] pathTokens = requestPath.substring(requestPath.lastIndexOf("pluginresource/") + "pluginresource/".length()).split("/");
             String author = pathTokens[0];
             String game = pathTokens[1];
             String version = pathTokens[2];
+            logger.debug("Plugin properties - Author: {} - Game: {} - Version: {}", author, game, version);
             String resourcePath = Arrays.asList(pathTokens).subList(3, pathTokens.length).stream().collect(Collectors.joining("/"));
-            PluginDescription incomingPluginDescription = new PluginDescription(URLDecoder.decode(author, "UTF-8"),
-                    URLDecoder.decode(game, "UTF-8"),
-                    URLDecoder.decode(version, "UTF-8"));
+            logger.debug("Resource path {}", resourcePath);
+            PluginDescription incomingPluginDescription = new PluginDescription(author, game, version);
             //If no resource is named, we get the character sheet
             if (resourcePath.equals("")) {
                 resourcePath = "character";
@@ -46,8 +51,10 @@ public class PluginResourceResolver implements ResourceResolver {
 
             try {
                 if (resource.isPresent()) {
+                    logger.debug("Resource was found");
                     return new UrlResource(resource.get());
                 } else {
+                    logger.debug("Resource was NOT found");
                     return null;
                 }
 
