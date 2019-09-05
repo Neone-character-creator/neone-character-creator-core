@@ -32,16 +32,16 @@ public class PluginResourceResolver implements ResourceResolver {
     @Override
     public Resource resolveResource(HttpServletRequest request, String requestPath, List<? extends Resource> locations, ResourceResolverChain chain) {
         try {
-            logger.debug("Initial path {}", requestPath);
+            logger.info("Initial path {}", requestPath);
             requestPath = URLDecoder.decode(requestPath, "UTF-8");
-            logger.debug("URL Decoded path {}", requestPath);
+            logger.info("URL Decoded path {}", requestPath);
             String[] pathTokens = requestPath.substring(requestPath.lastIndexOf("pluginresource/") + "pluginresource/".length()).split("/");
             String author = pathTokens[0];
             String game = pathTokens[1];
             String version = pathTokens[2];
-            logger.debug("Plugin properties - Author: {} - Game: {} - Version: {}", author, game, version);
+            logger.info("Plugin properties - Author: {} - Game: {} - Version: {}", author, game, version);
             String resourcePath = Arrays.asList(pathTokens).subList(3, pathTokens.length).stream().collect(Collectors.joining("/"));
-            logger.debug("Resource path {}", resourcePath);
+            logger.info("Resource path {}", resourcePath);
             PluginDescription incomingPluginDescription = new PluginDescription(author, game, version);
             //If no resource is named, we get the character sheet
             if (resourcePath.equals("")) {

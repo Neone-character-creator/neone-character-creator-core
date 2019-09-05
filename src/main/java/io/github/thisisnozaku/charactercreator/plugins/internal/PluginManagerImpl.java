@@ -73,7 +73,7 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
 
             framework.getBundleContext().addServiceListener(serviceEvent -> {
                 Object service = framework.getBundleContext().getService(serviceEvent.getServiceReference());
-                logger.info("Service of class {} event occurred", service.getClass().getCanonicalName());
+                logger.info("Service of class {} event occurred", service != null && service.getClass() != null ? service.getClass().getCanonicalName() : "unknown");
                 if (service instanceof GamePlugin) {
                     logger.info("Getting plugin at {} ready", serviceEvent.getServiceReference().getBundle().getLocation());
                     Bundle serviceBundle = serviceEvent.getServiceReference().getBundle();
