@@ -40,7 +40,7 @@ public class PluginResourceResolver implements ResourceResolver {
             String game = pathTokens[2];
             String version = pathTokens[3];
             logger.info("Plugin properties - Author: {} - Game: {} - Version: {}", author, game, version);
-            String resourcePath = Arrays.asList(pathTokens).subList(3, pathTokens.length).stream().collect(Collectors.joining("/"));
+            String resourcePath = Arrays.asList(pathTokens).subList(4, pathTokens.length).stream().collect(Collectors.joining("/"));
             logger.info("Resource path {}", resourcePath);
             PluginDescription incomingPluginDescription = new PluginDescription(author, game, version);
             //If no resource is named, we get the character sheet
