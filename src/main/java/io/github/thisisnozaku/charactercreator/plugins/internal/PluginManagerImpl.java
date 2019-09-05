@@ -2,6 +2,7 @@ package io.github.thisisnozaku.charactercreator.plugins.internal;
 
 import com.google.common.io.Files;
 import com.jayway.jsonpath.JsonPath;
+import io.github.thisisnozaku.charactercreator.data.access.AmazonS3Adapter;
 import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
 import io.github.thisisnozaku.charactercreator.data.access.FileInformation;
 import io.github.thisisnozaku.charactercreator.plugins.*;
@@ -134,7 +135,8 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
             Consumer<PluginMonitorEvent> update = (event) -> {
                 try {
                     FileInformation info = fileAccess.getFileInformation(event.getPluginUrl());
-                    Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
+                    String standardizedBundleUrl = AmazonS3Adapter.normalizeS3Url(info.getFileUrl().toExternalForm());
+                    Bundle b = framework.getBundleContext().getBundle(standardizedBundleUrl);
                     Optional<Instant> timestamp = info.getLastModifiedTimestamp();
                     if (timestamp.isPresent() && (b == null || timestamp.get().isAfter(Instant.ofEpochMilli(b.getLastModified())))) {
                         logger.info("A new plugin found at url {}, loading it.", info.getFileUrl().toExternalForm());
@@ -152,7 +154,7 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
                 try {
                     FileInformation info = fileAccess.getFileInformation(event.getPluginUrl());
                     Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
-                    logger.info("Delete for bundle {}", b.getSymbolicName());
+                    logger.info("Delete for bundle {}", b != null ? b.getSymbolicName() : "unknown plugin");
                     try {
                         if (b != null) {
                             logger.info("Uninstalling");

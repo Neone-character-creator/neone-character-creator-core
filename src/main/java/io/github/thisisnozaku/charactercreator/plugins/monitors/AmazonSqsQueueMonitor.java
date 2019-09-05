@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.model.S3Event;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.*;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import io.github.thisisnozaku.charactercreator.data.access.AmazonS3Adapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,6 +75,8 @@ public class AmazonSqsQueueMonitor extends PluginMonitorAdapter {
                             }
                             if (event != null) {
                                 handle(event);
+                            } else {
+                                logger.warn("An S3 event {} wasn't handled", appendedEventName);
                             }
                         });
                     });
