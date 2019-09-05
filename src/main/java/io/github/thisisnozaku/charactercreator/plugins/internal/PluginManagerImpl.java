@@ -148,17 +148,23 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
             };
             pluginMonitor.onCreated(update).onModified(update);
             pluginMonitor.onDeleted(event -> {
+                logger.info("Plugin deleted event triggered");
                 try {
                     FileInformation info = fileAccess.getFileInformation(event.getPluginUrl());
                     Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
+                    logger.info("Delete for bundle {}", b.getSymbolicName());
                     try {
                         if (b != null) {
+                            logger.info("Uninstalling");
                             b.uninstall();
                         }
                          Optional<Map.Entry<PluginDescription, Bundle>> entry = pluginBundles.entrySet().stream().filter(e -> e.getValue().equals(b)).findFirst();
                         if (entry.isPresent()) {
+                            logger.info("Removing bundle from plugins");
                             pluginBundles.remove(entry.get().getKey());
                             plugins.remove(entry.get().getKey());
+                        } else {
+                            logger.warn("Delete was triggered but bundle wasn't found for {}", b != null ? b.getSymbolicName() : "unknown plugin");
                         }
                     } catch (BundleException e) {
                         e.printStackTrace();
