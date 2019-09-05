@@ -9,6 +9,7 @@ import io.github.thisisnozaku.charactercreator.plugins.*;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.monitors.PluginMonitor;
 import io.github.thisisnozaku.charactercreator.plugins.monitors.PluginMonitorEvent;
+import org.apache.http.client.utils.URIBuilder;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
@@ -135,12 +136,12 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
             Consumer<PluginMonitorEvent> update = (event) -> {
                 try {
                     FileInformation info = fileAccess.getFileInformation(event.getPluginUrl());
-                    String standardizedBundleUrl = AmazonS3Adapter.normalizeS3Url(info.getFileUrl().toExternalForm());
-                    Bundle b = framework.getBundleContext().getBundle(standardizedBundleUrl);
+                    URL bundleUrl = new URIBuilder(info.getFileUrl().toExternalForm()).clearParameters().build().toURL();
+                    Bundle b = framework.getBundleContext().getBundle(bundleUrl.toExternalForm());
                     Optional<Instant> timestamp = info.getLastModifiedTimestamp();
                     if (timestamp.isPresent() && (b == null || timestamp.get().isAfter(Instant.ofEpochMilli(b.getLastModified())))) {
                         logger.info("A new plugin found at url {}, loading it.", info.getFileUrl().toExternalForm());
-                        loadBundle(info.getFileUrl());
+                        loadBundle(bundleUrl);
                     } else {
                         logger.info("Previous plugin found at url {}, skipping loading", info.getFileUrl().toExternalForm());
                     }
@@ -153,20 +154,13 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
                 logger.info("Plugin deleted event triggered");
                 try {
                     FileInformation info = fileAccess.getFileInformation(event.getPluginUrl());
-                    Bundle b = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
+                    String normalizedBundleLocation = new URIBuilder(info.getFileUrl().toExternalForm()).clearParameters().build().toURL().toExternalForm();
+                    Bundle b = framework.getBundleContext().getBundle(normalizedBundleLocation);
                     logger.info("Delete for bundle {}", b != null ? b.getSymbolicName() : "unknown plugin");
                     try {
                         if (b != null) {
                             logger.info("Uninstalling");
                             b.uninstall();
-                        }
-                         Optional<Map.Entry<PluginDescription, Bundle>> entry = pluginBundles.entrySet().stream().filter(e -> e.getValue().equals(b)).findFirst();
-                        if (entry.isPresent()) {
-                            logger.info("Removing bundle from plugins");
-                            pluginBundles.remove(entry.get().getKey());
-                            plugins.remove(entry.get().getKey());
-                        } else {
-                            logger.warn("Delete was triggered but bundle wasn't found for {}", b != null ? b.getSymbolicName() : "unknown plugin");
                         }
                     } catch (BundleException e) {
                         e.printStackTrace();
@@ -183,9 +177,12 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
             fileInfo.forEach(p -> {
                 logger.info("Loading {}", p.getFileUrl());
                 try {
-                    loadBundle(new URL(p.getFileUrl().toExternalForm()));
+                    URL url = new URIBuilder(p.getFileUrl().toExternalForm()).clearParameters().build().toURL();
+                    loadBundle(url);
                 } catch (MalformedURLException ex) {
                     ex.printStackTrace();
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
                 }
             });
         } catch (BundleException ex) {
@@ -246,13 +243,14 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
             Optional<InputStream> in = fileAccess.getContent(info);
             if (in.isPresent()) {
                 InputStream inStream = in.get();
-                Bundle bundle = framework.getBundleContext().getBundle(info.getFileUrl().toExternalForm());
+                String standardUrl = new URIBuilder(info.getFileUrl().toExternalForm()).clearParameters().build().toURL().toExternalForm();
+                Bundle bundle = framework.getBundleContext().getBundle(standardUrl);
                 if (bundle != null) {
                     logger.info("Bundle already exists, updating");
                     bundle.update(inStream);
                 } else {
                     logger.info("New bundle, installing");
-                    bundle = framework.getBundleContext().installBundle(info.getFileUrl().toExternalForm(), inStream);
+                    bundle = framework.getBundleContext().installBundle(standardUrl, inStream);
                     logger.info("Starting bundle");
                     bundle.start();
                 }
