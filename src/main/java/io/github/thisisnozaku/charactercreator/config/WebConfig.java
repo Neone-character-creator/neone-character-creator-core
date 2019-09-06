@@ -30,8 +30,6 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     private PluginResourceResolver pluginResourceResolver;
     @Inject
     private RequestMappingHandlerAdapter handlerAdapter;
-    @Inject
-    private GoogleOAuthUserResolver googleOAuthUserResolver;
 
     @Bean
     public SimpleMappingExceptionResolver exceptionResolver() {
@@ -57,7 +55,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-        argumentResolvers.add(googleOAuthUserResolver);
+        argumentResolvers.add(googleOAuthUserResolver());
     }
 
     /**
