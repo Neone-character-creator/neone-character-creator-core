@@ -21,6 +21,11 @@ public class User {
     @OneToMany
     private List<OAuthAccountAssociation> associatedAccounts;
 
+    /**
+     * Private constructor for hibernate.
+     */
+    private User(){}
+
     public User(Long id, List<OAuthAccountAssociation> associatedAccounts) {
         this.id = id;
         this.associatedAccounts = associatedAccounts.stream().map(e -> {
