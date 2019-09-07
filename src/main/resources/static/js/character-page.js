@@ -226,9 +226,8 @@ $().ready(function(){
 		    		headers : headers,
 		    		data : JSON.stringify(contentContainer[0].contentWindow.export()),
 		    		contentType : "application/json"
-		    	}).success(function(result){
-		    		console.log(result);
-		    		window.location = url + "/" + result;
+		    	}).done(function(result){
+		    		window.open(url + "/" + result);
 		    	}).fail(function(result){
 		    		console.log(result.responseText);
 		    		alert("There was an error while trying to export the character to PDF.");

@@ -3,6 +3,7 @@ package io.github.thisisnozaku.charactercreator.controllers.games;
 import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
+import io.github.thisisnozaku.charactercreator.data.pdf.PdfCache;
 import io.github.thisisnozaku.charactercreator.exceptions.MissingPluginException;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
 import io.github.thisisnozaku.charactercreator.plugins.GamePlugin;
@@ -39,11 +40,15 @@ public class GameRestController {
     private final PluginManager<GamePlugin<Character>, Character> plugins;
     private final Logger logger = LoggerFactory.getLogger(GameRestController.class);
     private final ObjectMapper objectMapper;
+    private final PdfCache pdfDataCache;
     @Inject
-    public GameRestController(CharacterMongoRepositoryCustom characters, PluginManager<GamePlugin<Character>, Character> pluginManager, ObjectMapper objectMapper) {
+    public GameRestController(CharacterMongoRepositoryCustom characters,
+                              PluginManager<GamePlugin<Character>, Character> pluginManager, ObjectMapper objectMapper,
+                              PdfCache pdfCache) {
         this.characters = characters;
         this.plugins = pluginManager;
         this.objectMapper = objectMapper;
+        this.pdfDataCache = pdfCache;
     }
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
@@ -143,7 +148,7 @@ public class GameRestController {
 
     @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/pdf", method = RequestMethod.POST)
-    public ResponseEntity<byte[]> exportToPdf(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, RequestEntity<String> request) {
+    public ResponseEntity<String> exportToPdf(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, RequestEntity<String> request) {
         try {
             PluginDescription pluginDescription = new PluginDescription(author, game, version);
             Optional<GamePlugin<Character>> plugin = plugins.getPlugin(pluginDescription);
@@ -171,10 +176,10 @@ public class GameRestController {
                     String characterJson = URLDecoder.decode(request.getBody(), "UTF-8");
                     pdfExporter.exportPdf(characterJson, resourceStream, pdfOut, overrideMappings);
                     HttpHeaders headers = new HttpHeaders();
-                    headers.setContentType(MediaType.parseMediaType("application/pdf"));
-                    return new ResponseEntity<>(pdfOut.toByteArray(), headers, HttpStatus.OK);
+                    String pdfUuid = pdfDataCache.addToCache(pdfOut.toByteArray());
+                    return new ResponseEntity<>(pdfUuid, headers, HttpStatus.OK);
                 }
-                return new ResponseEntity<byte[]>(HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             } else {
                 throw new MissingPluginException(pluginDescription);
             }
@@ -185,10 +190,22 @@ public class GameRestController {
     }
 
     @Secured({"ROLE_USER"})
+    @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/pdf/{uuid}", method = RequestMethod.GET)
+    public ResponseEntity<byte[]> exportToPdf(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("uuid") String uuid) {
+        Optional<byte[]> data = pdfDataCache.getFromCache(uuid);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/pdf"));
+        return data.map(d -> new ResponseEntity<byte[]>(d, headers, HttpStatus.OK))
+                .orElse(new ResponseEntity<byte[]>(null, headers, HttpStatus.NOT_FOUND));
+    }
+
+    @Secured({"ROLE_USER"})
     @RequestMapping(value = "/{author}/{game}/{version:.+?}/characters/{id}", method = RequestMethod.GET, produces = "application/json")
     public CharacterDataWrapper getCharacter(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, @PathVariable("id") String id) {
         return characters.findOne(id);
     }
+
+
 
     @SuppressWarnings("SameReturnValue")
     @ExceptionHandler(MissingPluginException.class)
