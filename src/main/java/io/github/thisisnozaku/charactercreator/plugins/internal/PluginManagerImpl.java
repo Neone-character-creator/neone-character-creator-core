@@ -40,7 +40,7 @@ import java.util.function.Consumer;
  * Created by Damien on 11/27/2015.
  */
 @Service("pluginManager")
-class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Character>, PluginThymeleafResourceResolver {
+class PluginManagerImpl implements PluginManager<GamePlugin<Character>>, PluginThymeleafResourceResolver {
     private final Map<PluginDescription, PluginWrapper> plugins = new HashMap<>();
     private final Map<PluginDescription, Bundle> pluginBundles = new HashMap<>();
     private Framework framework;
@@ -235,6 +235,19 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>, Characte
         } catch (URISyntaxException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    @Override
+    public Optional<URI> getPluginArchive(PluginDescription pluginDescription) {
+        return Optional.ofNullable(pluginBundles.get(pluginDescription))
+                .map(pluginBundle -> pluginBundle.getLocation())
+                .map(location -> {
+                    try {
+                        return new URIBuilder(location).build();
+                    } catch (URISyntaxException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     private Optional<Bundle> loadBundle(URL path) {

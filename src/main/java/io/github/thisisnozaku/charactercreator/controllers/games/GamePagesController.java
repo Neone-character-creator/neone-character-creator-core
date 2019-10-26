@@ -35,11 +35,11 @@ public class GamePagesController {
     @Inject
     private final CharacterMongoRepository characters;
     @Inject
-    private final PluginManager<GamePlugin<Character>, Character> plugins;
+    private final PluginManager<GamePlugin<Character>> plugins;
     @Value("${google.oauth2.client.clientId}")
     private String googleClientId;
 
-    public GamePagesController(CharacterMongoRepository characters, UserRepository accounts, PluginManager<GamePlugin<Character>, Character> plugins) {
+    public GamePagesController(CharacterMongoRepository characters, UserRepository accounts, PluginManager<GamePlugin<Character>> plugins) {
         this.characters = characters;
         this.accounts = accounts;
         this.plugins = plugins;

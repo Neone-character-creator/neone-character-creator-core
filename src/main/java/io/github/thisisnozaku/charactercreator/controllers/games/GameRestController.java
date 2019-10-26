@@ -37,13 +37,13 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/games/")
 public class GameRestController {
     private final CharacterMongoRepositoryCustom characters;
-    private final PluginManager<GamePlugin<Character>, Character> plugins;
+    private final PluginManager<GamePlugin<Character>> plugins;
     private final Logger logger = LoggerFactory.getLogger(GameRestController.class);
     private final ObjectMapper objectMapper;
     private final PdfCache pdfDataCache;
     @Inject
     public GameRestController(CharacterMongoRepositoryCustom characters,
-                              PluginManager<GamePlugin<Character>, Character> pluginManager, ObjectMapper objectMapper,
+                              PluginManager<GamePlugin<Character>> pluginManager, ObjectMapper objectMapper,
                               PdfCache pdfCache) {
         this.characters = characters;
         this.plugins = pluginManager;

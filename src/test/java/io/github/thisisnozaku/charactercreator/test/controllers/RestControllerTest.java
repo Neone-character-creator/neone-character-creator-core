@@ -7,6 +7,7 @@ import io.github.thisisnozaku.charactercreator.controllers.games.GameRestControl
 import io.github.thisisnozaku.charactercreator.data.CharacterDataWrapper;
 import io.github.thisisnozaku.charactercreator.data.CharacterMongoRepositoryCustom;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
+import io.github.thisisnozaku.charactercreator.data.pdf.PdfCache;
 import io.github.thisisnozaku.charactercreator.plugins.*;
 import io.github.thisisnozaku.charactercreator.plugins.Character;
 import org.junit.Before;
@@ -58,6 +59,8 @@ public class RestControllerTest {
     private CharacterMongoRepositoryCustom characters = Mockito.mock(CharacterMongoRepositoryCustom.class);
     @Mock
     private PluginManager plugins;
+    @Mock
+    private PdfCache pdfCache;
     private MockMvc mvc;
 
     private GamePlugin firstPlugin;
@@ -74,7 +77,7 @@ public class RestControllerTest {
         firstPlugin = Mockito.mock(GamePlugin.class);
         secondPlugin = Mockito.mock(GamePlugin.class);
 
-        controller = new GameRestController(characters, plugins, new org.codehaus.jackson.map.ObjectMapper());
+        controller = new GameRestController(characters, plugins, new org.codehaus.jackson.map.ObjectMapper(), pdfCache);
 
         mvc = MockMvcBuilders.standaloneSetup(controller).build();
         when(plugins.getPlugin(isA(PluginDescription.class))).thenAnswer((invocation -> {

@@ -1,7 +1,7 @@
 buildscript {
     ext {
         springBootVersion = '1.5.21.RELEASE'
-        appVersion = "0.0.8-SNAPSHOT.1"
+        appVersion = "0.0.9-SNAPSHOT"
     }
     repositories {
         mavenCentral()
@@ -91,7 +91,7 @@ dependencies {
 
     compile('javax.inject:javax.inject:1')
 
-    compile('io.github.thisisnozaku.charactercreator:neone-plugin-api:1.0')
+    compile('io.github.thisisnozaku.charactercreator:neone-plugin-api:1.1.0')
 
     compile 'org.apache.felix:org.apache.felix.framework:5.4.0'
     osgi 'org.apache.felix:org.apache.felix.scr:2.0.2'
