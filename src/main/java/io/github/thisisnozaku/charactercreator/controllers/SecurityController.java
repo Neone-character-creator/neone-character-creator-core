@@ -1,6 +1,6 @@
 package io.github.thisisnozaku.charactercreator.controllers;
 
-import com.google.api.services.plus.model.Person;
+import com.google.api.services.people.v1.model.Person;
 import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.OAuthAccountAssociation;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;
@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -42,10 +41,10 @@ public class SecurityController {
 
     @RequestMapping(value = "/login/google", method = RequestMethod.POST, consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
-    public void googleLogin(Person googleUser, HttpSession session) throws IOException {
-        OAuthAccountAssociation accountAssociation = users.findByProviderAndOauthId("google", googleUser.getId());
+    public void googleLogin(Person googleUser) throws IOException {
+        OAuthAccountAssociation accountAssociation = users.findByProviderAndOauthId("google", googleUser.getResourceName());
         if (accountAssociation == null) {
-            accountAssociation = new OAuthAccountAssociation("google", googleUser.getId());
+            accountAssociation = new OAuthAccountAssociation("google", googleUser.getResourceName());
             accountAssociation.setUser(new User(null, Arrays.asList(accountAssociation)));
             accountAssociation = users.saveAndFlush(accountAssociation);
         }

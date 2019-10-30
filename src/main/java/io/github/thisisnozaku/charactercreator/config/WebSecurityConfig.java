@@ -24,7 +24,8 @@ WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity security) throws Exception {
-        security.csrf().csrfTokenRepository(csrfTokenRepository());
+        security.csrf().csrfTokenRepository(csrfTokenRepository())
+            .ignoringAntMatchers("/login/**");
 
         //Security is controlled in REST Controller via annotation now
         security.authorizeRequests()
