@@ -87,9 +87,9 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>>, PluginT
                         try {
                             logger.info("Trying to read plugin.json");
                             String creator = JsonPath.read(pluginDescriptionFile.openStream(),
-                                    "$.description.creator");
+                                    "$.description.author");
                             String game = JsonPath.read(pluginDescriptionFile.openStream(),
-                                    "$.description.game");
+                                    "$.description.system");
                             String version = JsonPath.read(pluginDescriptionFile.openStream(),
                                     "$.description.version");
                             resourcePaths =

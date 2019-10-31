@@ -1,7 +1,7 @@
 {
   "description":{
-    "creator" : "Damien Marble",
-    "game" : "Test Plugin",
+    "author" : "Damien Marble",
+    "system" : "Test Plugin",
     "version" : "1.0.0"
   },
   "resources" : {
