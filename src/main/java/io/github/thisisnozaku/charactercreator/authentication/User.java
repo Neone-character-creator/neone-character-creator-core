@@ -24,10 +24,15 @@ public class User {
     /**
      * Private constructor for hibernate.
      */
-    private User(){}
+    private User() {
+    }
 
     public User(Long id, List<OAuthAccountAssociation> associatedAccounts) {
+        this(associatedAccounts);
         this.id = id;
+    }
+
+    public User(List<OAuthAccountAssociation> associatedAccounts) {
         this.associatedAccounts = associatedAccounts.stream().map(e -> {
             e.setUser(this);
             return e;

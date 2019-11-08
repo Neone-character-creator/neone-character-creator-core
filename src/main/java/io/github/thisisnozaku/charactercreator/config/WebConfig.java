@@ -1,6 +1,5 @@
 package io.github.thisisnozaku.charactercreator.config;
 
-import io.github.thisisnozaku.charactercreator.authentication.GoogleOAuthUserResolver;
 import io.github.thisisnozaku.charactercreator.plugins.PluginResourceResolver;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.context.annotation.Bean;
@@ -53,11 +52,6 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         return configurer;
     }
 
-    @Override
-    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-        argumentResolvers.add(googleOAuthUserResolver());
-    }
-
     /**
      * http://stackoverflow.com/a/19847526/1503554
      */
@@ -70,11 +64,6 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         argumentResolvers.removeAll(customResolvers);
         argumentResolvers.addAll(0, customResolvers);
         handlerAdapter.setArgumentResolvers(argumentResolvers.stream().filter(Objects::nonNull).collect(Collectors.toList()));
-    }
-
-    @Bean
-    public static GoogleOAuthUserResolver googleOAuthUserResolver(){
-        return new GoogleOAuthUserResolver();
     }
 
     @Bean

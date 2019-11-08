@@ -45,6 +45,7 @@ public class GamePagesController {
         this.plugins = plugins;
     }
 
+    @CrossOrigin
     @RequestMapping(value = "/pages/info", method = RequestMethod.GET, produces = "text/html")
     public String description(@PathVariable("author") String author, @PathVariable("game") String game, @PathVariable("version") String version, Model model, HttpServletRequest request) throws UnsupportedEncodingException {
         try {

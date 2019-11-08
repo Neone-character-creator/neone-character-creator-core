@@ -7,6 +7,7 @@ import io.github.thisisnozaku.charactercreator.plugins.PluginManager;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +29,7 @@ public class PluginsController {
     }
 
     @RequestMapping("")
+    @CrossOrigin
     public Collection<PluginDescription> getPresentPlugins() {
         return pluginManager.getAllPluginDescriptions();
     }

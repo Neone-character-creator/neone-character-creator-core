@@ -138,9 +138,7 @@ $().ready(function(){
     });
 
 	    $("#open-character").click(function(event){
-        	var source = $(this)
         	var url = $("#open-character").data("url");
-        	var redirect = $("#open-character").data("redirecturlbase");
         	var headers = {};
         	headers[csrfHeader] = csrfToken;
         	$("#modal-content").text("Loading...")
