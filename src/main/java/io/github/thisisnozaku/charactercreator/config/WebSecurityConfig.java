@@ -35,11 +35,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity security) throws Exception {
         security.authorizeRequests()
-                .antMatchers("/plugins").permitAll()
-                .anyRequest().authenticated().and()
-                .addFilterBefore(tokenAuthenticationChainFilter, AnonymousAuthenticationFilter.class);
+                .antMatchers("/plugins", "/pluginresource/**").permitAll()
+                .anyRequest().authenticated()
+                .and().addFilterBefore(tokenAuthenticationChainFilter, AnonymousAuthenticationFilter.class);
 
-        security.headers().frameOptions().sameOrigin();
+        security.headers().frameOptions().disable();
     }
 
     private CsrfTokenRepository csrfTokenRepository() {
@@ -52,4 +52,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+
 }
