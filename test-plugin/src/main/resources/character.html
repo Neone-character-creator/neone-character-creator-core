@@ -5,6 +5,22 @@
 <head>
     <meta charset="UTF-8"/>
     <title>Character Sheet</title>
+    <script>
+        var characterData = {};
+        window.addEventListener("message", function(event){
+            switch (event.data.action) {
+                case "get-character":
+                    event.source.postMessage({
+                        action: "get-character",
+                        character: characterData
+                    }, event.origin);
+                    break;
+                case "set-character":
+                    characterData = JSON.parse(event.data);
+                    break;
+            }
+        }, false);
+    </script>
 </head>
 <body>
 This is the character sheet for the plugin.
