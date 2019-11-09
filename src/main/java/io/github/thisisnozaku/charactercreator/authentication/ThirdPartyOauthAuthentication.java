@@ -31,4 +31,9 @@ public class ThirdPartyOauthAuthentication extends AbstractAuthenticationToken {
     public Object getPrincipal() {
         return principal;
     }
+
+    @Override
+    public boolean isAuthenticated() {
+        return true;
+    }
 }
