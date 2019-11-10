@@ -3,7 +3,6 @@ package io.github.thisisnozaku.charactercreator.controllers;
 import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.model.Person;
 import com.google.common.net.MediaType;
-import io.github.thisisnozaku.charactercreator.authentication.GoogleOAuthUserResolver;
 import io.github.thisisnozaku.charactercreator.authentication.User;
 import io.github.thisisnozaku.charactercreator.data.OAuthAccountAssociation;
 import io.github.thisisnozaku.charactercreator.data.UserRepository;

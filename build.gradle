@@ -1,7 +1,7 @@
 buildscript {
     ext {
         springBootVersion = '1.5.21.RELEASE'
-        appVersion = "0.0.10-SNAPSHOT"
+        appVersion = "0.0.11-SNAPSHOT"
     }
     repositories {
         mavenCentral()
@@ -110,6 +110,7 @@ dependencies {
 
     compile 'org.springframework.security.oauth:spring-security-oauth2:2.0.11.RELEASE'
 
+    implementation'com.google.api-client:google-api-client:1.30.4'
     implementation 'com.google.apis:google-api-services-people:v1-rev20190910-1.30.1'
 
     compile "com.jayway.jsonpath:json-path:2.2.0"
