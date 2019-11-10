@@ -48,16 +48,20 @@ public class TokenAuthenticationChainFilter implements Filter {
                         .setAudience(Collections.singletonList(googleOauthClientToken))
                         .build();
                 String[] authorizationHeaderTokens = authenticationHeader.split(" ");
-                GoogleIdToken googleIdToken = verifier.verify(authorizationHeaderTokens[1]);
-                String subject = googleIdToken.getPayload().getSubject();
-                Optional<OAuthAccountAssociation> existingAuthentication = userRepository.findByProviderAndOauthId("google", subject);
-                SecurityContextHolder.getContext().setAuthentication(new ThirdPartyOauthAuthentication(
-                        existingAuthentication.map(OAuthAccountAssociation::getUser).orElseGet(() -> {
-                            OAuthAccountAssociation newAssociation = new OAuthAccountAssociation("google", subject);
-                            User newUser = new User(Collections.singletonList(newAssociation));
-                            userRepository.save(newAssociation);
-                            return newUser;
-                        }), authorizationHeaderTokens[1], Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"))));
+                if(authorizationHeaderTokens.length == 2) {
+                    GoogleIdToken googleIdToken = verifier.verify(authorizationHeaderTokens[1]);
+                    String subject = googleIdToken.getPayload().getSubject();
+                    Optional<OAuthAccountAssociation> existingAuthentication = userRepository.findByProviderAndOauthId("google", subject);
+                    SecurityContextHolder.getContext().setAuthentication(new ThirdPartyOauthAuthentication(
+                            existingAuthentication.map(OAuthAccountAssociation::getUser).orElseGet(() -> {
+                                OAuthAccountAssociation newAssociation = new OAuthAccountAssociation("google", subject);
+                                User newUser = new User(Collections.singletonList(newAssociation));
+                                userRepository.save(newAssociation);
+                                return newUser;
+                            }), authorizationHeaderTokens[1], Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"))));
+                } else {
+                    logger.warn("Authorization header present but didn't have 2 elements.");
+                }
             } catch (GeneralSecurityException | IllegalArgumentException e) {
                 logger.debug("Google id token was invalid.");
             }
