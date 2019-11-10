@@ -46,7 +46,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         security.csrf().disable();
 
         security.authorizeRequests()
-                .antMatchers("/plugins", "/pluginresource/**", "/").permitAll()
+                .antMatchers("/plugins", "/pluginresource/**", "/games/*/*/*/pages/**").permitAll()
                 .anyRequest().authenticated()
                 .and().addFilterBefore(tokenAuthenticationChainFilter, AnonymousAuthenticationFilter.class);
 
