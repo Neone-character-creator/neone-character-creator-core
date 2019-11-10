@@ -86,7 +86,7 @@ public class GameRestController {
             logger.info("Plugin {}, {}, {} found.", author, game, version);
             CharacterDataWrapper wrapper = new CharacterDataWrapper(description, currentUser.getId(), requestBody.getBody());
             wrapper = characters.save(wrapper);
-            logger.info("Character (id {}) was saved.", wrapper.getId());
+            logger.info("New character (id {}) was saved.", wrapper.getId());
             return wrapper;
         } else {
             logger.info("Plugin {} - {} - {} was requested but unavailable.", author, game, version);
