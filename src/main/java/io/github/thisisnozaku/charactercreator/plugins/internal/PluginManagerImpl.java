@@ -221,6 +221,10 @@ class PluginManagerImpl implements PluginManager<GamePlugin<Character>>, PluginT
         try {
             //Find the bundle for the plugin.
             Bundle pluginBundle = pluginBundles.get(pluginDescription);
+            Optional<PluginWrapper> pluginWrapper = Optional.of(plugins.get(pluginDescription));
+            if(!pluginWrapper.isPresent()) {
+                return Optional.empty();
+            }
             Map<String, String> internalResourceMappings = plugins.get(pluginDescription).getResourceMappings();
             if (internalResourceMappings.containsKey(s)) {
                 s = internalResourceMappings.get(s);
