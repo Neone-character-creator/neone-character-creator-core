@@ -95,7 +95,7 @@ dependencies {
 
     compile 'org.apache.felix:org.apache.felix.framework:5.4.0'
     osgi 'org.apache.felix:org.apache.felix.scr:2.0.2'
-    osgi('io.github.thisisnozaku.charactercreator:neone-plugin-api:1.0')
+    osgi('io.github.thisisnozaku.charactercreator:neone-plugin-api:1.1.0')
     osgi 'org.apache.felix:org.apache.felix.framework.security:2.6.0'
     testOsgi project(':test-plugin')
 

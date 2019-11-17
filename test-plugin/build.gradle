@@ -27,7 +27,7 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
-    compile "io.github.thisisnozaku.charactercreator:neone-plugin-api:1.0"
+    compile "io.github.thisisnozaku.charactercreator:neone-plugin-api:1.1.0"
     compile 'org.apache.felix:org.apache.felix.scr.annotations:1.9.12'
 }
 
