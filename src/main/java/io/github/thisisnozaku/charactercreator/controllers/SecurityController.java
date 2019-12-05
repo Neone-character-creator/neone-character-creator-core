@@ -58,7 +58,7 @@ public class SecurityController {
         if (accountAssociation == null) {
             accountAssociation = new OAuthAccountAssociation("google", googleUser.getResourceName());
             accountAssociation.setUser(new User(null, Arrays.asList(accountAssociation)));
-            accountAssociation = users.saveAndFlush(accountAssociation);
+            accountAssociation = users.save(accountAssociation);
         }
         Authentication authentication = new UsernamePasswordAuthenticationToken(accountAssociation.getUser(), null, Arrays.asList(new SimpleGrantedAuthority("ROLE_USER")));
         SecurityContext securityContext = SecurityContextHolder.getContext();
