@@ -142,7 +142,7 @@ public class GameRestController {
         //TODO: Lookg into making user injectable via the method arguments.
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         logger.info("Getting all characters for user {} and plugin {}, {}, {}.", currentUser.getId(), author, game, version);
-        List<CharacterDataWrapper> result = characters.findByUserAndPlugin(currentUser.getId(), pluginDescription);
+        List<CharacterDataWrapper> result = characters.findByUserAndPluginSystemAndPluginAuthor(currentUser.getId(), pluginDescription.getSystem(), pluginDescription.getAuthor());
         logger.info("Found {} characters.", result.size());
         return result;
     }

@@ -10,5 +10,5 @@ import java.util.List;
  */
 public interface CharacterMongoRepositoryCustom extends CharacterMongoRepository {
     @Query
-    List<CharacterDataWrapper> findByUserAndPlugin(Object user, PluginDescription plugin);
+    List<CharacterDataWrapper> findByUserAndPluginSystemAndPluginAuthor(Object user, String system, String author);
 }
