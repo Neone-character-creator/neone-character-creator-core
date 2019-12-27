@@ -12,7 +12,8 @@
                 case "get-character":
                     event.source.postMessage({
                         action: "get-character",
-                        character: characterData
+                        character: characterData,
+                        correlationId: event.data.correlationId
                     }, event.origin);
                     break;
                 case "set-character":

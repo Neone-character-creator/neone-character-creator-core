@@ -6,7 +6,9 @@ import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -18,6 +20,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import javax.inject.Inject;
 
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 /**
@@ -38,6 +41,8 @@ public class IndexControllerTest {
 
     @Before
     public void setup(){
+        initMocks(this);
+
         mvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 

@@ -2,6 +2,7 @@ package io.github.thisisnozaku.charactercreator;
 
 
 import io.github.thisisnozaku.charactercreator.config.ThymeleafConfig;
+import io.github.thisisnozaku.charactercreator.data.UserRepository;
 import io.github.thisisnozaku.charactercreator.data.access.FileAccessor;
 import io.github.thisisnozaku.charactercreator.data.access.LocalFileSystemAccess;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +11,8 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+import static org.mockito.Mockito.mock;
 
 @EnableWebMvc
 @ComponentScan(excludeFilters = @ComponentScan.Filter(value = ThymeleafConfig.class, type = FilterType.ASSIGNABLE_TYPE))
@@ -24,5 +27,10 @@ public class TestConfiguration extends WebMvcConfigurerAdapter {
         PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
         configurer.setIgnoreUnresolvablePlaceholders(true);
         return configurer;
+    }
+
+    @Bean
+    static public UserRepository userRepository(){
+        return mock(UserRepository.class);
     }
 }
