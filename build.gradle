@@ -53,7 +53,7 @@ repositories {
         url "https://repository.jboss.org"
     }
     maven {
-        url "http://repo.spring.io/libs-release-remote/"
+        url "https://repo.spring.io/libs-release-remote/"
     }
     mavenCentral()
     mavenLocal()
