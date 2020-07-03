@@ -14,7 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
 public class IndexController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    public ModelAndView index() {
-        return new ModelAndView("index");
+    public String index() {
+        return "redirect:https://web.neonecharactercreatore.net";
     }
 }
