@@ -1,0 +1,54 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="damien (generated)" id="1593835742068-1">
+        <createTable tableName="app_users">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="damien (generated)" id="1593835742068-2">
+        <createTable tableName="app_users_associated_accounts">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="associated_accounts_id" type="INT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="damien (generated)" id="1593835742068-3">
+        <createTable tableName="authorities">
+            <column autoIncrement="true" name="authority_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="authority" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="damien (generated)" id="1593835742068-4">
+        <createTable tableName="oauth_accounts">
+            <column autoIncrement="true" name="id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="oauth_id" type="VARCHAR(255)"/>
+            <column name="provider" type="VARCHAR(255)"/>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="damien (generated)" id="1593835742068-5">
+        <createIndex indexName="FK30s1jeuaj1gnkgqbwgbvwycc4" tableName="app_users_associated_accounts">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="damien (generated)" id="1593835742068-6">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="app_users_associated_accounts" constraintName="FK30s1jeuaj1gnkgqbwgbvwycc4" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="app_users" validate="true"/>
+    </changeSet>
+    <changeSet author="damien (generated)" id="1593835742068-7">
+        <addForeignKeyConstraint baseColumnNames="associated_accounts_id" baseTableName="app_users_associated_accounts" constraintName="FKjciqnwm6xx53fi1xg1mblrxxl" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="oauth_accounts" validate="true"/>
+    </changeSet>
+    <changeSet author="damien (generated)" id="1593835742068-8">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="oauth_accounts" constraintName="FKnawrvjxp32gywm8smnewougqe" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="app_users" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

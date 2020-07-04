@@ -13,6 +13,8 @@ buildscript {
         classpath 'com.sourcemuse.gradle.plugin:gradle-mongo-plugin:0.9.0'
         classpath "io.spring.gradle:dependency-management-plugin:0.5.4.RELEASE"
         classpath "net.saliman:gradle-cobertura-plugin:2.4.0"
+
+        classpath "org.liquibase:liquibase-gradle-plugin:2.0.3"
     }
 }
 
@@ -29,6 +31,7 @@ apply plugin: 'idea'
 apply plugin: "io.spring.dependency-management"
 apply plugin: 'war'
 apply plugin: "jacoco"
+apply plugin: "org.liquibase.gradle"
 
 
 dependencyManagement {
@@ -64,6 +67,8 @@ configurations {
 
     testOsgi
     testOsgi.extendsFrom osgi
+
+    liquibaseRuntime.extendsFrom runtime
 }
 
 dependencies {
@@ -124,6 +129,12 @@ dependencies {
 
     runtime 'mysql:mysql-connector-java'
     runtime 'org.mariadb.jdbc:mariadb-java-client:2.4.3'
+
+    liquibaseRuntime 'org.liquibase:liquibase-core:3.10.1'
+    liquibaseRuntime "org.liquibase:liquibase-core:3.8.1"
+    liquibaseRuntime "org.liquibase:liquibase-groovy-dsl:2.1.1"
+    liquibaseRuntime 'mysql:mysql-connector-java'
+    liquibaseRuntime 'org.mariadb.jdbc:mariadb-java-client:2.4.3'
 }
 
 
@@ -147,17 +158,19 @@ task copyRuntimeDependencies(type: Copy) {
 copyRuntimeDependencies.outputs.upToDateWhen {
     false
 }
-
+/*
 task cleanCache {
     new File(System.getProperty("java.io.tmpdir")).deleteDir()
 }
-
-clean << {
-    new File('plugins').listFiles().each { f ->
-        delete f
+*/
+clean {
+    doLast {
+        new File('plugins').listFiles().each { f ->
+            delete f
+        }
     }
+    //dependsOn cleanCache
 }
-clean.dependsOn cleanCache
 
 //noinspection GroovyAssignabilityCheck
 test.dependsOn copyTestRuntimeDependencies
@@ -172,3 +185,14 @@ bootRun {
 }
 
 jacocoTestReport.dependsOn test
+
+liquibase {
+    activities {
+        main {
+            changeLogFile "src/main/db/db.master-changelog.xml"
+            url System.getProperty("liquibase.url")
+            username System.getProperty("liquibase.username")
+            password System.getProperty("liquibase.password")
+        }
+    }
+}
