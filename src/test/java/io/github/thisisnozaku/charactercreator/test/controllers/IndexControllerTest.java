@@ -54,7 +54,6 @@ public class IndexControllerTest {
         MockHttpServletRequestBuilder request = get("/").contentType(MediaType.TEXT_HTML);
 
         mvc.perform(request)
-                .andExpect(status().isOk())
-                .andExpect(view().name("index"));
+                .andExpect(status().isPermanentRedirect());
     }
 }
